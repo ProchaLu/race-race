@@ -215,10 +215,10 @@ func _update_cars(delta: float, alpha: float) -> void:
 func _refresh_ui() -> void:
 	var leader := sim.order[0]
 	var lap := mini(leader.laps_completed + 1, sim.track.laps)
-	header.text = "%s   Lap %d/%d   %s" % [
+	header.text = tr("%s   Lap %d/%d   %s") % [
 		sim.track.name, maxi(lap, 1), sim.track.laps, _fmt_time(sim.time_s)]
 	if sim.is_finished:
-		header.text += "   FINISHED"
+		header.text += "   " + tr("FINISHED")
 
 	var lines := PackedStringArray()
 	for i in sim.order.size():
@@ -230,8 +230,8 @@ func _refresh_ui() -> void:
 		(row.box as Button).set_pressed_no_signal(car.pit_requested)
 		var fuel_laps := car.fuel_kg / (RaceSim.FUEL_PER_LAP_KG * RaceSim.PACE_FUEL[car.pace_mode])
 		var margin := fuel_laps - sim.laps_left(car)
-		var state := "IN PIT" if car.in_pit else "%s %d%%" % [car.tyre.display_name, car.tyre_wear]
-		(row.status as Label).text = "  %s   Fuel %+.1f laps" % [state, margin]
+		var state := tr("IN PIT") if car.in_pit else "%s %d%%" % [tr(car.tyre.display_name), car.tyre_wear]
+		(row.status as Label).text = tr("  %s   Fuel %+.1f laps") % [state, margin]
 
 
 func _tower_row(pos: int, car: RaceCarState, leader: RaceCarState) -> String:
@@ -239,49 +239,49 @@ func _tower_row(pos: int, car: RaceCarState, leader: RaceCarState) -> String:
 	var tyre_color := car.tyre.color.to_html(false)
 	var gap := ""
 	if car.is_retired:
-		gap = "OUT"
+		gap = tr("OUT")
 	elif pos == 0:
-		gap = "Leader"
+		gap = tr("Leader")
 	else:
 		var laps_down := leader.laps_completed - car.laps_completed
 		if laps_down >= 1 and leader.race_distance_m - car.race_distance_m > sim.track.lap_length_m:
-			gap = "+%d Lap" % laps_down
+			gap = tr("+%d Lap") % laps_down
 		else:
 			gap = "+%.1f" % car.gap_to_leader_s
 	var flag := ""
 	if car.in_pit:
-		flag = " PIT"
+		flag = " " + tr("PIT")
 	elif car.is_finished:
 		flag = " F"
 	var row := "%2d [color=#%s]■[/color] %-3s %-10s %8s [color=#%s]%s[/color]%3d%%%s" % [
 		pos + 1, team_color, car.team.short_name, car.driver.last_name.left(10), gap,
-		tyre_color, car.tyre.display_name.left(1), car.tyre_wear, flag]
+		tyre_color, tr(car.tyre.display_name).left(1), car.tyre_wear, flag]
 	return "[b]%s[/b]" % row if car.is_player else row
 
 
 # --- Race events -------------------------------------------------------------
 
 func _on_overtake(attacker: RaceCarState, defender: RaceCarState) -> void:
-	_add_log(attacker, "%s passes %s" % [attacker.driver.last_name, defender.driver.last_name])
+	_add_log(attacker, tr("%s passes %s") % [attacker.driver.last_name, defender.driver.last_name])
 
 
 func _on_pit_stop(car: RaceCarState) -> void:
-	_add_log(car, "%s pits for %s" % [car.driver.last_name, car.next_tyre.display_name])
+	_add_log(car, tr("%s pits for %s") % [car.driver.last_name, tr(car.next_tyre.display_name)])
 
 
 func _on_mistake(car: RaceCarState) -> void:
-	_add_log(car, "%s makes a mistake" % car.driver.last_name)
+	_add_log(car, tr("%s makes a mistake") % car.driver.last_name)
 
 
 func _on_retired(car: RaceCarState) -> void:
-	_add_log(car, "[color=#ff6060]%s OUT: %s[/color]" % [car.driver.last_name, car.retire_reason])
+	_add_log(car, "[color=#ff6060]%s[/color]" % (tr("%s OUT: %s") % [car.driver.last_name, tr(car.retire_reason)]))
 
 
 func _on_lap_completed(car: RaceCarState) -> void:
 	if car.laps_completed >= 2 and car.last_lap_time_s < _fastest_lap:
 		_fastest_lap = car.last_lap_time_s
-		_add_log(car, "[color=#c080ff]Fastest lap: %s %s[/color]" % [
-			car.driver.last_name, _fmt_time(_fastest_lap)])
+		_add_log(car, "[color=#c080ff]%s[/color]" % (tr("Fastest lap: %s %s") % [
+			car.driver.last_name, _fmt_time(_fastest_lap)]))
 
 
 func _add_log(car: RaceCarState, text: String) -> void:
@@ -298,9 +298,9 @@ func _on_race_finished() -> void:
 	var lines := PackedStringArray(["[b]Race result - %s[/b]\n" % sim.track.name])
 	for i in sim.order.size():
 		var car := sim.order[i]
-		var result := car.retire_reason if car.is_retired else \
+		var result := tr(car.retire_reason) if car.is_retired else \
 			(_fmt_time(car.finish_time_s) if i == 0 else "+%.1fs" % car.gap_to_leader_s)
-		lines.append("%2d. %-18s %-3s %12s  best %s  stops %d" % [
+		lines.append(tr("%2d. %-18s %-3s %12s  best %s  stops %d") % [
 			i + 1, car.driver.full_name(), car.team.short_name, result,
 			_fmt_time(car.best_lap_time_s), car.pit_stops])
 	results_label.text = "\n".join(lines)

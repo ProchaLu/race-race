@@ -5,6 +5,8 @@ extends Resource
 
 @export var id: StringName
 @export var name: String
+## Short label for compact UI, e.g. "VALDERA".
+@export var short_name: String
 @export var country: String
 
 ## Total lap length in metres. Must match the end of the last segment.

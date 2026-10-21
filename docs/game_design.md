@@ -15,6 +15,7 @@ Ein tiefgehender Motorsport-Manager. Der Spieler ist **Teamchef** eines F1-Teams
 3. **Übersicht wie Motorsport Manager, Tiefe wie Football Manager.** Die Oberfläche ist klar und schnell lesbar; darunter steckt ein dichtes Zahlenmodell, das man erforschen kann.
 4. **Unsicherheit ist Spielmechanik.** Man sieht nicht alles: Talente muss man scouten, Teile müssen sich auf der Strecke beweisen.
 5. **Die Rennen sind passiv.** Das Rennen wird in 2D von oben beobachtet; man greift nur taktisch ein. Der Fokus liegt auf dem Management.
+6. **Simulation zuerst, Darstellung danach.** ✅ Training, Qualifying und Rennen laufen zuerst als **reine Simulation** (ohne Grafik). Erst wenn das Grundgerüst und eine sehr gute Simulation stehen, kommt die 2D-Rennansicht dazu. Am Ende entscheidet der Spieler pro Session: **nur simulieren** (Ergebnis sofort) oder **zuschauen und mitentscheiden**.
 
 ---
 
@@ -26,7 +27,9 @@ Ein tiefgehender Motorsport-Manager. Der Spieler ist **Teamchef** eines F1-Teams
 | Spielstart | ✅ Ein bestehendes Team übernehmen. **Alle 11 Teams frei wählbar.** (Später als Schwierigkeits-Feature: z. B. Start nur beim letzten Team.) |
 | Teamchef-Avatar | ✅ Eigener Name, Nationalität und Hintergrund mit kleinen Boni (siehe 1.1). |
 | Sprint-Wochenenden | ✅ Nicht in v1, erst später. |
-| Spielsprache | ✅ Godots Übersetzungssystem von Anfang an. Zuerst **Englisch**, Deutsch später. |
+| Spielsprache | ✅ Godots Übersetzungssystem von Anfang an, **Englisch und Deutsch ab Start**. |
+| Rennwochenende | ✅ Training, Qualifying und Rennen zuerst als reine Simulation; 2D-Ansicht erst danach. Später pro Session wählbar: simulieren oder zuschauen/mitentscheiden. |
+| Gesichter | ✅ Prozedural generierte Porträts für **alle Personen** + generierte **Helm-Designs** für Fahrer. Teil von R0 (Stil-Auswahl per Vorschau). |
 | Spielwelt | ✅ Feste Startwelt (11 Teams, Fahrer, Personal) in Datendateien. **Nachwuchs- und vertragslose Fahrer/Personal werden laufend neu erzeugt** (Dynamik). Siehe 1.2. |
 | KI-Teams | ✅ Gleiche Regeln wie der Spieler (v1 mit vereinfachten Entscheidungen, später schlauer). |
 | Plattform | ✅ Spaßprojekt, lokal auf **Windows und macOS**. Alles Open Source/kostenlos. Veröffentlichung nur, wenn es wirklich fertig ist. |
@@ -87,6 +90,7 @@ Saison
 ### Zeitmodell
 - Die kleinste Einheit ist **1 Tag**.
 - Der **„Weiter“-Button** spult automatisch vor, bis etwas die Aufmerksamkeit des Spielers braucht (Inbox-Nachricht mit Priorität, Rennwochenende, abgeschlossenes Projekt, Vertragsangebot …).
+- ✅ Daneben gibt es den passiven Button **„+1 Tag“** für genau einen Tag.
 - Alles mit Dauer (Teil-Entwicklung, Gebäudebau, Scouting-Auftrag, Gardening Leave) läuft über einen zentralen **Scheduler** mit Start- und Enddatum.
 - Ein Saisonkalender hat ca. 20–24 Rennen; dazwischen Winterpause mit Vorsaison-Tests.
 
@@ -550,6 +554,15 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 ### 15.4 Bausteine (wiederverwendbare UI-Szenen)
 `StatBar`, `AttributeGrid`, `RangeValue` (für gescoutete Werte), `PersonCard`, `DataTable` (sortier- und filterbar), `MoneyLabel`, `StarRating`, `TrendArrow`, `LineChart`, `ProgressTimer` (Projekte, Bau), `InboxItem`, `CompareView`, `ConfirmDialog`, `Tooltip mit Aufschlüsselung`.
 
+### 15.4b Visueller Stil ✅
+- **Stil „Pit Wall“**: angelehnt an die Zeitenmonitore an der Boxenmauer. Dunkles Graphit, feine Linien, eckige Formen (Radius ≈ 2 px), Zahlen in Monospace, Akzentfarbe Bernstein für Überschriften und Hervorhebungen, Teamfarbe als Streifen.
+- **Schriften** (frei, OFL): *Barlow Condensed* (Überschriften), *IBM Plex Sans* (Text), *JetBrains Mono* (Zahlen).
+- **Farbskala für Attribute 1–20**: 1–5 Rot, 6–10 Bernstein, 11–15 Hellgrün, 16–20 Türkisgrün.
+- **Layout „Columns“** für das Fahrerprofil (und als Vorbild für andere Profile): Identität + Bewertung oben, darunter eine Status-Kachelleiste, dann vier gleich hohe Spalten (Fahrerisch · Mental · Körperlich & Traits · Vertrag), unten Saison · letzte Rennen · Beziehungen & Versprechen · Verlauf.
+- **Traits** mit Symbol, Name und einem kurzen Satz zur Wirkung (in Godot später freies Icon-Set statt Emoji).
+- **Klare Begriffe**: ausgeschriebene Bezeichnungen („Average finishing position“, „Ahead in qualifying: 9 of 14“), „Races“ statt Fußball-Begriffen.
+- Referenz-Mockup: [ui_mockups/driver_profile_styles.html](ui_mockups/driver_profile_styles.html) (Layout 1).
+
 ### 15.5 Beispiel: Fahrerprofil auf einen Blick
 ✅ Vorbild ist das **Spielerprofil im Football Manager**: alle Attribute, Persönlichkeit, Vertrag, Form und Statistiken detailliert auf einem Bildschirm.
 ```
@@ -633,7 +646,7 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 | 13 | Sprint-Wochenenden | ✅ Nicht in v1 |
 | 14 | Teamchef-Avatar | ✅ Ja, mit Hintergrund und kleinen Boni |
 | 15 | Teamauswahl | ✅ Alle 11 Teams frei wählbar |
-| 16 | Spielsprache | ✅ Übersetzungssystem von Anfang an, Englisch zuerst, Deutsch später |
+| 16 | Spielsprache | ✅ Übersetzungssystem von Anfang an, **Englisch und Deutsch ab Start** (i18n/strings.csv, Umschaltung in der Seitenleiste) |
 | 17 | Spielwelt | ✅ Feste Startwelt + laufend generierte Nachwuchs-/vertragslose Personen |
 | 18 | Strecken | ✅ Erst nach v0, dann mit Strecken-Editor |
 | 19 | KI-Teams | ✅ Gleiche Regeln wie der Spieler |
@@ -645,6 +658,11 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 | 25 | Teamstimmung | ✅ Ein übersichtlicher Gesamtwert |
 | 26 | Geld | ✅ Realistische F1-Größenordnungen |
 | 27 | Plattform | ✅ Lokal auf Windows + macOS, kostenlos/Open Source |
+| 28 | UI-Stil | ✅ „Pit Wall“ (dunkel, Telemetrie-Look, Bernstein-Akzent) |
+| 29 | Profil-Layout | ✅ „Columns“ (FM-ähnlich, vier Spalten) |
+| 30 | Zeitsteuerung | ✅ Zwei Buttons: passiv „+1 Tag“ und aktiv „Weiter“ (bis zum nächsten wichtigen Ereignis) |
+| 31 | Simulation zuerst | ✅ Training, Quali, Rennen erst als reine Simulation; 2D-Rennen danach; am Ende pro Session „simulieren“ oder „zuschauen & mitentscheiden“ |
+| 32 | Gesichter | ✅ Prozedurale Porträts im Stil **„Flat“** mit vielen Merkmalen für alle Personen (R0). Helm-Designs vorerst **nicht** im UI – überall werden Gesichter verwendet. |
 
 ## 19. Offene Fragen ❓
 *(siehe Diskussion – wird nach Beantwortung ins Log übernommen)*

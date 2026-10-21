@@ -1,0 +1,473 @@
+<title>Driver Profile Style Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: chrome (layout switcher) on top, one full-width "Pit Wall" profile below.
+   Chrome follows the viewer theme; the profile itself is a fixed dark game UI. */
+:root {
+  --chrome-bg: #f3f4f6; --chrome-fg: #1b2230; --chrome-muted: #5d6676; --chrome-line: #d6dae1;
+  --chrome-btn: #ffffff; --chrome-active: #1b2230; --chrome-active-fg: #ffffff;
+  --team: #e8471c;
+  /* Pit Wall tokens */
+  --bg: #0e1216; --panel: #141a20; --panel-2: #10151a; --text: #dfe5ea; --muted: #7f8b96; --faint: #56616c;
+  --line: #232c35; --line-strong: #34404b; --zebra: #171e25; --hover: #1d2731;
+  --amber: #f2a93b;
+  --lv1: #ef5b5b; --lv2: #e0a13a; --lv3: #8fc46a; --lv4: #4fd1a5;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-num: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36;
+    --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36;
+  --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--chrome-bg); color: var(--chrome-fg);
+  font-family: var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.lab { max-width: 1480px; margin: 0 auto; display: grid; gap: 14px; }
+.lab-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.lab-head h1 { margin: 0; font-size: 1.25rem; font-weight: 600; text-wrap: balance; }
+.lab-head p { margin: 4px 0 0; color: var(--chrome-muted); font-size: .875rem; max-width: 70ch; }
+.switch { display: flex; flex-wrap: wrap; gap: 6px; }
+.switch button {
+  font: inherit; font-size: .875rem; padding: 8px 14px; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--chrome-line); background: var(--chrome-btn); color: var(--chrome-fg);
+}
+.switch button[aria-pressed="true"] { background: var(--chrome-active); color: var(--chrome-active-fg); border-color: var(--chrome-active); }
+.switch button:focus-visible { outline: 2px solid var(--team); outline-offset: 2px; }
+.note { margin: 0; font-size: .875rem; color: var(--chrome-muted); max-width: 100ch; }
+.note b { color: var(--chrome-fg); }
+
+/* ---------- Profile base ---------- */
+.profile {
+  background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.4;
+  padding: 18px; display: grid; gap: 14px; min-width: 0; border-radius: 2px;
+}
+.row { display: grid; gap: 14px; min-width: 0; }
+.stack { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 2px;
+  padding-bottom: 12px; min-width: 0; display: flex; flex-direction: column;
+}
+.card > h3 {
+  margin: 0 0 6px; padding: 10px 16px 9px; border-bottom: 1px solid var(--line);
+  font-family: var(--f-display); font-weight: 700; font-size: .875rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--amber);
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+}
+.card > h3 small { font-family: var(--f-body); font-weight: 400; font-size: .75rem; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.sub {
+  margin: 12px 16px 4px; font-family: var(--f-display); font-size: .75rem; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+}
+.good { color: var(--lv4); } .ok { color: var(--lv3); } .warn { color: var(--lv2); } .bad { color: var(--lv1); }
+[data-tip] { cursor: help; }
+
+/* Identity */
+.ident { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; align-items: center; padding: 14px 18px; border-left: 4px solid var(--team); }
+.ident .num { font-family: var(--f-display); font-weight: 700; font-size: 3rem; line-height: 1; color: var(--team); grid-row: span 2; }
+.ident .first { font-family: var(--f-display); font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.ident .last { font-family: var(--f-display); font-size: 2.1rem; font-weight: 700; line-height: 1; text-transform: uppercase; letter-spacing: .02em; }
+.ident .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: .8125rem; margin-top: 6px; }
+.ident .meta b { color: var(--text); font-weight: 600; }
+.ident.vertical { grid-template-columns: 1fr; border-left: none; border-top: 4px solid var(--team); }
+.ident.vertical .num { grid-row: auto; font-size: 3.4rem; }
+.ident.vertical .meta { flex-direction: column; gap: 4px; }
+
+.ratings { display: grid; gap: 8px; padding: 6px 16px; }
+.rating { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rating span:first-child { font-size: .8125rem; color: var(--muted); }
+.stars { color: var(--amber); letter-spacing: 2px; font-size: 1.1rem; white-space: nowrap; }
+.stars .off { color: var(--line-strong); }
+
+/* Attributes */
+.attr { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 4px 16px; }
+.attr:nth-child(even of .attr) { background: var(--zebra); }
+.attr:hover, .attr:focus-visible { background: var(--hover); outline: none; }
+.attr .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attr .trend { font-size: .7rem; margin-left: 6px; }
+.val {
+  font-family: var(--f-num); font-variant-numeric: tabular-nums; font-weight: 600; font-size: .95rem;
+  min-width: 2.6em; text-align: center; padding: 1px 0; border: 1px solid var(--line-strong); background: var(--panel-2);
+}
+.v1 { color: var(--lv1); } .v2 { color: var(--lv2); } .v3 { color: var(--lv3); } .v4 { color: var(--lv4); }
+
+/* Status: list with meters */
+.status { display: grid; gap: 2px; padding: 2px 0; }
+.st { display: grid; grid-template-columns: 7.5em 1fr 6.5em; align-items: center; gap: 12px; padding: 6px 16px; }
+.st:hover, .st:focus-visible { background: var(--hover); outline: none; }
+.st .k { color: var(--muted); }
+.st .v { text-align: right; font-weight: 600; white-space: nowrap; }
+.meter { height: 6px; background: var(--line); position: relative; }
+.meter > div { position: absolute; inset: 0 auto 0 0; }
+.meter.none { background: transparent; }
+
+/* Status: tiles */
+.tiles { display: grid; grid-template-columns: repeat(6, 1fr); }
+.tile { padding: 12px 16px; border-right: 1px solid var(--line); display: grid; gap: 6px; }
+.tile:last-child { border-right: none; }
+.tile:hover, .tile:focus-visible { background: var(--hover); outline: none; }
+.tile .k { font-family: var(--f-display); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.tile .v { font-size: 1.15rem; font-weight: 600; }
+.tile .meter { height: 4px; }
+
+/* Facts (contract / season) */
+.facts { display: grid; gap: 0; }
+.fact { display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 6px 16px; align-items: baseline; }
+.fact:nth-child(even) { background: var(--zebra); }
+.fact .k { color: var(--muted); }
+.fact .v { font-weight: 600; text-align: right; }
+.fact .v small { display: block; font-weight: 400; color: var(--muted); font-size: .75rem; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+.bigstats { display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 8px 2px; }
+.big { text-align: center; padding: 6px 4px; }
+.big b { display: block; font-family: var(--f-display); font-size: 1.9rem; font-weight: 700; line-height: 1.05; }
+.big span { font-size: .75rem; color: var(--muted); }
+.big.hero b { color: var(--amber); }
+
+/* Bars (experience, track knowledge) */
+.bar-label { display: flex; justify-content: space-between; gap: 12px; margin: 4px 16px 0; font-size: .8125rem; color: var(--muted); }
+.bar-label b { color: var(--text); font-weight: 600; }
+.bar { margin: 6px 16px 2px; height: 6px; background: var(--line); }
+.bar > div { height: 100%; background: var(--amber); }
+
+/* Traits */
+.traits { display: grid; gap: 6px; padding: 4px 16px; }
+.trait { display: grid; grid-template-columns: 2rem 1fr; gap: 12px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); background: var(--panel-2); }
+.trait .ico { width: 2rem; height: 2rem; display: grid; place-items: center; font-size: 1.05rem; border: 1px solid; }
+.trait.pos .ico { border-color: color-mix(in srgb, var(--lv4) 55%, transparent); background: color-mix(in srgb, var(--lv4) 12%, transparent); }
+.trait.neg .ico { border-color: color-mix(in srgb, var(--lv1) 55%, transparent); background: color-mix(in srgb, var(--lv1) 12%, transparent); }
+.trait b { display: block; font-weight: 600; }
+.trait.pos b { color: var(--lv4); } .trait.neg b { color: var(--lv1); }
+.trait small { color: var(--muted); font-size: .8125rem; }
+
+/* Races */
+.races { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 6px 16px 2px; }
+.race { text-align: center; padding: 8px 2px 6px; background: var(--panel-2); border: 1px solid var(--line); }
+.race b { display: block; font-family: var(--f-display); font-size: 1.3rem; font-weight: 700; }
+.race small { color: var(--muted); font-size: .6875rem; letter-spacing: .08em; }
+.race.win b { color: var(--lv4); } .race.pod b { color: var(--amber); } .race.dnf b { color: var(--lv1); }
+
+/* Relationships, promises */
+.rel { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 6px 16px; align-items: center; }
+.rel:hover, .promise:hover { background: var(--hover); }
+.rel small, .promise small { display: block; color: var(--muted); font-size: .75rem; }
+.promise { padding: 6px 16px; }
+.spark { padding: 6px 16px 0; }
+.spark svg { width: 100%; height: 96px; display: block; overflow: visible; }
+.spark text { font-family: var(--f-num); font-size: 10px; fill: var(--muted); }
+
+/* ---------- Layout-specific grids ---------- */
+.L1 .r-top { grid-template-columns: 1.4fr 1fr; }
+.L1 .r-mid { grid-template-columns: repeat(4, 1fr); }
+.L1 .r-bot { grid-template-columns: 1fr 1.2fr 1fr 1fr; }
+
+.L2 { grid-template-columns: 330px 1fr; align-items: start; }
+.L2 .r-attrs { grid-template-columns: repeat(3, 1fr); }
+.L2 .r-two { grid-template-columns: 1fr 1fr 1fr; }
+
+.L3 .r-main { grid-template-columns: 1.15fr 1fr; align-items: start; }
+.L3 .r-attrs { grid-template-columns: 1fr 1fr; }
+.L3 .r-side { grid-template-columns: 1fr 1fr; align-items: start; }
+
+.L4 .r-band { grid-template-columns: 1fr 1.1fr 1.2fr; }
+.L4 .r-attrs { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.L4 .r-bot { grid-template-columns: 1fr 1.2fr 1fr 1fr; }
+
+@media (max-width: 1150px) {
+  .L1 .r-mid, .L1 .r-bot, .L4 .r-attrs, .L4 .r-bot, .L2 .r-two, .L2 .r-attrs { grid-template-columns: 1fr 1fr; }
+  .L2 { grid-template-columns: 1fr; }
+  .L3 .r-main, .L4 .r-band { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: repeat(3, 1fr); }
+  .tile:nth-child(3) { border-right: none; }
+  .tile:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 680px) {
+  .profile .row { grid-template-columns: 1fr !important; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .tile { border-right: none; border-bottom: 1px solid var(--line); }
+  .st { grid-template-columns: 6.5em 1fr 5.5em; }
+  .profile { padding: 10px; }
+}
+
+/* Tooltip */
+.tip {
+  position: fixed; z-index: 50; pointer-events: none; max-width: 320px;
+  background: #0a0d10; color: var(--text); border: 1px solid var(--amber);
+  padding: 10px 12px; font-size: .8125rem; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.tip h4 { margin: 0 0 6px; font-size: .8125rem; }
+.tip ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.tip li { display: flex; justify-content: space-between; gap: 18px; }
+.tip li span:last-child { font-family: var(--f-num); font-variant-numeric: tabular-nums; font-weight: 600; }
+.tip .pos { color: var(--lv4); } .tip .neg { color: var(--lv1); }
+.tip p { margin: 6px 0 0; color: var(--muted); font-size: .75rem; }
+</style>
+
+<div class="lab">
+  <div class="lab-head">
+    <div>
+      <h1>Driver profile: Pit Wall layouts</h1>
+      <p>Four layouts in the Pit Wall style with identical content. Hover any value for its breakdown. Every label is meant to be readable without guessing.</p>
+    </div>
+    <div class="switch" role="group" aria-label="Layout">
+      <button id="btn-1" data-layout="1" aria-pressed="true">1 · Columns</button>
+      <button id="btn-2" data-layout="2" aria-pressed="false">2 · Dossier</button>
+      <button id="btn-3" data-layout="3" aria-pressed="false">3 · Split</button>
+      <button id="btn-4" data-layout="4" aria-pressed="false">4 · Overview band</button>
+    </div>
+  </div>
+  <p class="note" id="note"></p>
+  <section class="profile" id="profile" aria-label="Driver profile"></section>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const NOTES = {
+  1: "<b>Columns.</b> Closest to Football Manager: identity on top, a clear status strip below it, then four equal columns. Attributes, traits and contract all at the same height.",
+  2: "<b>Dossier.</b> A fixed sidebar holds who the driver is and his situation (status, contract). The main area is reserved for performance: attributes, season, form.",
+  3: "<b>Split.</b> Left half is the driver's ability (all attributes and traits), right half is his current situation (status, season, contract, relationships). Two questions, two halves.",
+  4: "<b>Overview band.</b> A top band answers the three key questions at once: who is he, how is he doing, how is his season going. Attributes and details follow below."
+};
+
+// ---------- Example data (fictional) ----------
+const D = {
+  num: 7, first: "Marco", last: "Hale", nat: "Italy", age: 28, born: "14 Mar 1998",
+  team: "Vortex Racing", role: "No.1 driver",
+  driving: [["Cornering", 16, "+"], ["Braking", 15], ["One-lap pace", 17], ["Consistency", 14], ["Tyre management", 12, "+"], ["Fuel management", 13], ["Overtaking", 15], ["Defending", 13], ["Starts", 14], ["Wet driving", 18], ["Racecraft", 15]],
+  mental: [["Composure", 15], ["Focus", 14], ["Aggression", 11], ["Adaptability", 13], ["Technical feedback", 13], ["Work ethic", 16], ["Professionalism", 14], ["Ambition", 18], ["Loyalty", 9], ["Temperament", 7, "-"]],
+  physical: [["Fitness", 17], ["Reactions", 16, "-"]],
+  status: [
+    { key: "morale", k: "Morale", v: "High", val: 78, cls: "good" },
+    { key: "form", k: "Form", v: "▲ Rising", val: 70, cls: "good" },
+    { key: "confidence", k: "Confidence", v: "High", val: 80, cls: "good" },
+    { key: "fitness", k: "Fitness", v: "94 %", val: 94, cls: "ok" },
+    { key: "injury", k: "Injury", v: "None", val: null, cls: "good" },
+    { key: "training", k: "Training", v: "Tyres", val: null, cls: "" }
+  ],
+  traits: [
+    { key: "Rain master", ico: "🌧️", pos: true, d: "Faster and makes fewer mistakes in the wet" },
+    { key: "Quali specialist", ico: "⏱️", pos: true, d: "Extra speed over a single qualifying lap" },
+    { key: "Hot-headed", ico: "🔥", pos: false, d: "More collisions, reacts badly to team orders" }
+  ]
+};
+
+const TIPS = {
+  "Wet driving": { h: "Wet driving 18 (internal 91)", rows: [["Base skill", "16"], ["Trait: Rain master", "+2", "pos"]], p: "In wet races about 0.4 s per lap faster than a driver rated 12." },
+  "Cornering": { h: "Cornering 16 (internal 82)", rows: [["Last season", "15"], ["Training", "+1", "pos"]], p: "Main factor for lap time in medium and slow corners." },
+  "Temperament": { h: "Temperament 7 (internal 33)", rows: [["Last season", "8"], ["Tension with teammate", "-1", "neg"]], p: "Low temperament means more clashes and angry reactions to team orders." },
+  "Tyre management": { h: "Tyre management 12 (internal 61)", rows: [["Last season", "11"], ["Training focus", "+1", "pos"]], p: "Current training focus. Next +1 expected in about 3 months." },
+  "Reactions": { h: "Reactions 16 (internal 80)", rows: [["Peak at age 25", "17"], ["Age decline", "-1", "neg"]], p: "Physical attributes decline first with age." },
+  morale: { h: "Morale: High (78 / 100)", rows: [["Results above expectations", "+12", "pos"], ["No.1 status (promise kept)", "+8", "pos"], ["Contract security", "+5", "pos"], ["Tension with teammate", "-6", "neg"], ["Car not competitive", "-4", "neg"]], p: "Morale changes race pace by up to ±1.5 %." },
+  form: { h: "Form: Rising", rows: [["Last 5 races vs. car level", "better", "pos"], ["Ahead of teammate", "4 of 5", "pos"]], p: "Short-term trend from the last 3 to 5 race weekends." },
+  confidence: { h: "Confidence: High (80 / 100)", rows: [["Win at Kessling", "+10", "pos"], ["Crash at Sorrento", "-6", "neg"]], p: "Rises with wins and beating the teammate, drops after crashes." },
+  fitness: { h: "Fitness 94 %", rows: [["Fitness attribute", "17"], ["Back-to-back races", "-4 %", "neg"], ["Performance centre level 3", "+2 %", "pos"]], p: "Below 85 % the driver loses pace late in races." },
+  injury: { h: "No injury", rows: [["Injury risk", "Low"]], p: "Risk depends on crash severity and fitness." },
+  training: { h: "Training focus: Tyre management", rows: [["Training quality", "Good", "pos"], ["Work ethic 16", "+", "pos"]], p: "Set by you. How much he improves depends on the driver himself." },
+  ability: { h: "Current ability ★★★★", rows: [["Driving attributes", "15.1"], ["Mental attributes", "13.9"], ["Experience", "+0.3", "pos"]], p: "Known exactly: he has driven for you for 3 race weekends." },
+  potential: { h: "Potential ★★★★½", rows: [["Scout estimate", "★★★★ – ★★★★★"], ["Age 28, close to peak", "little growth left"]], p: "Potential stays hidden and is only shown as an estimate." },
+  "Rain master": { h: "Rain master", rows: [["Wet driving", "+2", "pos"], ["Mistakes in the wet", "-30 %", "pos"]] },
+  "Quali specialist": { h: "Quali specialist", rows: [["Pace in qualifying", "+1.5 %", "pos"]] },
+  "Hot-headed": { h: "Hot-headed", rows: [["Collision risk", "+25 %", "neg"], ["Morale loss after team orders", "x2", "neg"]] },
+  avgfinish: { h: "Average finishing position: P4.8", rows: [["Races finished", "12"], ["Best", "P1"], ["Worst", "P9"]], p: "The average position he crossed the line in. Retirements are not counted." },
+  ppr: { h: "Points per race: 9.7", rows: [["Points", "126"], ["Races", "13"]] },
+  brandt: { h: "Jonas Brandt (teammate): Tense", rows: [["Ahead in qualifying 9 of 14", "+", "pos"], ["Team order at Valdera", "-15", "neg"], ["Comments in the media", "-5", "neg"]], p: "Tension lowers both drivers' morale and makes team orders riskier." },
+  lund: { h: "Sofia Lund (race engineer): Excellent", rows: [["Years together", "3"], ["Chemistry", "92 / 100", "pos"]], p: "Better setup (about 0.1 s per lap) and fewer strategy misunderstandings." },
+  you: { h: "You (team principal): Good", rows: [["Promises kept", "1 of 1", "pos"], ["Open promises", "1"]] },
+  p1: { h: "Promise: No.1 status", rows: [["Made", "Jan 2026"], ["Status", "Kept", "pos"]] },
+  p2: { h: "Promise: competitive car by mid-season", rows: [["Deadline", "Round 12"], ["Gap to the fastest car", "0.6 s"], ["If broken", "Morale -15", "neg"]] },
+  r1: { h: "Round 9, Valdera GP: P3", rows: [["Started", "P4"], ["Positions gained", "+1", "pos"]] },
+  r2: { h: "Round 10, Kessling GP: P1", rows: [["Started", "P2"], ["Wet race", "Rain master active", "pos"]] },
+  r3: { h: "Round 11, Sorrento GP: retired", rows: [["Started", "P3"], ["Reason", "Crash on lap 31", "neg"]] },
+  r4: { h: "Round 12, Harrow Park: P5", rows: [["Started", "P7"], ["Positions gained", "+2", "pos"]] },
+  r5: { h: "Round 13, Oakmere GP: P2", rows: [["Started", "P1 (pole)"], ["Positions lost", "-1", "neg"]] },
+  salary: { h: "Salary $4.2M per year", rows: [["Base salary", "$4.2M"], ["Bonuses paid this season", "$0.9M"]], p: "Sixth highest salary of all drivers." },
+  release: { h: "Release clause $12.0M", rows: [["Any team can pay this", "to sign him"]], p: "If paid, he may talk to the other team and leave." }
+};
+
+// ---------- Components ----------
+const lv = v => v <= 5 ? "v1" : v <= 10 ? "v2" : v <= 15 ? "v3" : "v4";
+const meterColor = v => v >= 75 ? "var(--lv4)" : v >= 50 ? "var(--lv3)" : v >= 30 ? "var(--lv2)" : "var(--lv1)";
+function stars(n) {
+  let s = "";
+  for (let i = 1; i <= 5; i++) s += i <= n ? "★" : (i - .5 === n ? "⯪" : '<span class="off">★</span>');
+  return s;
+}
+const attrs = list => list.map(([name, v, t]) => {
+  const trend = t ? `<span class="trend ${t === "+" ? "good" : "bad"}">${t === "+" ? "▲" : "▼"}</span>` : "";
+  return `<div class="attr" tabindex="0" data-attr="${name}" data-v="${v}"${TIPS[name] ? ` data-tip="${name}"` : ""}><span class="label">${name}${trend}</span><span class="val ${lv(v)}">${v}</span></div>`;
+}).join("");
+const card = (title, body, small = "") => `<div class="card"><h3>${title}${small ? `<small>${small}</small>` : ""}</h3>${body}</div>`;
+
+const C = {
+  ident: (vertical = false) => `<div class="card ident ${vertical ? "vertical" : ""}">
+      <div class="num">${D.num}</div>
+      <div><div class="first">${D.first}</div><div class="last">${D.last}</div></div>
+      <div class="meta"><span>Nationality <b>${D.nat}</b></span><span>Age <b>${D.age}</b> (born ${D.born})</span><span>Team <b>${D.team}</b></span><span>Role <b>${D.role}</b></span><span>Super licence <b>Valid</b></span></div>
+    </div>`,
+  ratings: () => card("Rating", `<div class="ratings">
+      <div class="rating" data-tip="ability"><span>Current ability</span><span class="stars">${stars(4)}</span></div>
+      <div class="rating" data-tip="potential"><span>Potential (estimate)</span><span class="stars">${stars(4.5)}</span></div></div>`),
+  statusList: () => card("Status", `<div class="status">${D.status.map(s => `
+      <div class="st" tabindex="0" data-tip="${s.key}"><span class="k">${s.k}</span>
+      <div class="meter ${s.val === null ? "none" : ""}">${s.val === null ? "" : `<div style="width:${s.val}%;background:${meterColor(s.val)}"></div>`}</div>
+      <span class="v ${s.cls}">${s.v}</span></div>`).join("")}</div>`),
+  statusTiles: () => `<div class="card" style="padding:0"><div class="tiles">${D.status.map(s => `
+      <div class="tile" tabindex="0" data-tip="${s.key}"><span class="k">${s.k}</span><span class="v ${s.cls}">${s.v}</span>
+      ${s.val === null ? "" : `<div class="meter"><div style="width:${s.val}%;background:${meterColor(s.val)}"></div></div>`}</div>`).join("")}</div></div>`,
+  driving: () => card("Driving", attrs(D.driving), "11 attributes · scale 1–20"),
+  mental: () => card("Mental", attrs(D.mental), "10 attributes"),
+  physical: () => card("Physical & experience", `${attrs(D.physical)}
+      <div class="sub">Experience</div>
+      <div class="bar-label"><span>112 races in 7 seasons</span><b>Veteran</b></div><div class="bar"><div style="width:72%"></div></div>
+      <div class="sub">Knowledge of next track</div>
+      <div class="bar-label"><span>Monteverde · 4 visits, 6 h simulator</span><b>81 %</b></div><div class="bar"><div style="width:81%"></div></div>`),
+  traits: () => card("Traits", `<div class="traits">${D.traits.map(t => `
+      <div class="trait ${t.pos ? "pos" : "neg"}" data-tip="${t.key}"><span class="ico" aria-hidden="true">${t.ico}</span><div><b>${t.key}</b><small>${t.d}</small></div></div>`).join("")}</div>`, "3 known"),
+  contract: () => card("Contract", `<div class="facts">
+      <div class="fact" data-tip="salary"><span class="k">Salary</span><span class="v num">$4.2M per year</span></div>
+      <div class="fact"><span class="k">Contract ends</span><span class="v">End of 2028<small>2 more seasons after this one</small></span></div>
+      <div class="fact"><span class="k">Role</span><span class="v">No.1 driver</span></div>
+      <div class="fact"><span class="k">Bonus per win</span><span class="v num">$250,000</span></div>
+      <div class="fact"><span class="k">Bonus per podium</span><span class="v num">$80,000</span></div>
+      <div class="fact" data-tip="release"><span class="k">Release clause</span><span class="v num">$12.0M</span></div>
+      <div class="fact"><span class="k">Extension option</span><span class="v">2029, team decides</span></div>
+      <div class="fact"><span class="k">Agent</span><span class="v">Paolo Ricci<small>Hard negotiator</small></span></div></div>`),
+  season: () => card("Season 2026", `<div class="bigstats">
+      <div class="big hero"><b>P4</b><span>Championship</span></div>
+      <div class="big"><b class="num">126</b><span>Points</span></div>
+      <div class="big"><b>2</b><span>Wins</span></div>
+      <div class="big"><b>5</b><span>Podiums</span></div></div>
+      <div class="facts">
+      <div class="fact"><span class="k">Races driven</span><span class="v num">13 of 24</span></div>
+      <div class="fact"><span class="k">Pole positions</span><span class="v num">1</span></div>
+      <div class="fact" data-tip="avgfinish"><span class="k">Average finishing position</span><span class="v num">P4.8</span></div>
+      <div class="fact" data-tip="ppr"><span class="k">Points per race</span><span class="v num">9.7</span></div>
+      <div class="fact"><span class="k">Retirements</span><span class="v num">1</span></div>
+      <div class="fact"><span class="k">Gap to championship leader</span><span class="v num">−58 pts</span></div></div>`, "after round 13"),
+  races: () => card("Last 5 races", `<div class="races">
+      <div class="race pod" data-tip="r1"><b>P3</b><small>VALDERA</small></div>
+      <div class="race win" data-tip="r2"><b>P1</b><small>KESSLING</small></div>
+      <div class="race dnf" data-tip="r3"><b>OUT</b><small>SORRENTO</small></div>
+      <div class="race" data-tip="r4"><b>P5</b><small>HARROW</small></div>
+      <div class="race pod" data-tip="r5"><b>P2</b><small>OAKMERE</small></div></div>
+      <div class="sub">Against teammate Brandt</div>
+      <div class="facts">
+      <div class="fact"><span class="k">Ahead in qualifying</span><span class="v num">9 of 14</span></div>
+      <div class="fact"><span class="k">Ahead in the race</span><span class="v num">8 of 14</span></div></div>`),
+  relations: () => card("Relationships", `
+      <div class="rel" data-tip="brandt"><div>Jonas Brandt<small>Teammate</small></div><span class="bad">▼ Tense</span></div>
+      <div class="rel" data-tip="lund"><div>Sofia Lund<small>Race engineer</small></div><span class="good">▲ Excellent</span></div>
+      <div class="rel" data-tip="you"><div>You<small>Team principal</small></div><span class="ok">● Good</span></div>`),
+  promises: () => card("Promises", `
+      <div class="promise" data-tip="p1"><span class="good">✔ No.1 status</span><small>Kept since January</small></div>
+      <div class="promise" data-tip="p2"><span class="warn">◷ Competitive car by mid-season</span><small>Open · deadline round 12</small></div>`),
+  trend: () => card("Ability over time", `<div class="spark">${sparkline()}</div>`, "2021–2026")
+};
+
+function sparkline() {
+  const vals = [11.2, 12.5, 13.6, 14.4, 15.0, 15.2], years = [2021, 2022, 2023, 2024, 2025, 2026];
+  const w = 300, h = 76, min = 10, max = 16, pad = 6;
+  const x = i => pad + i * (w - 2 * pad) / (vals.length - 1);
+  const y = v => h - (v - min) / (max - min) * (h - 8);
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const grid = [12, 14, 16].map(g => `<line x1="${pad}" x2="${w - pad}" y1="${y(g)}" y2="${y(g)}" stroke="var(--line)" stroke-width="1"/><text x="${w + 2}" y="${y(g) + 3}">${g}</text>`).join("");
+  const labels = years.map((yr, i) => `<text x="${x(i)}" y="${h + 14}" text-anchor="middle">${yr}</text>`).join("");
+  const l = vals.length - 1;
+  return `<svg viewBox="0 0 ${w + 18} ${h + 18}" role="img" aria-label="Current ability rose from 11.2 in 2021 to 15.2 in 2026">
+    ${grid}<polygon points="${x(0)},${h} ${pts} ${x(l)},${h}" fill="var(--amber)" fill-opacity=".12"/>
+    <polyline points="${pts}" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${x(l)}" cy="${y(vals[l])}" r="3.5" fill="var(--amber)"/>${labels}</svg>`;
+}
+
+// ---------- Layouts ----------
+const LAYOUTS = {
+  1: () => `
+    <div class="row r-top">${C.ident()}${C.ratings()}</div>
+    ${C.statusTiles()}
+    <div class="row r-mid">${C.driving()}${C.mental()}<div class="stack">${C.physical()}${C.traits()}</div>${C.contract()}</div>
+    <div class="row r-bot">${C.season()}${C.races()}<div class="stack">${C.relations()}${C.promises()}</div>${C.trend()}</div>`,
+  2: () => `
+    <div class="stack">${C.ident(true)}${C.ratings()}${C.statusList()}${C.contract()}</div>
+    <div class="stack">
+      <div class="row r-attrs">${C.driving()}${C.mental()}<div class="stack">${C.physical()}${C.traits()}</div></div>
+      <div class="row r-two">${C.season()}${C.races()}<div class="stack">${C.relations()}${C.promises()}</div></div>
+      ${C.trend()}
+    </div>`,
+  3: () => `
+    <div class="row r-top" style="grid-template-columns:1.6fr 1fr">${C.ident()}${C.ratings()}</div>
+    <div class="row r-main">
+      <div class="stack">
+        <div class="row r-attrs">${C.driving()}${C.mental()}</div>
+        <div class="row r-attrs">${C.physical()}${C.traits()}</div>
+        ${C.trend()}
+      </div>
+      <div class="stack">
+        <div class="row r-side">${C.statusList()}${C.season()}</div>
+        <div class="row r-side">${C.contract()}<div class="stack">${C.races()}</div></div>
+        <div class="row r-side">${C.relations()}${C.promises()}</div>
+      </div>
+    </div>`,
+  4: () => `
+    <div class="row r-band"><div class="stack">${C.ident()}${C.ratings()}</div>${C.statusList()}${C.season()}</div>
+    <div class="row r-attrs">${C.driving()}${C.mental()}${C.physical()}${C.traits()}</div>
+    <div class="row r-bot">${C.contract()}${C.races()}${C.relations()}${C.promises()}</div>`
+};
+
+const profile = document.getElementById("profile");
+const note = document.getElementById("note");
+function setLayout(n) {
+  profile.className = "profile L" + n;
+  profile.innerHTML = LAYOUTS[n]();
+  note.innerHTML = NOTES[n];
+  document.querySelectorAll(".switch button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.layout === String(n))));
+  try { localStorage.setItem("profile-layout", n); } catch (e) {}
+}
+document.querySelectorAll(".switch button").forEach(b => b.addEventListener("click", () => setLayout(b.dataset.layout)));
+
+// ---------- Tooltips ----------
+const tip = document.getElementById("tip");
+function genericTip(el) {
+  const v = Number(el.dataset.v);
+  const band = v <= 5 ? "Weak" : v <= 10 ? "Average" : v <= 15 ? "Good" : "Elite";
+  return { h: `${el.dataset.attr} ${v} · ${band}`, rows: [["Internal value", String(v * 5 - 2)], ["Change this season", "±0"]] };
+}
+function showTip(el, x, y) {
+  const t = el.dataset.tip ? TIPS[el.dataset.tip] : (el.dataset.attr ? genericTip(el) : null);
+  if (!t) return;
+  tip.innerHTML = `<h4>${t.h}</h4><ul>${t.rows.map(r => `<li><span>${r[0]}</span><span class="${r[2] || ""}">${r[1]}</span></li>`).join("")}</ul>${t.p ? `<p>${t.p}</p>` : ""}`;
+  tip.hidden = false;
+  const r = tip.getBoundingClientRect();
+  tip.style.left = Math.max(8, Math.min(x + 14, innerWidth - r.width - 8)) + "px";
+  tip.style.top = Math.max(8, y + 16 + r.height > innerHeight ? y - r.height - 10 : y + 16) + "px";
+}
+profile.addEventListener("mousemove", e => {
+  const el = e.target.closest("[data-tip], [data-attr]");
+  if (el) showTip(el, e.clientX, e.clientY); else tip.hidden = true;
+});
+profile.addEventListener("mouseleave", () => tip.hidden = true);
+profile.addEventListener("focusin", e => {
+  const el = e.target.closest("[data-tip], [data-attr]");
+  if (el) { const r = el.getBoundingClientRect(); showTip(el, r.left, r.bottom - 10); }
+});
+profile.addEventListener("focusout", () => tip.hidden = true);
+
+let start = "1";
+try { start = localStorage.getItem("profile-layout") || "1"; } catch (e) {}
+setLayout(LAYOUTS[start] ? start : "1");
+</script>

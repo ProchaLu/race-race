@@ -14,4 +14,6 @@ extends Resource
 @export var points_table: Array[int] = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
 ## Track IDs in calendar order.
 @export var calendar: Array[StringName] = []
+## Day of the season on which each round is raced (same order as calendar).
+@export var race_days: Array[int] = []
 @export var team_ids: Array[StringName] = []

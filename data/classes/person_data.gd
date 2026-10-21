@@ -3,11 +3,14 @@
 class_name PersonData
 extends Resource
 
+enum Gender { MALE, FEMALE }
+
 @export var id: StringName
 @export var first_name: String
 @export var last_name: String
 @export var nationality: String  # ISO country code, e.g. "DE"
 @export var birth_year: int = 2000
+@export var gender: Gender = Gender.MALE
 
 ## 0..100, affects performance and contract negotiations.
 @export_range(0, 100) var morale: int = 50

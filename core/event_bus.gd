@@ -18,6 +18,11 @@ signal hq_requested()
 # Race weekend
 signal race_weekend_started(track_id: StringName)
 signal race_finished(track_id: StringName, results: Array)
+signal round_completed(round_index: int)
+
+# Inbox
+signal inbox_message_added(message: InboxMessage)
+signal inbox_changed()
 
 # Management
 signal budget_changed(team_id: StringName, new_budget: int)

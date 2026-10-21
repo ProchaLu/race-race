@@ -20,3 +20,9 @@ enum Role {
 ## Secondary traits, interpreted per role (e.g. scout accuracy, pit stop speed).
 @export_range(0, 100) var specialty: int = 50
 @export_range(0, 100) var leadership: int = 50
+## For race engineers: the driver they work with.
+@export var assigned_driver_id: StringName
+
+
+static func role_name(r: Role) -> String:
+	return Role.keys()[r].capitalize()

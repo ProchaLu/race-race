@@ -15,80 +15,81 @@ script = ExtResource("1_race")
 [node name="Background" type="ColorRect" parent="."]
 offset_left = -1000.0
 offset_top = -1000.0
-offset_right = 3000.0
-offset_bottom = 2000.0
+offset_right = 4000.0
+offset_bottom = 3000.0
 mouse_filter = 2
 color = Color(0.13, 0.2, 0.13, 1)
 
 [node name="TrackLayer" type="Node2D" parent="."]
-position = Vector2(20, 60)
+position = Vector2(30, 90)
+scale = Vector2(1.55, 1.55)
 
 [node name="Path2D" type="Path2D" parent="TrackLayer"]
 
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="Header" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 14.0
-offset_right = 560.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 18
+offset_left = 30.0
+offset_top = 20.0
+offset_right = 900.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 24
 text = "Race"
 
 [node name="SpeedBar" type="HBoxContainer" parent="UI"]
-offset_left = 560.0
-offset_top = 10.0
-offset_right = 1140.0
-offset_bottom = 41.0
+offset_left = 1000.0
+offset_top = 16.0
+offset_right = 1890.0
+offset_bottom = 56.0
 alignment = 2
 
 [node name="Tower" type="RichTextLabel" parent="UI"]
-offset_left = 840.0
-offset_top = 56.0
-offset_right = 1144.0
-offset_bottom = 330.0
+offset_left = 1370.0
+offset_top = 76.0
+offset_right = 1900.0
+offset_bottom = 610.0
 mouse_filter = 2
 theme_override_fonts/normal_font = SubResource("SystemFont_mono")
 theme_override_fonts/bold_font = SubResource("SystemFont_mono_bold")
-theme_override_font_sizes/normal_font_size = 13
-theme_override_font_sizes/bold_font_size = 13
+theme_override_font_sizes/normal_font_size = 17
+theme_override_font_sizes/bold_font_size = 17
 bbcode_enabled = true
 scroll_active = false
 
 [node name="Log" type="RichTextLabel" parent="UI"]
-offset_left = 840.0
-offset_top = 340.0
-offset_right = 1144.0
-offset_bottom = 640.0
+offset_left = 1370.0
+offset_top = 630.0
+offset_right = 1900.0
+offset_bottom = 1060.0
 mouse_filter = 2
-theme_override_font_sizes/normal_font_size = 12
-theme_override_font_sizes/bold_font_size = 12
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
 bbcode_enabled = true
 scroll_active = false
 
 [node name="PlayerPanel" type="VBoxContainer" parent="UI"]
-offset_left = 20.0
-offset_top = 560.0
-offset_right = 830.0
-offset_bottom = 640.0
+offset_left = 30.0
+offset_top = 950.0
+offset_right = 1340.0
+offset_bottom = 1060.0
 
 [node name="Results" type="PanelContainer" parent="UI"]
 visible = false
-offset_left = 150.0
-offset_top = 110.0
-offset_right = 800.0
-offset_bottom = 500.0
+offset_left = 260.0
+offset_top = 140.0
+offset_right = 1160.0
+offset_bottom = 900.0
 
 [node name="VBox" type="VBoxContainer" parent="UI/Results"]
 layout_mode = 2
 
 [node name="Text" type="RichTextLabel" parent="UI/Results/VBox"]
-custom_minimum_size = Vector2(630, 330)
+custom_minimum_size = Vector2(880, 680)
 layout_mode = 2
 theme_override_fonts/normal_font = SubResource("SystemFont_mono")
 theme_override_fonts/bold_font = SubResource("SystemFont_mono_bold")
-theme_override_font_sizes/normal_font_size = 13
-theme_override_font_sizes/bold_font_size = 14
+theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/bold_font_size = 17
 bbcode_enabled = true
 
 [node name="BackButton" type="Button" parent="UI/Results/VBox"]

@@ -1,0 +1,425 @@
+<title>Portrait Style Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: chrome (style switcher) on top, then the fixed dark Pit Wall stage:
+   in-context profile header, driver grid, staff grid, ageing row, helmets. */
+:root {
+  --chrome-bg: #f3f4f6; --chrome-fg: #1b2230; --chrome-muted: #5d6676; --chrome-line: #d6dae1;
+  --chrome-btn: #ffffff; --chrome-active: #1b2230; --chrome-active-fg: #ffffff;
+  --bg: #0e1216; --panel: #141a20; --panel-2: #10151a; --text: #dfe5ea; --muted: #7f8b96;
+  --line: #232c35; --line-strong: #34404b; --amber: #f2a93b; --team: #e8471c;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36;
+    --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36;
+  --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--chrome-bg); color: var(--chrome-fg); font-family: var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.lab { max-width: 1400px; margin: 0 auto; display: grid; gap: 14px; }
+.lab-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.lab-head h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.lab-head p { margin: 4px 0 0; color: var(--chrome-muted); font-size: .875rem; max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.controls button {
+  font: inherit; font-size: .875rem; padding: 8px 14px; border-radius: 4px; cursor: pointer;
+  border: 1px solid var(--chrome-line); background: var(--chrome-btn); color: var(--chrome-fg);
+}
+.controls button[aria-pressed="true"] { background: var(--chrome-active); color: var(--chrome-active-fg); border-color: var(--chrome-active); }
+.controls button:focus-visible { outline: 2px solid var(--team); outline-offset: 2px; }
+.note { margin: 0; font-size: .875rem; color: var(--chrome-muted); max-width: 100ch; }
+.note b { color: var(--chrome-fg); }
+
+.stage { background: var(--bg); color: var(--text); padding: 18px; display: grid; gap: 14px; border-radius: 2px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; min-width: 0; }
+.card > h3 {
+  margin: 0; padding: 9px 16px 8px; border-bottom: 1px solid var(--line);
+  font-family: var(--f-display); font-weight: 700; font-size: .875rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--amber); display: flex; justify-content: space-between; gap: 10px;
+}
+.card > h3 small { font-family: var(--f-body); font-weight: 400; font-size: .75rem; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.card .body { padding: 14px 16px; }
+
+/* In-context identity card */
+.ident { display: grid; grid-template-columns: auto auto 1fr auto; gap: 18px; align-items: center; padding: 12px 18px; border-left: 5px solid var(--team); }
+.ident .portrait { width: 104px; height: 124px; border: 1px solid var(--line-strong); }
+.ident .num { font-family: var(--f-display); font-weight: 700; font-size: 3.4rem; line-height: 1; color: var(--team); }
+.ident .first { font-family: var(--f-display); font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.ident .last { font-family: var(--f-display); font-size: 2.4rem; font-weight: 700; line-height: 1; text-transform: uppercase; }
+.ident .meta { display: flex; flex-wrap: wrap; gap: 4px 20px; color: var(--muted); font-size: .8125rem; margin-top: 6px; }
+.ident .meta b { color: var(--text); font-weight: 600; }
+.ident .helmet { width: 150px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.person { display: grid; gap: 6px; }
+.person svg { width: 100%; height: auto; display: block; border: 1px solid var(--line); background: var(--panel-2); }
+.person b { font-weight: 600; font-size: .875rem; }
+.person span { color: var(--muted); font-size: .75rem; }
+.ageing { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.ageing .person { text-align: center; }
+.helmets { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.helmets .person svg { background: var(--panel-2); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+@media (max-width: 900px) {
+  .ident { grid-template-columns: auto 1fr; }
+  .ident .num, .ident .helmet { display: none; }
+  .ageing { grid-template-columns: repeat(3, 1fr); }
+  .pair { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="lab">
+  <div class="lab-head">
+    <div>
+      <h1>Portraits and helmets: three styles</h1>
+      <p>Every face is generated from the person's ID, nationality, gender and age, so it never changes and needs no image files. Switch styles at the top; "New faces" shows other random people.</p>
+    </div>
+    <div class="controls" role="group" aria-label="Portrait style">
+      <button id="s-flat" data-style="flat" aria-pressed="true">A · Flat</button>
+      <button id="s-line" data-style="line" aria-pressed="false">B · Line art</button>
+      <button id="s-illus" data-style="illus" aria-pressed="false">C · Illustrated</button>
+      <button id="reseed">New faces</button>
+    </div>
+  </div>
+  <p class="note" id="note"></p>
+  <section class="stage" id="stage" aria-label="Preview"></section>
+</div>
+
+<script>
+const NOTES = {
+  flat: "<b>A · Flat.</b> Solid shapes, no outlines, no shading. Calm and modern, sits quietly next to the data.",
+  line: "<b>B · Line art.</b> Amber outlines on dark, like a telemetry screen. The most Pit Wall-like, very stylised.",
+  illus: "<b>C · Illustrated.</b> Flat base plus soft shading, eye colour, lips and hair highlights. The most personality, closest to a game portrait."
+};
+
+// ---------- Random helpers ----------
+function hash(str) { let h = 2166136261; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const pick = (r, list) => list[Math.floor(r() * list.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function mix(c1, c2, t) {
+  const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+  const a = p(c1), b = p(c2);
+  return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, "0")).join("");
+}
+const darken = (c, t) => mix(c, "#000000", t);
+const lighten = (c, t) => mix(c, "#ffffff", t);
+
+// ---------- Heritage by nationality ----------
+const HERITAGE = {
+  SE: [["nordic", 1]], NO: [["nordic", 1]], FI: [["nordic", 1]], DK: [["nordic", 1]],
+  GB: [["west", .78], ["african", .14], ["south_asian", .08]], DE: [["west", .9], ["med", .1]],
+  NL: [["west", .9], ["african", .1]], BE: [["west", .85], ["african", .15]], CH: [["west", 1]], AT: [["west", 1]],
+  FR: [["west", .7], ["med", .15], ["african", .15]], US: [["west", .6], ["african", .2], ["latam", .12], ["east_asian", .08]],
+  CA: [["west", .8], ["east_asian", .1], ["south_asian", .1]], AU: [["west", .9], ["east_asian", .1]], NZ: [["west", 1]],
+  IT: [["med", 1]], ES: [["med", 1]], MC: [["med", 1]], BR: [["latam", .7], ["african", .3]], AR: [["latam", 1]], MX: [["latam", 1]],
+  JP: [["east_asian", 1]], CN: [["east_asian", 1]], IN: [["south_asian", 1]]
+};
+const SKIN = {
+  nordic: ["#f6d7c6", "#f0cab4", "#f3d0bb"], west: ["#f1c9ae", "#e8b896", "#f4d2b8", "#dfa888"],
+  med: ["#e3b08c", "#d9a47e", "#e8bb98"], latam: ["#c98d63", "#d39b72", "#b9794f", "#e0ae88"],
+  african: ["#8d5a3b", "#6f432a", "#a06a45", "#5a3622"], south_asian: ["#b07a52", "#a06b45", "#c08a60"],
+  east_asian: ["#f0c9a4", "#e8bd96", "#f3d1af"]
+};
+const HAIR = {
+  nordic: ["#d8b26a", "#b48a55", "#7a5535", "#a8532c"], west: ["#5a3d28", "#2e2119", "#c9a15e", "#8a6440", "#9c4a26"],
+  med: ["#2a1d16", "#1b1512", "#4a3324"], latam: ["#1b1512", "#2e2119", "#4a3324"], african: ["#161110", "#1f1714"],
+  south_asian: ["#141110", "#231a15"], east_asian: ["#141214", "#231b17"]
+};
+const EYES = {
+  nordic: ["#4a78a8", "#5b8a6a", "#6a8fb0"], west: ["#4a78a8", "#6b4a2f", "#5b8a6a"], med: ["#5a3a22", "#6b4a2f"],
+  latam: ["#4a2f1f", "#5a3a22"], african: ["#3a2418"], south_asian: ["#3a2418", "#4a2f1f"], east_asian: ["#2e1d14", "#3a2418"]
+};
+
+function heritageOf(r, nat) {
+  const options = HERITAGE[nat] || [["west", 1]];
+  let x = r(), acc = 0;
+  for (const [h, w] of options) { acc += w; if (x <= acc) return h; }
+  return options[0][0];
+}
+
+// ---------- Person -> stable portrait parameters ----------
+function params(person, seedOffset) {
+  const r = rng(hash(person.id + ":" + seedOffset));
+  const female = person.gender === "f";
+  const h = heritageOf(r, person.nat);
+  const p = {
+    female, age: person.age, heritage: h,
+    skin: pick(r, SKIN[h]), hairBase: pick(r, HAIR[h]), eye: pick(r, EYES[h]),
+    faceW: female ? 18.5 + r() * 2.5 : 20 + r() * 3.2, jaw: r(),
+    brow: 1.6 + r() * 1.4, mouthW: 7 + r() * 4, smile: r() * 1.4 - 0.3,
+    greyStart: 32 + r() * 18,
+    recedeStart: (!female && r() < 0.5) ? 28 + r() * 22 : 999,
+    beard: female ? "none" : pick(r, ["none", "none", "none", "stubble", "stubble", "full", "moustache"]),
+    glassesRoll: r(), wrinkleRoll: r()
+  };
+  const curlyChance = (h === "african" ? .7 : h === "latam" ? .25 : .08);
+  p.hairStyle = female ? pick(r, ["long", "bun", "bob", "ponytail"])
+    : (r() < curlyChance ? "curly" : pick(r, ["short", "side", "buzz", "quiff", "short"]));
+  // Age-dependent looks
+  const grey = clamp((p.age - p.greyStart) / 22, 0, .92);
+  p.hair = mix(p.hairBase, female ? "#c9c4c0" : "#bdbdbd", grey);
+  p.recede = clamp((p.age - p.recedeStart) / 26, 0, 1);
+  if (p.age < 18) p.beard = "none";
+  p.glasses = p.glassesRoll < (p.age > 45 ? .45 : .1);
+  return p;
+}
+
+// ---------- Portrait renderer ----------
+let clipId = 0;
+function portrait(person, style, team, seedOffset = 0) {
+  const p = params(person, seedOffset);
+  const L = style === "line", I = style === "illus";
+  const w = p.faceW, jw = w - 4 - p.jaw * 3.5, cx = 50;
+  const id = "c" + (clipId++);
+  const amber = "#f2a93b";
+  const skinFill = L ? "#141b22" : p.skin;
+  const skinDark = darken(p.skin, .18);
+  const hairFill = L ? amber : p.hair;
+  const strokeAttr = L ? `stroke="${amber}" stroke-width="1.1" stroke-linejoin="round"` : "";
+  const fillA = (c, a) => L ? `fill="${c}" fill-opacity="${a}"` : `fill="${c}"`;
+  const out = [];
+
+  // Background tinted with the team colour
+  out.push(`<rect width="100" height="120" fill="${L ? "#0f1418" : mix("#141a20", team, .16)}"/>`);
+  if (!L) out.push(`<circle cx="50" cy="58" r="44" fill="${mix("#141a20", team, .28)}"/>`);
+
+  // Long hair behind the head
+  const back = {
+    long: `M${cx - w - 4},50 C${cx - w - 7},24 ${cx + w + 7},24 ${cx + w + 4},50 L${cx + w + 6},98 C${cx + 8},104 ${cx - 8},104 ${cx - w - 6},98Z`,
+    bob: `M${cx - w - 4},50 C${cx - w - 7},24 ${cx + w + 7},24 ${cx + w + 4},50 L${cx + w + 5},78 C${cx + 8},82 ${cx - 8},82 ${cx - w - 5},78Z`,
+    ponytail: `M${cx + w - 2},40 C${cx + w + 12},44 ${cx + w + 10},76 ${cx + w + 2},90 C${cx + w - 2},74 ${cx + w + 2},56 ${cx + w - 6},48Z`
+  }[p.hairStyle];
+  if (back) out.push(`<path d="${back}" ${fillA(hairFill, .22)} ${strokeAttr}/>`);
+
+  // Shoulders: race suit in team colour with a collar
+  out.push(`<path d="M6,120 C8,104 22,95 38,93 L62,93 C78,95 92,104 94,120Z" ${fillA(team, .3)} ${L ? `stroke="${team}" stroke-width="1.2"` : ""}/>`);
+  if (!L) {
+    out.push(`<path d="M38,93 L62,93 L66,99 C60,102 40,102 34,99Z" fill="${darken(team, .35)}"/>`);
+    out.push(`<path d="M20,112 L80,112" stroke="${lighten(team, .35)}" stroke-width="2" opacity=".55"/>`);
+  }
+
+  // Neck and ears
+  const nw = p.female ? 6 : 7.5;
+  out.push(`<path d="M${cx - nw},70 L${cx - nw},95 L${cx + nw},95 L${cx + nw},70Z" fill="${L ? skinFill : skinDark}" ${strokeAttr}/>`);
+  for (const s of [-1, 1]) out.push(`<ellipse cx="${cx + s * (w - .5)}" cy="58" rx="3.6" ry="6" fill="${L ? skinFill : darken(p.skin, .06)}" ${strokeAttr}/>`);
+
+  // Head
+  const head = `M${cx},27 C${cx + w * .82},27 ${cx + w},39 ${cx + w},55 C${cx + w},66 ${cx + jw + 2},73 ${cx + jw},77 C${cx + jw - 3},81 ${cx + 3},84 ${cx},84 C${cx - 3},84 ${cx - jw + 3},81 ${cx - jw},77 C${cx - jw - 2},73 ${cx - w},66 ${cx - w},55 C${cx - w},39 ${cx - w * .82},27 ${cx},27Z`;
+  out.push(`<path d="${head}" fill="${skinFill}" ${strokeAttr}/>`);
+  if (I) {
+    out.push(`<clipPath id="${id}"><path d="${head}"/></clipPath>`);
+    out.push(`<rect x="${cx + 4}" y="20" width="40" height="70" fill="#000" opacity=".1" clip-path="url(#${id})"/>`);
+    out.push(`<ellipse cx="${cx - 11}" cy="66" rx="5" ry="3" fill="#d9655a" opacity=".12"/><ellipse cx="${cx + 11}" cy="66" rx="5" ry="3" fill="#d9655a" opacity=".12"/>`);
+    out.push(`<ellipse cx="${cx}" cy="86" rx="${jw}" ry="3.5" fill="#000" opacity=".12"/>`);
+  }
+
+  // Wrinkles with age
+  const lineCol = L ? amber : darken(p.skin, .3);
+  if (p.age > 38 + p.wrinkleRoll * 8) {
+    out.push(`<path d="M${cx - 18},55 l-3,-1.5 M${cx - 18},57.5 l-3,.5 M${cx + 18},55 l3,-1.5 M${cx + 18},57.5 l3,.5" stroke="${lineCol}" stroke-width=".8" opacity=".6" fill="none"/>`);
+  }
+  if (p.age > 48 + p.wrinkleRoll * 6) {
+    out.push(`<path d="M${cx - 9},39 q9,-2 18,0 M${cx - 7},42.5 q7,-1.5 14,0 M${cx - 8},64 q-2,5 -1,9 M${cx + 8},64 q2,5 1,9" stroke="${lineCol}" stroke-width=".8" opacity=".55" fill="none"/>`);
+  }
+
+  // Beard (drawn before the mouth)
+  const beardPath = `M${cx - w},57 C${cx - w},70 ${cx - jw - 1},76 ${cx - jw},78 C${cx - jw + 3},84 ${cx - 3},87 ${cx},87 C${cx + 3},87 ${cx + jw - 3},84 ${cx + jw},78 C${cx + jw + 1},76 ${cx + w},70 ${cx + w},57 C${cx + w - 3},67 ${cx + 6},70 ${cx},70 C${cx - 6},70 ${cx - w + 3},67 ${cx - w},57Z`;
+  if (p.beard === "full") out.push(`<path d="${beardPath}" ${fillA(hairFill, .3)} ${strokeAttr}/>`);
+  if (p.beard === "stubble") out.push(`<path d="${beardPath}" fill="${L ? amber : p.hair}" opacity="${L ? .12 : .28}"/>`);
+  if (p.beard === "moustache" || p.beard === "full") {
+    out.push(`<path d="M${cx - 7},70.5 C${cx - 4},67.5 ${cx + 4},67.5 ${cx + 7},70.5 C${cx + 3},69.5 ${cx - 3},69.5 ${cx - 7},70.5Z" fill="${hairFill}" ${L ? `stroke="${amber}" stroke-width=".8"` : ""}/>`);
+  }
+
+  // Eyes and brows
+  for (const s of [-1, 1]) {
+    const ex = cx + s * 8.2;
+    if (I) {
+      out.push(`<ellipse cx="${ex}" cy="56" rx="3.6" ry="2.3" fill="#f4f1ec"/>`);
+      out.push(`<circle cx="${ex}" cy="56" r="1.8" fill="${p.eye}"/><circle cx="${ex}" cy="56" r=".85" fill="#120d0b"/>`);
+      out.push(`<path d="M${ex - 3.8},55.2 Q${ex},52.6 ${ex + 3.8},55.2" stroke="${darken(p.skin, .5)}" stroke-width=".9" fill="none"/>`);
+    } else if (L) {
+      out.push(`<path d="M${ex - 3},56 Q${ex},53.6 ${ex + 3},56 Q${ex},57.8 ${ex - 3},56Z" fill="${amber}"/>`);
+    } else {
+      out.push(`<ellipse cx="${ex}" cy="56" rx="2" ry="2.4" fill="#1b1512"/>`);
+    }
+    const browCol = L ? amber : mix(darken(p.hairBase, .2), "#9a9a9a", clamp((p.age - p.greyStart - 8) / 25, 0, .8));
+    // Inner end slightly higher than the outer end.
+    out.push(`<path d="M${ex - 4.4 * s},50 Q${ex},48.4 ${ex + 4.4 * s},50.6" stroke="${browCol}" stroke-width="${p.brow}" stroke-linecap="round" fill="none"/>`);
+  }
+
+  // Nose and mouth
+  const noseCol = L ? amber : darken(p.skin, .28);
+  out.push(`<path d="M${cx + .6},57 L${cx - 1.6},65.5 Q${cx},67.2 ${cx + 2},65.6" stroke="${noseCol}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`);
+  if (I) out.push(`<path d="M${cx + 1},58 L${cx + 2.6},65" stroke="#000" stroke-width="1.6" opacity=".07"/>`);
+  const mw = p.mouthW, my = 73;
+  if (I) {
+    out.push(`<path d="M${cx - mw / 2},${my} Q${cx},${my + 1.5 + p.smile * 2.4} ${cx + mw / 2},${my} Q${cx},${my - 1.2} ${cx - mw / 2},${my}Z" fill="${mix(p.skin, "#b5544a", .45)}"/>`);
+  }
+  out.push(`<path d="M${cx - mw / 2},${my} Q${cx},${my + p.smile * 2.4} ${cx + mw / 2},${my}" stroke="${L ? amber : darken(p.skin, .45)}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`);
+
+  // Hair on top (hairline moves up as it recedes)
+  const hl = 37 - p.recede * 9;
+  const top = 22 + p.recede * 3;
+  const hairPaths = {
+    short: `M${cx - w - 1},54 C${cx - w - 2},30 ${cx - w * .5},${top} ${cx},${top} C${cx + w * .5},${top} ${cx + w + 2},30 ${cx + w + 1},54 C${cx + w - 2},44 ${cx + w * .45},${hl} ${cx},${hl} C${cx - w * .45},${hl} ${cx - w + 2},44 ${cx - w - 1},54Z`,
+    side: `M${cx - w - 1},54 C${cx - w - 2},29 ${cx - w * .5},${top} ${cx + 2},${top} C${cx + w * .5},${top} ${cx + w + 2},30 ${cx + w + 1},54 C${cx + w - 2},43 ${cx + 6},${hl - 1} ${cx - 4},${hl + 2} C${cx - w * .5},${hl + 4} ${cx - w + 2},46 ${cx - w - 1},54Z`,
+    buzz: `M${cx - w},52 C${cx - w - 1},32 ${cx - w * .5},${top + 3} ${cx},${top + 3} C${cx + w * .5},${top + 3} ${cx + w + 1},32 ${cx + w},52 C${cx + w - 2},44 ${cx + w * .45},${hl + 1} ${cx},${hl + 1} C${cx - w * .45},${hl + 1} ${cx - w + 2},44 ${cx - w},52Z`,
+    quiff: `M${cx - w - 1},54 C${cx - w - 2},30 ${cx - w * .5},${top} ${cx},${top} C${cx + w * .5},${top} ${cx + w + 2},30 ${cx + w + 1},54 C${cx + w - 2},44 ${cx + w * .45},${hl} ${cx},${hl} C${cx - w * .45},${hl} ${cx - w + 2},44 ${cx - w - 1},54Z M${cx - 8},${top + 4} C${cx - 6},${top - 8} ${cx + 12},${top - 9} ${cx + 13},${top + 2}Z`,
+    long: `M${cx - w - 1},56 C${cx - w - 2},27 ${cx + w + 2},27 ${cx + w + 1},56 C${cx + w - 3},42 ${cx + 4},34 ${cx - 8},40 C${cx - w + 3},44 ${cx - w},49 ${cx - w - 1},56Z`,
+    bob: `M${cx - w - 1},56 C${cx - w - 2},27 ${cx + w + 2},27 ${cx + w + 1},56 C${cx + w - 3},44 ${cx + w * .4},38 ${cx},38 C${cx - w * .4},38 ${cx - w + 3},44 ${cx - w - 1},56Z`,
+    bun: `M${cx - w - 1},52 C${cx - w - 2},28 ${cx + w + 2},28 ${cx + w + 1},52 C${cx + w - 2},42 ${cx + w * .4},36 ${cx},36 C${cx - w * .4},36 ${cx - w + 2},42 ${cx - w - 1},52Z M${cx},14 a7,7 0 1,0 .1,0Z`,
+    ponytail: `M${cx - w - 1},52 C${cx - w - 2},28 ${cx + w + 2},28 ${cx + w + 1},52 C${cx + w - 2},42 ${cx + w * .4},36 ${cx},36 C${cx - w * .4},36 ${cx - w + 2},42 ${cx - w - 1},52Z`
+  };
+  if (p.hairStyle === "curly") {
+    const blobs = [];
+    for (let i = 0; i <= 10; i++) {
+      const a = Math.PI * (1.05 + i * 0.09);
+      blobs.push(`<circle cx="${(cx + Math.cos(a) * (w + 1)).toFixed(1)}" cy="${(45 + Math.sin(a) * (w - 1 + p.recede * -4)).toFixed(1)}" r="${5.6 - p.recede * 2}"/>`);
+    }
+    out.push(`<g ${fillA(hairFill, .3)} ${strokeAttr}>${blobs.join("")}</g>`);
+  } else {
+    const opacity = p.recede > .75 ? .55 : 1;
+    out.push(`<path d="${hairPaths[p.hairStyle]}" ${fillA(hairFill, .3)} ${strokeAttr} opacity="${opacity}"/>`);
+  }
+  if (I && p.hairStyle !== "curly") {
+    out.push(`<path d="M${cx - w * .5},${top + 4} Q${cx},${top + 1} ${cx + w * .5},${top + 4}" stroke="${lighten(p.hair, .3)}" stroke-width="1.4" fill="none" opacity=".5"/>`);
+  }
+
+  // Glasses
+  if (p.glasses) {
+    const gc = L ? amber : "#20262c";
+    out.push(`<g fill="none" stroke="${gc}" stroke-width="1.2"><rect x="${cx - 13.5}" y="52" width="10.6" height="7.6" rx="2.2"/><rect x="${cx + 2.9}" y="52" width="10.6" height="7.6" rx="2.2"/><path d="M${cx - 2.9},55 Q${cx},53.6 ${cx + 2.9},55"/></g>`);
+  }
+  return `<svg viewBox="0 0 100 120" role="img" aria-label="Portrait of ${person.name}">${out.join("")}</svg>`;
+}
+
+// ---------- Helmet renderer ----------
+const HELMET_COLOURS = ["#e8471c", "#1e90ff", "#ffd23f", "#32cd32", "#9370db", "#ffffff", "#ff69b4", "#1fb5a8", "#dc143c", "#111418", "#ff8c1a", "#4a6cf7"];
+function helmet(person, style, seedOffset = 0) {
+  const r = rng(hash("helmet:" + person.id + ":" + seedOffset));
+  const L = style === "line";
+  const amber = "#f2a93b";
+  const base = pick(r, HELMET_COLOURS);
+  let second = pick(r, HELMET_COLOURS);
+  if (second === base) second = "#ffffff";
+  const accent = pick(r, ["#ffd23f", "#ffffff", "#111418", "#e8471c"]);
+  const pattern = pick(r, ["band", "cap", "chevron", "split", "stripes"]);
+  const id = "h" + (clipId++);
+  const shell = "M12,58 C8,32 28,8 56,8 C80,9 93,26 92,46 L92,56 C92,63 86,67 78,67 L22,67 C15,67 12,63 12,58Z";
+  const visor = "M50,28 C64,25 84,28 90,38 L90,49 C80,50 62,50 50,47 C47,40 47,32 50,28Z";
+  const patterns = {
+    band: `<path d="M0,44 L100,22 L100,34 L0,56Z" fill="${second}"/>`,
+    cap: `<ellipse cx="46" cy="10" rx="44" ry="20" fill="${second}"/>`,
+    chevron: `<path d="M0,20 L40,40 L0,60 L0,48 L24,40 L0,32Z" fill="${second}"/><path d="M8,40 L40,40" stroke="${accent}" stroke-width="2"/>`,
+    split: `<rect x="0" y="0" width="38" height="80" fill="${second}"/><rect x="38" y="0" width="3" height="80" fill="${accent}"/>`,
+    stripes: `<rect x="0" y="16" width="100" height="4" fill="${second}"/><rect x="0" y="24" width="100" height="4" fill="${accent}"/><rect x="0" y="32" width="100" height="4" fill="${second}"/>`
+  };
+  const out = [];
+  out.push(`<rect width="100" height="76" fill="${L ? "#0f1418" : "#10151a"}"/>`);
+  out.push(`<clipPath id="${id}"><path d="${shell}"/></clipPath>`);
+  if (L) {
+    out.push(`<path d="${shell}" fill="${base}" fill-opacity=".18" stroke="${amber}" stroke-width="1.2"/>`);
+    out.push(`<g clip-path="url(#${id})" opacity=".35">${patterns[pattern]}</g>`);
+    out.push(`<path d="${visor}" fill="#0a0d10" stroke="${amber}" stroke-width="1.2"/>`);
+  } else {
+    out.push(`<path d="${shell}" fill="${base}"/>`);
+    out.push(`<g clip-path="url(#${id})">${patterns[pattern]}<rect x="0" y="60" width="100" height="10" fill="#000" opacity=".25"/>
+      <path d="M0,0 L100,0 L100,30 C70,18 40,16 0,26Z" fill="#fff" opacity=".1"/></g>`);
+    out.push(`<path d="${visor}" fill="#0b0e12" stroke="${accent}" stroke-width="1.6"/>`);
+    out.push(`<path d="M56,31 C66,29 78,30 85,35" stroke="#fff" stroke-width="1.6" opacity=".22" fill="none"/>`);
+    out.push(`<rect x="38" y="9" width="12" height="4" rx="1" fill="#0b0e12" opacity=".7"/>`);
+  }
+  out.push(`<text x="30" y="56" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="17" text-anchor="middle" fill="${L ? amber : accent}" ${L ? "" : `stroke="#000" stroke-opacity=".25" stroke-width=".6"`}>${person.number || ""}</text>`);
+  return `<svg viewBox="0 0 100 76" role="img" aria-label="Helmet of ${person.name}">${out.join("")}</svg>`;
+}
+
+// ---------- Example people (fictional) ----------
+const TEAM = { vortex: "#e8471c", nordline: "#1e90ff", aurum: "#ffd23f", meridian: "#1fb5a8", corsa: "#dc143c", halcyon: "#ff69b4", tundra: "#9fd3f0", brightwater: "#4a6cf7" };
+const DRIVERS = [
+  { id: "d_hale", name: "Marco Hale", nat: "IT", age: 28, gender: "m", team: "vortex", number: 7 },
+  { id: "d_brandt", name: "Jonas Brandt", nat: "DE", age: 24, gender: "m", team: "vortex", number: 27 },
+  { id: "d_alstad", name: "Viktor Alstad", nat: "NO", age: 40, gender: "m", team: "meridian", number: 5 },
+  { id: "d_okafor", name: "Daniel Okafor", nat: "GB", age: 26, gender: "m", team: "nordline", number: 4 },
+  { id: "d_morita", name: "Kenji Morita", nat: "JP", age: 25, gender: "m", team: "aurum", number: 22 },
+  { id: "d_duarte", name: "Rafael Duarte", nat: "BR", age: 30, gender: "m", team: "aurum", number: 1 },
+  { id: "d_menon", name: "Ravi Menon", nat: "IN", age: 25, gender: "m", team: "halcyon", number: 9 },
+  { id: "d_arrieta", name: "Felipe Arrieta", nat: "AR", age: 20, gender: "m", team: "halcyon", number: 26 },
+  { id: "d_ferraro", name: "Matteo Ferraro", nat: "IT", age: 31, gender: "m", team: "corsa", number: 11 },
+  { id: "d_koskinen", name: "Jari Koskinen", nat: "FI", age: 33, gender: "m", team: "tundra", number: 14 }
+];
+const STAFF = [
+  { id: "s_lund", name: "Sofia Lund", nat: "SE", age: 38, gender: "f", team: "vortex", role: "Race engineer" },
+  { id: "s_becker", name: "Tom Becker", nat: "DE", age: 34, gender: "m", team: "vortex", role: "Race engineer" },
+  { id: "o_whitmore", name: "Charles Whitmore", nat: "GB", age: 64, gender: "m", team: "vortex", role: "Owner" },
+  { id: "a_ricci", name: "Paolo Ricci", nat: "IT", age: 55, gender: "m", team: "vortex", role: "Agent" },
+  { id: "s_okoye", name: "Amara Okoye", nat: "GB", age: 44, gender: "f", team: "vortex", role: "Technical director" },
+  { id: "s_tanaka", name: "Yui Tanaka", nat: "JP", age: 29, gender: "f", team: "vortex", role: "Chief scout" },
+  { id: "s_moreau", name: "Claire Moreau", nat: "FR", age: 51, gender: "f", team: "vortex", role: "Commercial manager" },
+  { id: "y_silva", name: "Lucas Silva", nat: "BR", age: 16, gender: "m", team: "vortex", role: "Academy driver" }
+];
+const TALENT = { id: "y_berg", name: "Elias Berg", nat: "SE", gender: "m", team: "nordline", number: 31 };
+
+// ---------- Page ----------
+let style = "flat";
+let seedOffset = 0;
+
+function render() {
+  clipId = 0;
+  const hale = DRIVERS[0];
+  const stage = document.getElementById("stage");
+  stage.innerHTML = `
+    <div class="card ident">
+      <div class="portrait">${portrait(hale, style, TEAM.vortex, seedOffset)}</div>
+      <div class="num">${hale.number}</div>
+      <div>
+        <div class="first">Marco</div><div class="last">Hale</div>
+        <div class="meta"><span>Nationality <b>Italy</b></span><span>Age <b>28</b></span><span>Team <b>Vortex Racing</b></span><span>Role <b>No.1 driver</b></span></div>
+      </div>
+      <div class="helmet">${helmet(hale, style, seedOffset)}</div>
+    </div>
+    <div class="card"><h3>Drivers <small>portrait, team colour in the background and the suit</small></h3>
+      <div class="body grid">${DRIVERS.map(d => `<div class="person">${portrait(d, style, TEAM[d.team], seedOffset)}<b>${d.name}</b><span>${d.nat} · ${d.age} years</span></div>`).join("")}</div></div>
+    <div class="card"><h3>Staff and other people <small>engineers, owner, agent, scouts, academy</small></h3>
+      <div class="body grid">${STAFF.map(s => `<div class="person">${portrait(s, style, TEAM[s.team], seedOffset)}<b>${s.name}</b><span>${s.role} · ${s.age}</span></div>`).join("")}</div></div>
+    <div class="pair">
+      <div class="card"><h3>One career <small>the same talent at different ages</small></h3>
+        <div class="body ageing">${[16, 22, 28, 34, 41, 48].map(a => `<div class="person">${portrait({ ...TALENT, age: a }, style, TEAM[TALENT.team], seedOffset)}<span>age ${a}</span></div>`).join("")}</div></div>
+      <div class="card"><h3>Helmets <small>drivers only</small></h3>
+        <div class="body helmets">${DRIVERS.slice(0, 6).map(d => `<div class="person">${helmet(d, style, seedOffset)}<span>${d.name}</span></div>`).join("")}</div></div>
+    </div>`;
+}
+
+function setStyle(s) {
+  style = s;
+  document.getElementById("note").innerHTML = NOTES[s];
+  document.querySelectorAll("[data-style]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.style === s)));
+  try { localStorage.setItem("portrait-style", s); } catch (e) {}
+  render();
+}
+document.querySelectorAll("[data-style]").forEach(b => b.addEventListener("click", () => setStyle(b.dataset.style)));
+document.getElementById("reseed").addEventListener("click", () => { seedOffset++; render(); });
+
+let start = "flat";
+try { start = localStorage.getItem("portrait-style") || "flat"; } catch (e) {}
+setStyle(NOTES[start] ? start : "flat");
+</script>
