@@ -1,0 +1,96 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/race/race_view.gd" id="1_race"]
+
+[sub_resource type="SystemFont" id="SystemFont_mono"]
+font_names = PackedStringArray("Consolas", "Courier New", "Monospace")
+
+[sub_resource type="SystemFont" id="SystemFont_mono_bold"]
+font_names = PackedStringArray("Consolas", "Courier New", "Monospace")
+font_weight = 700
+
+[node name="RaceView" type="Node2D"]
+script = ExtResource("1_race")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = -1000.0
+offset_top = -1000.0
+offset_right = 3000.0
+offset_bottom = 2000.0
+mouse_filter = 2
+color = Color(0.13, 0.2, 0.13, 1)
+
+[node name="TrackLayer" type="Node2D" parent="."]
+position = Vector2(20, 60)
+
+[node name="Path2D" type="Path2D" parent="TrackLayer"]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Header" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 14.0
+offset_right = 560.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 18
+text = "Race"
+
+[node name="SpeedBar" type="HBoxContainer" parent="UI"]
+offset_left = 560.0
+offset_top = 10.0
+offset_right = 1140.0
+offset_bottom = 41.0
+alignment = 2
+
+[node name="Tower" type="RichTextLabel" parent="UI"]
+offset_left = 840.0
+offset_top = 56.0
+offset_right = 1144.0
+offset_bottom = 330.0
+mouse_filter = 2
+theme_override_fonts/normal_font = SubResource("SystemFont_mono")
+theme_override_fonts/bold_font = SubResource("SystemFont_mono_bold")
+theme_override_font_sizes/normal_font_size = 13
+theme_override_font_sizes/bold_font_size = 13
+bbcode_enabled = true
+scroll_active = false
+
+[node name="Log" type="RichTextLabel" parent="UI"]
+offset_left = 840.0
+offset_top = 340.0
+offset_right = 1144.0
+offset_bottom = 640.0
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+bbcode_enabled = true
+scroll_active = false
+
+[node name="PlayerPanel" type="VBoxContainer" parent="UI"]
+offset_left = 20.0
+offset_top = 560.0
+offset_right = 830.0
+offset_bottom = 640.0
+
+[node name="Results" type="PanelContainer" parent="UI"]
+visible = false
+offset_left = 150.0
+offset_top = 110.0
+offset_right = 800.0
+offset_bottom = 500.0
+
+[node name="VBox" type="VBoxContainer" parent="UI/Results"]
+layout_mode = 2
+
+[node name="Text" type="RichTextLabel" parent="UI/Results/VBox"]
+custom_minimum_size = Vector2(630, 330)
+layout_mode = 2
+theme_override_fonts/normal_font = SubResource("SystemFont_mono")
+theme_override_fonts/bold_font = SubResource("SystemFont_mono_bold")
+theme_override_font_sizes/normal_font_size = 13
+theme_override_font_sizes/bold_font_size = 14
+bbcode_enabled = true
+
+[node name="BackButton" type="Button" parent="UI/Results/VBox"]
+layout_mode = 2
+text = "Back to HQ"

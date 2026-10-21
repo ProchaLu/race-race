@@ -1,0 +1,25 @@
+## Global signal hub (autoload "EventBus").
+## Systems emit and listen here instead of referencing each other directly.
+extends Node
+
+# Signals are emitted by other scripts, so "unused" warnings don't apply here.
+@warning_ignore_start("unused_signal")
+
+# Time
+signal day_passed(day: int)
+signal week_passed(week: int)
+signal season_started(year: int)
+signal season_ended(year: int)
+
+# Navigation
+signal race_requested(track_id: StringName)
+signal hq_requested()
+
+# Race weekend
+signal race_weekend_started(track_id: StringName)
+signal race_finished(track_id: StringName, results: Array)
+
+# Management
+signal budget_changed(team_id: StringName, new_budget: int)
+signal contract_expiring(contract: ContractData)
+signal driver_scouted(driver_id: StringName)
