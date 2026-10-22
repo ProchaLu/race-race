@@ -23,7 +23,9 @@ extends Resource
 @export_range(1, 5) var scouting_level: int = 1
 
 @export_group("Links")
+## The two race drivers.
 @export var driver_ids: Array[StringName] = []
+@export var reserve_driver_ids: Array[StringName] = []
 @export var staff_ids: Array[StringName] = []
 @export var sponsor_ids: Array[StringName] = []
 @export var academy_driver_ids: Array[StringName] = []

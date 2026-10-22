@@ -28,6 +28,10 @@ const SCREENS := {
 	&"inbox": preload("res://ui/screens/inbox_screen.gd"),
 	&"drivers": preload("res://ui/screens/driver_list_screen.gd"),
 	&"driver_profile": preload("res://ui/screens/driver_profile_screen.gd"),
+	&"staff": preload("res://ui/screens/staff_list_screen.gd"),
+	&"staff_profile": preload("res://ui/screens/staff_profile_screen.gd"),
+	&"market": preload("res://ui/screens/market_screen.gd"),
+	&"negotiation": preload("res://ui/screens/negotiation_screen.gd"),
 }
 const PlaceholderScreen := preload("res://ui/screens/placeholder_screen.gd")
 const LANGUAGES := [["en", "English"], ["de", "Deutsch"]]
@@ -131,6 +135,15 @@ func go_back() -> void:
 
 func open_driver(driver_id: StringName) -> void:
 	navigate(&"driver_profile", {"driver_id": driver_id})
+
+
+func open_staff(staff_id: StringName) -> void:
+	navigate(&"staff_profile", {"staff_id": staff_id})
+
+
+## Remembers state of the current screen (e.g. a selection) for "back".
+func update_args(args: Dictionary) -> void:
+	_current_entry.args = _current_entry.args.merged(args, true)
 
 
 ## Re-opens the current screen with fresh data (after time passed).

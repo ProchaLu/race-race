@@ -228,6 +228,8 @@ Gebrochene Versprechen → Moraleinbruch, Wechselwunsch, schlechter Ruf bei ande
 - Form: **Angebotsformular** wie in FM – man stellt das Paket zusammen (Gehalt, Laufzeit, Status, Boni, Klauseln).
 - **Live-Feedback**: Während man das Angebot verändert, zeigt eine Anzeige, wie zufrieden der Agent damit wäre und welche Punkte ihm wichtig sind.
 - **Mehrere Runden**: Annahme, Ablehnung oder Gegenangebot. Die Geduld des Agenten ist begrenzt; zu viele schlechte Angebote beenden die Gespräche.
+- ✅ **Ablauf wie in der Realität**: Das Gespräch mit dem Berater läuft **direkt** (Live-Reaktion auf jedes Angebot). Ist man sich einig, **unterschreibt die Person erst nach ein paar Tagen** – in dieser Zeit kann ein anderes Team noch dazwischenfunken (Inbox-Meldung). Risiko 8 %, mit Handgeld bis auf 2 % senkbar; das Risiko wird in der Verhandlung angezeigt. Verlängerungen sind nie betroffen.
+- Ob jemand überhaupt wechseln will, hängt ab von Team-Ruf, Stärke des Autos und angebotener Rolle.
 - Gleiches System für Personal-Verträge.
 
 ### 3.9 Superlizenz
@@ -292,6 +294,11 @@ Kart / Nachwuchs (generiert, ca. 15–17 Jahre)
 - Scouting-Berichte enthalten eine Empfehlung („Sofort verpflichten“, „Beobachten“, „Nicht interessant“) und entdeckte Traits.
 - ✅ **Eigene Fahrer** kennt man nach **1–3 Rennwochenenden exakt** (Telemetrie, Training, Rennen). Bis dahin gilt der Wissensstand aus dem Scouting.
 - ✅ **Eigenes Personal** kennt man **sofort nach der Einstellung** exakt.
+- ✅ **Das Wissensmodell kommt schon in R1** (Scouting-Aufträge erst in R7):
+  - **Bekannte Personen** (etablierte F1-Fahrer, bekanntes Top-Personal) kennt man **perfekt**.
+  - **Unbekannte** (Markt, Nachwuchs, Personal anderer Teams) nur als **grobe Bereiche**.
+  - **Jugendfahrer** sind fast immer unbekannt – gerade hier lohnt sich später das Scouting.
+  - In R7 machen Scouts die Bereiche enger (oder schätzen daneben).
 
 ---
 
@@ -300,20 +307,27 @@ Kart / Nachwuchs (generiert, ca. 15–17 Jahre)
 ### 5.1 Struktur
 **Schlüsselpersonen** haben einen Namen und eigene Attribute. **Abteilungen** (die breite Masse) werden als Anzahl × Qualitätsstufe geführt, ohne einzelne Namen.
 
-| Bereich | Schlüsselpersonen | Abteilung (Masse) |
-|---|---|---|
-| Technik | Technischer Direktor, Chefdesigner, Aero-Chef, Chassis-Chef, Leiter Fahrzeugperformance | Aerodynamiker, Designer, CFD-Ingenieure |
-| Motor | Motorenchef | Motoreningenieure |
-| Produktion | Fabrikleiter | Mechaniker, Fertigung |
-| Renn-Betrieb | Sportdirektor, 2 Renningenieure, Strategiechef, Boxencrew-Chef | Boxencrew, Renn-Mechaniker |
-| Nachwuchs | Akademieleiter, Jugendtrainer, Scouts | – |
-| Kommerz | Kaufmännischer Leiter, Marketing-Chef | Marketing |
-| Fahrerbetreuung | Fitnesstrainer, Mentaltrainer | – |
+✅ **16 Schlüsselrollen pro Team** (so realitätsnah wie möglich, R1):
+
+| Bereich | Schlüsselpersonen | Abteilung (Masse) | Wirkt auf |
+|---|---|---|---|
+| Technik | Technischer Direktor, Chefdesigner, Aero-Chef, Chassis-Chef | Aerodynamiker, Designer, CFD-Ingenieure | Auto-Entwicklung (R3) |
+| Motor | Motorenchef | Motoreningenieure | Motor (R5) |
+| Produktion | Fabrikleiter | Mechaniker, Fertigung | Teilefertigung (R3) |
+| Renn-Betrieb | Sportdirektor, 2 Renningenieure, Strategiechef, Boxencrew-Chef | Boxencrew, Renn-Mechaniker | Rennwochenende, Strategie, Boxenstopps |
+| Nachwuchs | Akademieleiter, Chefscout | – | Akademie, Scouting (R7) |
+| Kommerz | Kaufmännischer Leiter | Marketing | Sponsoren (R6) |
+| Fahrerbetreuung | Fitnesstrainer, Mentaltrainer | – | Fitness, Moral, Altersabbau |
+
+In R1 werden Abteilungen nur angezeigt (Anzahl × Qualität); Einstellen/Ausbauen kommt mit HQ und Finanzen.
+
+**Personal-Profil**: gleiches Columns-Layout wie das Fahrerprofil, zusätzlich eine Karte **„Wirkung im Team“** (z. B. „Boxenstopps −0,3 s“), jeder Wert erklärbar.
 
 ### 5.2 Attribute (Beispiel)
 - **Allgemein**: Fachkompetenz, Führung, Erfahrung, Arbeitsmoral, Anpassungsfähigkeit.
 - **Rollenspezifisch**: z. B. Chefdesigner → Innovation, Detailgenauigkeit, Spezialgebiet (Aero/Mechanik); Boxencrew-Chef → Stopp-Tempo, Fehlerquote; Strategiechef → Reifenmodell-Genauigkeit, Wetterprognose.
 - **Persönlichkeit**: Ehrgeiz, Loyalität, Gehaltsvorstellungen.
+- ✅ **Traits auch beim Personal** (z. B. Perfektionist, Teamplayer, Innovator, Sturkopf) – mit Symbol wie bei den Fahrern.
 
 ### 5.3 Qualitätsverteilung ✅
 Es gibt schlechte, gute, sehr gute und **legendäre** Mitarbeiter. Die Verteilung beim Generieren ist pyramidenförmig – Weltklasse ist selten und teuer.
@@ -465,6 +479,8 @@ Motorkontingente pro Saison mit Startplatzstrafen, Entwicklungseinfrierung.
 - Logistik pro Rennen
 - Unfallschäden
 - Ablösen, Abfindungen, Strafen
+
+✅ **Schon ab R1**: Gehälter werden **monatlich** vom Budget abgezogen, dazu Handgeld bei Verpflichtungen und Abfindungen bei Entlassungen. Die vollständigen Finanzen (Einnahmen, Übersichten, Prognosen) folgen in R6.
 
 ### Darstellung
 Übersicht mit Verlauf (Diagramm), Prognose bis Saisonende, Aufschlüsselung nach Kategorien, Warnungen bei drohendem Minus.
@@ -662,6 +678,15 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 | 29 | Profil-Layout | ✅ „Columns“ (FM-ähnlich, vier Spalten) |
 | 30 | Zeitsteuerung | ✅ Zwei Buttons: passiv „+1 Tag“ und aktiv „Weiter“ (bis zum nächsten wichtigen Ereignis) |
 | 31 | Simulation zuerst | ✅ Training, Quali, Rennen erst als reine Simulation; 2D-Rennen danach; am Ende pro Session „simulieren“ oder „zuschauen & mitentscheiden“ |
+| 33 | Personal-Rollen | ✅ 16 Schlüsselrollen pro Team, so realitätsnah wie möglich |
+| 34 | Verhandlung | ✅ Direktes Gespräch mit dem Berater, Unterschrift einige Tage später (andere Teams können dazwischenfunken) |
+| 35 | Gehälter | ✅ Ab R1 monatlich vom Budget, plus Handgeld und Abfindungen |
+| 36 | Wissensmodell | ✅ Ab R1: Bekannte perfekt, Unbekannte/Jugend als grobe Bereiche, Eigene exakt; Scouting in R7 |
+| 37 | Personal-Traits | ✅ Ja, Personal hat Persönlichkeit und Traits |
+| 38 | Mockups | ✅ Für jede neue Grafik oder Grafik-Idee zuerst ein HTML-Mockup |
+| 39 | Unsichere Werte | ✅ **Bereichsbalken** (Band auf der Skala 1–20, unsichere Sterne als Umriss) – in Markt-Tabelle und Personen-Vorschau |
+| 40 | Verhandlung | ✅ **Gespräch im Mittelpunkt**: Gesprächspunkte (teils riskant) beeinflussen die Stimmung, Angebote erscheinen als Karten im Gespräch; Zufriedenheit = Angebot + Gesprächsklima; Prioritäten des Beraters erst nach Nachfrage sichtbar |
+| 41 | Abwechslung im Gespräch | ✅ Großer Pool an Gesprächspunkten, pro Gespräch eine zufällige Auswahl (verbrauchte werden ersetzt), Antworten in mehreren Varianten und abhängig von Berater-Persönlichkeit und Situation, **riskante Optionen mit großen Ausschlägen** nach oben und unten. Darf auch nach vielen Verhandlungen nicht langweilig werden. |
 | 32 | Gesichter | ✅ Prozedurale Porträts im Stil **„Flat“** mit vielen Merkmalen für alle Personen (R0). Helm-Designs vorerst **nicht** im UI – überall werden Gesichter verwendet. |
 
 ## 19. Offene Fragen ❓

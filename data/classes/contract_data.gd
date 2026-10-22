@@ -22,7 +22,8 @@ enum DriverRole { NUMBER_ONE, EQUAL, NUMBER_TWO, RESERVE }
 @export var release_clause: int = 0
 ## Extra year the team may add (0 = none).
 @export var team_option_year: int = 0
-@export var agent_name: String = ""
+## Staff: months they keep working (or stay on gardening leave) after notice.
+@export var notice_months: int = 3
 
 
 func is_active(current_year: int) -> bool:

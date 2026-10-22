@@ -4,6 +4,11 @@ extends Node
 
 ## Safety limit for one press of Continue.
 const MAX_DAYS_PER_CONTINUE := 60
+## Chance that another team steps in before a new signing is official.
+## A signing fee lowers it (up to -75 % at a fee of 30 % of the salary).
+const HIJACK_CHANCE := 0.08
+const NEW_MARKET_DRIVERS_PER_MONTH := 2
+const NEW_MARKET_STAFF_PER_MONTH := 4
 
 var _important_posted := false
 
@@ -34,10 +39,142 @@ func _step() -> bool:
 		_run_race(today)
 	else:
 		Calendar.advance_day()
+		_daily_world_update()
 		var new_round := round_today()
 		if new_round >= 0:
 			_announce_race(new_round)
 	return _important_posted
+
+
+# --- People and money --------------------------------------------------------
+
+func _daily_world_update() -> void:
+	_process_signings()
+	if Calendar.date_of().day == 1:
+		_pay_salaries()
+		_refresh_market()
+	if Calendar.day % 7 == 0:
+		_ai_fill_vacancies()
+
+
+## Agreed deals become official after a few days – unless a rival steps in.
+func _process_signings() -> void:
+	for pending in GameState.pending_signings.duplicate():
+		if pending.sign_day > Calendar.day:
+			continue
+		GameState.pending_signings.erase(pending)
+		var person := GameState.find_person(pending.person_id)
+		var msg := InboxMessage.new()
+		msg.priority = InboxMessage.Priority.IMPORTANT
+		msg.icon = "handshake"
+		msg.link_screen = &"driver_profile" if person is DriverData else &"staff_profile"
+		msg.link_args = {"driver_id": person.id} if person is DriverData else {"staff_id": person.id}
+		msg.link_label = "Open profile"
+		var rival := _rival_team() if pending.kind == Negotiation.Kind.SIGN else null
+		if rival and randf() < hijack_chance(pending.terms):
+			ContractLogic.sign(person, rival, {"salary": int(pending.terms.salary * 1.15), "years": pending.terms.years})
+			msg.sender = "Sporting director"
+			msg.subject = "Transfer failed: %s joins %s instead"
+			msg.subject_args = [person.full_name(), rival.name]
+			msg.add_paragraph("Before %s could sign with us, %s made a better offer. %s has NOT joined our team and is now under contract with %s.",
+				[person.full_name(), rival.name, person.first_name, rival.name])
+			msg.add_paragraph("A higher signing fee makes it less likely that rivals step in before the signature.")
+		else:
+			ContractLogic.sign(person, GameState.player_team(), pending.terms)
+			msg.sender = "Sporting director"
+			msg.subject = "Contract signed: %s"
+			msg.subject_args = [person.full_name()]
+			msg.add_paragraph("%s has signed the contract: %s per year until the end of %d.",
+				[person.full_name(), UIStyle.money(pending.terms.salary), GameState.contract_of(person.id).end_year])
+		GameState.add_message(msg)
+
+
+## Risk that a rival steps in before an agreed new signing becomes official.
+func hijack_chance(terms: Dictionary) -> float:
+	var salary: float = maxf(terms.get("salary", 1), 1.0)
+	var protection := minf(terms.get("signing_fee", 0) / (salary * 0.3), 1.0) * 0.75
+	return HIJACK_CHANCE * (1.0 - protection)
+
+
+func _rival_team() -> TeamData:
+	var others: Array = []
+	for team in GameState.teams.values():
+		if team.id != GameState.player_team_id:
+			others.append(team)
+	return others[randi() % others.size()] if not others.is_empty() else null
+
+
+func _pay_salaries() -> void:
+	for team in GameState.teams.values():
+		var payroll := ContractLogic.payroll_per_month(team.id)
+		team.budget -= payroll
+		if team.id == GameState.player_team_id:
+			var msg := InboxMessage.new()
+			msg.sender = "Finance department"
+			msg.subject = "Salaries paid: %s"
+			msg.subject_args = [UIStyle.money(payroll)]
+			msg.icon = "wallet"
+			msg.add_paragraph("Monthly salaries for drivers and staff have been paid. Budget now: %s.",
+				[UIStyle.money(team.budget)])
+			GameState.add_message(msg)
+
+
+## New young drivers and staff appear; old free agents retire.
+func _refresh_market() -> void:
+	var r := RandomNumberGenerator.new()
+	r.randomize()
+	for i in NEW_MARKET_DRIVERS_PER_MONTH:
+		var tier := PersonGenerator.DriverTier.F3 if r.randf() < 0.6 else PersonGenerator.DriverTier.F2
+		var d := PersonGenerator.driver(r, tier)
+		GameState.add_driver(d)
+		GameState.knowledge[d.id] = r.randi_range(10, 30) if tier == PersonGenerator.DriverTier.F3 else r.randi_range(30, 60)
+	for i in NEW_MARKET_STAFF_PER_MONTH:
+		var role: StaffData.Role = StaffRoles.TEAM_POSITIONS[r.randi() % StaffRoles.TEAM_POSITIONS.size()]
+		var s := PersonGenerator.staff(r, role, r.randi_range(40, 80))
+		GameState.add_staff(s)
+		GameState.knowledge[s.id] = r.randi_range(20, 60)
+	for d in GameState.free_drivers():
+		if d.age(Calendar.year) > 37 and r.randf() < 0.3 and not GameState.shortlist.has(d.id):
+			GameState.drivers.erase(d.id)
+
+
+## AI teams fill empty race seats and staff positions with the best free agent.
+func _ai_fill_vacancies() -> void:
+	for team in GameState.teams.values():
+		if team.id == GameState.player_team_id:
+			continue
+		while team.driver_ids.size() < ContractLogic.RACE_SEATS:
+			var best := _best_free_driver()
+			if not best:
+				break
+			ContractLogic.sign(best, team, {"salary": ContractLogic.market_value(best), "years": 2,
+				"role": ContractData.DriverRole.EQUAL})
+		var counts := {}
+		for s in GameState.staff_of_team(team.id):
+			counts[s.role] = counts.get(s.role, 0) + 1
+		for role in StaffRoles.TEAM_POSITIONS:
+			if counts.get(role, 0) > 0:
+				counts[role] -= 1
+				continue
+			var hire := _best_free_staff(role)
+			if hire:
+				ContractLogic.sign(hire, team, {"salary": ContractLogic.market_value(hire), "years": 2})
+
+
+func _best_free_driver() -> DriverData:
+	var best: DriverData = null
+	for d in GameState.free_drivers():
+		if GameState.pending_signing_of(d.id).is_empty() and (not best or d.overall() > best.overall()):
+			best = d
+	return best
+
+
+func _best_free_staff(role: StaffData.Role) -> StaffData:
+	var best: StaffData = null
+	for s in GameState.free_staff():
+		if s.role == role and GameState.pending_signing_of(s.id).is_empty() and (not best or s.overall() > best.overall()):
+			best = s
+	return best
 
 
 ## Index of the round raced today that is not resolved yet, or -1.

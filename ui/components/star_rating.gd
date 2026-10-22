@@ -52,6 +52,61 @@ static func texture(stars: float, star_size: int = 15) -> Texture2D:
 	return tex
 
 
+## A single star (filled or outline), e.g. for shortlist buttons.
+static func single(filled: bool, star_size: int = 18) -> Texture2D:
+	var key := "single_%s_%d" % [filled, star_size]
+	if _texture_cache.has(key):
+		return _texture_cache[key]
+	var points := PackedStringArray()
+	for p in _star_points(Vector2(1, 1), star_size - 2):
+		points.append("%.2f,%.2f" % [p.x, p.y])
+	var amber := "#" + UIStyle.ACCENT.to_html(false)
+	var grey := "#" + UIStyle.MUTED.to_html(false)
+	var svg := '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d"><polygon points="%s" %s/></svg>' % [
+		star_size, star_size, " ".join(points),
+		('fill="%s"' % amber) if filled else ('fill="none" stroke="%s" stroke-width="1.3"' % grey)]
+	var image := Image.new()
+	image.load_svg_from_string(svg)
+	var tex := ImageTexture.create_from_image(image)
+	_texture_cache[key] = tex
+	return tex
+
+
+## Uncertain rating: filled up to `lo`, outlined up to `hi` (decision 39).
+static func texture_range(lo: float, hi: float, star_size: int = 15) -> Texture2D:
+	if is_equal_approx(lo, hi):
+		return texture(lo, star_size)
+	var key := "r%s_%s_%d" % [lo, hi, star_size]
+	if _texture_cache.has(key):
+		return _texture_cache[key]
+	var width := 5 * star_size + 4 * int(GAP)
+	var amber := "#" + UIStyle.ACCENT.to_html(false)
+	var empty := "#" + UIStyle.LINE_STRONG.to_html(false)
+	var svg := '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d">' % [width, star_size]
+	for i in 5:
+		var origin := Vector2(i * (star_size + GAP), 0)
+		var points := PackedStringArray()
+		for p in _star_points(origin + Vector2(0.6, 0.6), star_size - 1.2):
+			points.append("%.2f,%.2f" % [p.x, p.y])
+		var shape := " ".join(points)
+		var ghost := clampf(hi - i, 0.0, 1.0)
+		var fill := clampf(lo - i, 0.0, 1.0)
+		if ghost <= 0.0:
+			svg += '<polygon points="%s" fill="%s"/>' % [shape, empty]
+		else:
+			svg += '<clipPath id="g%d"><rect x="%.2f" y="0" width="%.2f" height="%d"/></clipPath>' % [i, origin.x, star_size * ghost, star_size]
+			svg += '<polygon points="%s" fill="none" stroke="%s" stroke-width="1.1" clip-path="url(#g%d)"/>' % [shape, amber, i]
+		if fill > 0.0:
+			svg += '<clipPath id="f%d"><rect x="%.2f" y="0" width="%.2f" height="%d"/></clipPath>' % [i, origin.x, star_size * fill, star_size]
+			svg += '<polygon points="%s" fill="%s" clip-path="url(#f%d)"/>' % [shape, amber, i]
+	svg += "</svg>"
+	var image := Image.new()
+	image.load_svg_from_string(svg)
+	var tex := ImageTexture.create_from_image(image)
+	_texture_cache[key] = tex
+	return tex
+
+
 static func draw_stars(canvas: CanvasItem, rect: Rect2, stars: float, star_size: float) -> void:
 	var y := rect.position.y + (rect.size.y - star_size) / 2.0
 	for i in 5:

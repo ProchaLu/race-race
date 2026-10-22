@@ -46,7 +46,7 @@ func screen_title() -> String:
 
 
 func nav_section() -> StringName:
-	return &"drivers"
+	return &"drivers" if driver.team_id != &"" else &"market"
 
 
 # --- Layout helpers ----------------------------------------------------------
@@ -75,12 +75,13 @@ func _stack(children: Array) -> VBoxContainer:
 # --- Top ---------------------------------------------------------------------
 
 func _identity_card() -> Control:
-	var team: TeamData = GameState.teams[driver.team_id]
+	var team: TeamData = GameState.teams.get(driver.team_id)
+	var team_color := team.primary_color if team else UIStyle.LINE_STRONG
 	var contract := GameState.contract_of(driver.id)
 	var panel := PanelContainer.new()
 	var style := UIStyle.box(UIStyle.PANEL, UIStyle.LINE, 1, 14, 8)
 	style.border_width_left = 5
-	style.border_color = team.primary_color
+	style.border_color = team_color
 	panel.add_theme_stylebox_override("panel", style)
 
 	var row := HBoxContainer.new()
@@ -97,7 +98,7 @@ func _identity_card() -> Control:
 	number.text = str(driver.number)
 	number.theme_type_variation = &"NameLabel"
 	number.add_theme_font_size_override("font_size", 60)
-	number.add_theme_color_override("font_color", team.primary_color)
+	number.add_theme_color_override("font_color", team_color)
 	number.custom_minimum_size.x = 70
 	number.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	number.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -123,7 +124,7 @@ func _identity_card() -> Control:
 	meta.add_theme_constant_override("v_separation", 2)
 	_meta_pair(meta, "Nationality", Countries.name_of(driver.nationality))
 	_meta_pair(meta, "Age", tr("%d (born %d)") % [driver.age(Calendar.year), driver.birth_year])
-	_meta_pair(meta, "Team", team.name)
+	_meta_pair(meta, "Team", team.name if team else tr("Free agent"))
 	if contract:
 		_meta_pair(meta, "Role", ContractData.role_name(contract.role))
 	_meta_pair(meta, "Super licence", "Valid" if driver.has_superlicence else "Missing")
@@ -148,15 +149,16 @@ func _meta_pair(parent: Container, key: String, value: String) -> void:
 
 
 func _rating_card() -> UICard:
-	var card := UICard.new("Rating")
-	card.add_row(_star_row("Current ability", DriverAttributes.to_stars(driver.overall()),
-		DriverStatus.ability_breakdown(driver)))
-	card.add_row(_star_row("Potential", DriverAttributes.to_stars(driver.potential),
-		DriverStatus.potential_breakdown(driver)))
+	var exact := Knowledge.is_exact(driver)
+	var card := UICard.new("Rating", "" if exact else tr(Knowledge.label(driver)))
+	card.add_row(_star_row("Current ability", Knowledge.star_range(driver, &"overall", driver.overall()),
+		DriverStatus.ability_breakdown(driver) if exact else null))
+	card.add_row(_star_row("Potential", Knowledge.star_range(driver, &"potential", driver.potential),
+		DriverStatus.potential_breakdown(driver) if exact else null))
 	return card
 
 
-func _star_row(label: String, stars: float, b: Breakdown) -> HoverRow:
+func _star_row(label: String, stars: Vector2, b: Breakdown) -> HoverRow:
 	var row := HoverRow.new()
 	var line := HBoxContainer.new()
 	var text := Label.new()
@@ -164,9 +166,12 @@ func _star_row(label: String, stars: float, b: Breakdown) -> HoverRow:
 	text.theme_type_variation = &"MutedLabel"
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(text)
-	line.add_child(StarRating.new(stars, 20.0))
+	var image := TextureRect.new()
+	image.texture = StarRating.texture_range(stars.x, stars.y, 20)
+	line.add_child(image)
 	row.add_child(line)
-	row.set_breakdown(b)
+	if b:
+		row.set_breakdown(b)
 	return row
 
 
@@ -222,9 +227,15 @@ func _attribute_card(title: String, group: Array, subtitle: String = "") -> UICa
 
 func _attribute_row(entry: Array) -> AttributeRow:
 	var property: StringName = entry[0]
-	var value := DriverAttributes.to_display(driver.get(property))
-	var row := AttributeRow.new(entry[1], value, driver.attribute_changes.get(property, 0))
-	row.set_breakdown(DriverStatus.attribute_breakdown(driver, property, entry[1]))
+	var internal: int = driver.get(property)
+	var value := DriverAttributes.to_display(internal)
+	var known := Knowledge.display_range(driver, property, internal)
+	var row := AttributeRow.new(entry[1], value, driver.attribute_changes.get(property, 0), known)
+	if known.x == known.y:
+		row.set_breakdown(DriverStatus.attribute_breakdown(driver, property, entry[1]))
+	else:
+		row.set_breakdown(Breakdown.new("%s %d–%d" % [tr(entry[1]), known.x, known.y],
+			tr(DriverAttributes.DESCRIPTIONS.get(property, "")) + " " + tr("Only an estimate: your team does not know this person well.")))
 	row.make_clickable()
 	row.clicked.connect(_on_attribute_clicked.bind(property))
 	_attribute_rows[property] = row
@@ -244,12 +255,13 @@ func _physical_card() -> UICard:
 	card.add_section("Experience")
 	var level := "Rookie" if driver.races < 25 else ("Experienced" if driver.races < 100 \
 		else ("Veteran" if driver.races < 250 else "Legend"))
-	card.add_padded(_bar_with_label(tr("%d races in %d seasons") % [driver.races, driver.seasons + 1],
-		level, minf(driver.races / 300.0 * 100.0, 100.0)), 2, 2)
+	var experience_text := tr("No Formula Apex races yet") if driver.races == 0 \
+		else tr("%d races in %d seasons") % [driver.races, driver.seasons + 1]
+	card.add_padded(_bar_with_label(experience_text, level, minf(driver.races / 300.0 * 100.0, 100.0)), 2, 2)
 
 	var next := GameState.next_round_index()
-	if next >= 0:
-		var s: SeriesData = GameState.series[driver.series_id]
+	var s: SeriesData = GameState.series.get(driver.series_id)
+	if next >= 0 and s and driver.team_id != &"":
 		var track: TrackData = GameState.tracks[s.calendar[next]]
 		# Stand-in until track knowledge is tracked per track (simulator, visits).
 		var visits := mini(driver.seasons, 6)
@@ -297,7 +309,12 @@ func _contract_card() -> UICard:
 	var card := UICard.new("Contract")
 	var c := GameState.contract_of(driver.id)
 	if not c:
-		card.add_row(FactRow.new("Status", "No contract"))
+		card.add_row(FactRow.new("Status", tr("Free agent"), "", false, UIStyle.GOOD))
+		card.add_row(FactRow.new("Salary demand", tr("about %s per year") % UIStyle.money(ContractLogic.salary_demand(driver)), "", true))
+		var free_agent := ContractLogic.agent_of(driver)
+		if free_agent:
+			card.add_row(FactRow.new("Agent", free_agent.full_name(), tr(AgentData.style_name(free_agent.style))))
+		card.add_padded(ContractActions.new(driver, shell), 12, 0)
 		return card
 	var salary_row := FactRow.new("Salary", tr("%s per year") % UIStyle.money(c.salary), "", true)
 	salary_row.set_breakdown(Breakdown.new(tr("Salary %s per year") % UIStyle.money(c.salary),
@@ -322,9 +339,10 @@ func _contract_card() -> UICard:
 	release.set_breakdown(Breakdown.new("Release clause",
 		"If another team pays this amount, he may talk to them and leave."))
 	card.add_row(release)
-	card.add_row(FactRow.new("Extension option",
-		tr("%d, team decides") % c.team_option_year if c.team_option_year > 0 else "None"))
-	card.add_row(FactRow.new("Agent", c.agent_name))
+	var agent := ContractLogic.agent_of(driver)
+	if agent:
+		card.add_row(FactRow.new("Agent", agent.full_name(), tr(AgentData.style_name(agent.style))))
+	card.add_padded(ContractActions.new(driver, shell), 10, 0)
 	return card
 
 
@@ -332,13 +350,17 @@ func _contract_card() -> UICard:
 
 func _season_card() -> UICard:
 	var stats: DriverSeasonStats = GameState.season_stats.get(driver.id)
-	var s: SeriesData = GameState.series[driver.series_id]
+	var s: SeriesData = GameState.series.get(driver.series_id)
 	var card := UICard.new(tr("Season %d") % Calendar.year, tr("after round %d") % GameState.rounds_completed())
-	if not stats:
+	if not stats or not s:
+		var none := Label.new()
+		none.text = "No Formula Apex races this season."
+		none.theme_type_variation = &"MutedLabel"
+		card.add_padded(none, 8, 0)
 		return card
-	var position := GameState.championship_position(driver.id)
+	var standing := GameState.championship_position(driver.id)
 	var big := HBoxContainer.new()
-	big.add_child(BigStat.new("P%d" % position, "Championship", UIStyle.ACCENT))
+	big.add_child(BigStat.new("P%d" % standing, "Championship", UIStyle.ACCENT))
 	big.add_child(BigStat.new(str(stats.points), "Points"))
 	big.add_child(BigStat.new(str(stats.wins), "Wins"))
 	big.add_child(BigStat.new(str(stats.podiums), "Podiums"))
@@ -355,7 +377,7 @@ func _season_card() -> UICard:
 
 	var standings := GameState.driver_standings(driver.series_id)
 	var leader_points: int = GameState.season_stats[standings[0]].points
-	if position == 1 and standings.size() > 1:
+	if standing == 1 and standings.size() > 1:
 		var second: int = GameState.season_stats[standings[1]].points
 		card.add_row(FactRow.new("Lead over P2", tr("+%d pts") % (stats.points - second), "", true, UIStyle.GOOD))
 	else:
@@ -366,7 +388,11 @@ func _season_card() -> UICard:
 func _races_card() -> UICard:
 	var card := UICard.new("Last 5 races")
 	var stats: DriverSeasonStats = GameState.season_stats.get(driver.id)
-	if not stats:
+	if not stats or stats.results.is_empty():
+		var none := Label.new()
+		none.text = "No Formula Apex races this season."
+		none.theme_type_variation = &"MutedLabel"
+		card.add_padded(none, 8, 0)
 		return card
 	var boxes := HBoxContainer.new()
 	boxes.add_theme_constant_override("separation", 6)
@@ -455,6 +481,14 @@ func _show_chart(property: StringName) -> void:
 	var first_year := Calendar.year - history.size() + 1
 	var card := UICard.new("Development", tr("%d–%d · scale 1–20") % [first_year, Calendar.year])
 	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if not Knowledge.is_exact(driver):
+		var unknown := Label.new()
+		unknown.text = "History unknown – this person has not worked for you."
+		unknown.theme_type_variation = &"MutedLabel"
+		unknown.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		card.add_padded(unknown, 8, 0)
+		_chart_slot.add_child(card)
+		return
 
 	var header := HBoxContainer.new()
 	var what := Label.new()

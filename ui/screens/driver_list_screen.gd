@@ -73,6 +73,9 @@ func _rebuild() -> void:
 	var root := _tree.create_item()
 	var list: Array[DriverData] = []
 	for driver in GameState.drivers.values():
+		# Free agents live on the transfer market.
+		if driver.team_id == &"":
+			continue
 		if _filter.selected == 1 and driver.team_id != GameState.player_team_id:
 			continue
 		list.append(driver)

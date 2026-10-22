@@ -68,7 +68,53 @@ const TRAITS := {
 		"desc": "Needs more time on new tracks",
 		"effects": [["Track knowledge gain", "-40 %"]],
 	},
+	# --- Staff traits ---
+	&"perfectionist": {
+		"name": "Perfectionist", "icon": "check", "positive": true,
+		"desc": "Better results, but needs more time",
+		"effects": [["Quality of work", "+8 %"], ["Speed of work", "-5 %"]],
+	},
+	&"cool_head": {
+		"name": "Cool head", "icon": "clock", "positive": true,
+		"desc": "Few wrong calls under pressure",
+		"effects": [["Mistakes under pressure", "-35 %"]],
+	},
+	&"innovator": {
+		"name": "Innovator", "icon": "cog", "positive": true,
+		"desc": "Finds ideas others miss",
+		"effects": [["Chance of a breakthrough", "+20 %"]],
+	},
+	&"workaholic": {
+		"name": "Workaholic", "icon": "briefcase", "positive": true,
+		"desc": "Works long hours without complaint",
+		"effects": [["Output", "+10 %"], ["Burnout risk", "+15 %"]],
+	},
+	&"networker": {
+		"name": "Networker", "icon": "heart-handshake", "positive": true,
+		"desc": "Knows everyone in the paddock",
+		"effects": [["Contacts and offers", "+25 %"]],
+	},
+	&"stubborn": {
+		"name": "Stubborn", "icon": "flame", "positive": false,
+		"desc": "Clashes with people who disagree",
+		"effects": [["Conflicts with colleagues", "+30 %"]],
+	},
+	&"lazy": {
+		"name": "Lazy", "icon": "clock", "positive": false,
+		"desc": "Does the minimum",
+		"effects": [["Output", "-12 %"]],
+	},
+	&"glory_hunter": {
+		"name": "Glory hunter", "icon": "trophy", "positive": false,
+		"desc": "Leaves quickly for a bigger team",
+		"effects": [["Chance to accept rival offers", "+40 %"]],
+	},
 }
+
+const STAFF_TRAITS := [&"perfectionist", &"cool_head", &"innovator", &"workaholic", &"networker",
+	&"mentor", &"stubborn", &"lazy", &"glory_hunter"]
+const DRIVER_TRAITS := [&"rain_master", &"quali_specialist", &"tyre_whisperer", &"rocket_start",
+	&"team_player", &"media_darling", &"clutch", &"hot_headed", &"glass_nerves", &"tyre_killer", &"slow_learner"]
 
 
 static func get_trait(id: StringName) -> Dictionary:

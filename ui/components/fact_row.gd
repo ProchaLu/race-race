@@ -2,6 +2,9 @@
 class_name FactRow
 extends HoverRow
 
+## The right-hand value, for screens that update it live.
+var value_label: Label
+
 
 func _init(key: String, value: String, sub: String = "", mono: bool = false,
 		value_color: Color = UIStyle.TEXT) -> void:
@@ -18,7 +21,7 @@ func _init(key: String, value: String, sub: String = "", mono: bool = false,
 
 	var right := VBoxContainer.new()
 	right.add_theme_constant_override("separation", 0)
-	var value_label := Label.new()
+	value_label = Label.new()
 	value_label.text = value
 	value_label.theme_type_variation = &"NumberLabel" if mono else &"StrongLabel"
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT

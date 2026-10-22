@@ -27,4 +27,6 @@ signal inbox_changed()
 # Management
 signal budget_changed(team_id: StringName, new_budget: int)
 signal contract_expiring(contract: ContractData)
+signal contract_signed(person_id: StringName, team_id: StringName)
+signal contract_released(person_id: StringName)
 signal driver_scouted(driver_id: StringName)

@@ -88,7 +88,6 @@ const DRIVERS := [
 	[&"d_whitlock", 41, "Sam", "Whitlock", "NZ", 2005, 62, &"tundra", []],
 ]
 
-const AGENTS := ["Paolo Ricci", "Sarah Klein", "Marcus Dunn", "Ines Duval", "Henrik Berg", "Lucia Romero"]
 
 
 static func build() -> void:
@@ -102,9 +101,12 @@ static func build() -> void:
 	f1.is_player_series = true
 	GameState.series[f1.id] = f1
 
+	var r := RandomNumberGenerator.new()
+	r.randomize()
 	_make_tyres()
 	_make_test_track()
 	_make_calendar(f1)
+	_make_agents(r)
 	for t in TEAMS:
 		_make_team(t[0], t[1], t[2], t[3], t[4], t[5] * 1_000_000, f1)
 	for d in DRIVERS:
@@ -112,6 +114,10 @@ static func build() -> void:
 	GameState.player_team_id = &"vortex"
 
 	_make_player_team_details()
+	for t in TEAMS:
+		_make_team_staff(r, GameState.teams[t[0]], t[4])
+	_make_market(r)
+	_make_knowledge(r)
 	Calendar.day = FIRST_RACE_DAY + (ROUNDS_COMPLETED - 1) * DAYS_BETWEEN_RACES + 3
 	for round_index in ROUNDS_COMPLETED:
 		QuickRace.resolve_round(f1, round_index)
@@ -238,48 +244,15 @@ static func _make_driver(entry: Array) -> void:
 	d.match_fitness = randi_range(86, 99)
 	d.morale_factors = {"Recent results": randi_range(-10, 12), "Contract security": randi_range(0, 6)}
 	d.recalculate_morale()
-	_make_ability_history(d)
+	var r := RandomNumberGenerator.new()
+	r.randomize()
+	PersonGenerator.make_driver_history(d, r)
+	var agent_ids := GameState.agents.keys()
+	d.agent_id = agent_ids[randi() % agent_ids.size()]
 
 	GameState.add_driver(d)
 	GameState.teams[d.team_id].driver_ids.append(d.id)
 	_make_contract(d, skill)
-
-
-## Past season values. Young drivers improved a lot; with age the physical
-## side declines while the mental side keeps growing.
-static func _make_ability_history(d: DriverData) -> void:
-	var age := d.age(Calendar.year)
-	var years := mini(6, d.seasons + 1)
-	var groups := {"driving": DriverAttributes.DRIVING, "mental": DriverAttributes.MENTAL,
-		"physical": DriverAttributes.PHYSICAL}
-	for group in groups:
-		for entry in groups[group]:
-			var current: int = d.get(entry[0])
-			var history: Array[int] = []
-			var value := current
-			# Walk backwards from today, undoing each year's change.
-			for years_ago in range(1, years):
-				value -= _yearly_change(group, age - years_ago + 1) + randi_range(-1, 1)
-				history.push_front(clampi(value, 0, 100))
-			history.append(current)
-			d.attribute_history[entry[0]] = history
-
-	d.ability_history.clear()
-	for i in years:
-		var years_ago := years - 1 - i
-		var growth_per_year := 3 if age - years_ago < 25 else (1 if age - years_ago < 31 else 0)
-		d.ability_history.append(clampi(d.overall() - years_ago * growth_per_year + randi_range(-1, 1), 0, 100))
-	d.ability_history[-1] = d.overall()
-
-
-## Typical change of an attribute group during the season a driver turned `age`.
-static func _yearly_change(group: String, age: int) -> int:
-	match group:
-		"physical":
-			return 2 if age < 25 else (0 if age < 31 else -2)
-		"mental":
-			return 2 if age < 30 else 1
-	return 3 if age < 25 else (1 if age < 31 else 0)
 
 
 static func _make_contract(d: DriverData, skill: int) -> void:
@@ -299,7 +272,6 @@ static func _make_contract(d: DriverData, skill: int) -> void:
 	c.podium_bonus = roundi(c.salary * 0.02 / 10_000.0) * 10_000
 	c.release_clause = c.salary * 3 if skill >= 70 else 0
 	c.team_option_year = c.end_year + 1 if randf() < 0.4 else 0
-	c.agent_name = AGENTS[randi() % AGENTS.size()]
 	GameState.contracts.append(c)
 
 
@@ -357,23 +329,114 @@ static func _make_player_team_details() -> void:
 	contract.podium_bonus = 80_000
 	contract.release_clause = 12_000_000
 	contract.team_option_year = 2029
-	contract.agent_name = "Paolo Ricci"
+	hale.agent_id = &"a_ricci"
+	brandt.agent_id = &"a_klein"
 
 
 static func _make_engineer(id: StringName, first: String, last: String, nationality: String,
 		birth_year: int, ability: int, driver_id: StringName) -> void:
-	var s := StaffData.new()
+	var r := RandomNumberGenerator.new()
+	r.seed = hash(id)
+	var s := PersonGenerator.staff(r, StaffData.Role.RACE_ENGINEER, ability)
 	s.id = id
 	s.first_name = first
 	s.last_name = last
 	s.nationality = nationality
 	s.birth_year = birth_year
-	s.role = StaffData.Role.RACE_ENGINEER
-	s.ability = ability
+	s.gender = PersonData.Gender.MALE
 	s.team_id = GameState.player_team_id
+	PersonGenerator.drop_jobs_at(s, GameState.player_team().name)
 	s.assigned_driver_id = driver_id
 	GameState.add_staff(s)
 	GameState.teams[s.team_id].staff_ids.append(id)
+	_make_staff_contract(s)
+
+
+# --- People around the drivers ----------------------------------------------
+
+static func _make_agents(r: RandomNumberGenerator) -> void:
+	for i in 10:
+		var a := PersonGenerator.agent(r)
+		GameState.agents[a.id] = a
+	# Two hand-made agents for the player's drivers.
+	for spec in [[&"a_ricci", "Paolo", "Ricci", "IT", AgentData.Style.HARD, PersonData.Gender.MALE],
+			[&"a_klein", "Sarah", "Klein", "DE", AgentData.Style.PROUD, PersonData.Gender.FEMALE]]:
+		var a := PersonGenerator.agent(r)
+		a.id = spec[0]
+		a.first_name = spec[1]
+		a.last_name = spec[2]
+		a.nationality = spec[3]
+		a.style = spec[4]
+		a.gender = spec[5]
+		GameState.agents[a.id] = a
+
+
+## Fills all 16 key positions of a team (keeps people who already exist).
+static func _make_team_staff(r: RandomNumberGenerator, team: TeamData, level: int) -> void:
+	var counts := {}
+	for s in GameState.staff_of_team(team.id):
+		counts[s.role] = counts.get(s.role, 0) + 1
+	var engineers := 0
+	for role in StaffRoles.TEAM_POSITIONS:
+		if counts.get(role, 0) > 0:
+			counts[role] -= 1
+			continue
+		var s := PersonGenerator.staff(r, role, clampi(level + r.randi_range(-10, 8), 30, 90))
+		s.team_id = team.id
+		PersonGenerator.drop_jobs_at(s, team.name)
+		if role == StaffData.Role.RACE_ENGINEER and engineers < team.driver_ids.size():
+			s.assigned_driver_id = team.driver_ids[engineers]
+			engineers += 1
+		GameState.add_staff(s)
+		team.staff_ids.append(s.id)
+		_make_staff_contract(s)
+
+
+static func _make_staff_contract(s: StaffData) -> void:
+	var agent_ids := GameState.agents.keys()
+	s.agent_id = agent_ids[hash(s.id) % agent_ids.size()]
+	var c := ContractData.new()
+	c.person_id = s.id
+	c.team_id = s.team_id
+	c.salary = ContractLogic.market_value(s)
+	c.start_year = Calendar.year - randi_range(0, 3)
+	c.end_year = Calendar.year + randi_range(0, 2)
+	c.notice_months = randi_range(3, 6)
+	c.release_clause = c.salary * 2 if randf() < 0.3 else 0
+	GameState.contracts.append(c)
+
+
+## Free agents: ex-F1 drivers, F2 and F3 talents, and staff for every role.
+static func _make_market(r: RandomNumberGenerator) -> void:
+	for spec in [[PersonGenerator.DriverTier.EX_F1, 8], [PersonGenerator.DriverTier.F2, 12],
+			[PersonGenerator.DriverTier.F3, 12]]:
+		for i in spec[1]:
+			GameState.add_driver(PersonGenerator.driver(r, spec[0]))
+	for i in 70:
+		var role: StaffData.Role = StaffRoles.TEAM_POSITIONS[r.randi() % StaffRoles.TEAM_POSITIONS.size()]
+		# Pyramid: many average people, few stars.
+		var quality := 38 + int(pow(r.randf(), 2.0) * 50.0)
+		var s := PersonGenerator.staff(r, role, quality)
+		s.agent_id = GameState.agents.keys()[r.randi() % GameState.agents.size()]
+		GameState.add_staff(s)
+
+
+## How well the player's team knows everybody (design doc 4.3).
+static func _make_knowledge(r: RandomNumberGenerator) -> void:
+	for d in GameState.drivers.values():
+		if d.team_id != &"":
+			GameState.knowledge[d.id] = 100  # F1 drivers are well known
+		elif d.series_id == &"f2":
+			GameState.knowledge[d.id] = r.randi_range(30, 60)
+		elif d.series_id == &"f3":
+			GameState.knowledge[d.id] = r.randi_range(10, 30)
+		else:
+			GameState.knowledge[d.id] = r.randi_range(85, 100)
+	for s in GameState.staff.values():
+		if s.team_id == &"":
+			GameState.knowledge[s.id] = r.randi_range(20, 65)
+		else:
+			GameState.knowledge[s.id] = clampi(30 + s.overall() / 2 + r.randi_range(-10, 10), 30, 95)
 
 
 static func _make_welcome_messages() -> void:

@@ -38,7 +38,6 @@ timers/tooltip_delay_sec=0.25
 [internationalization]
 
 locale/translations=PackedStringArray("res://i18n/strings.de.translation")
-locale/fallback="en"
 
 [physics]
 

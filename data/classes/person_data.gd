@@ -16,6 +16,10 @@ enum Gender { MALE, FEMALE }
 @export_range(0, 100) var morale: int = 50
 ## Team this person currently works for. Empty = free agent.
 @export var team_id: StringName
+## Agent who negotiates for this person (empty = negotiates alone).
+@export var agent_id: StringName
+## Earlier jobs, oldest first: {"from": 2016, "to": 2019, "team": "Nordline GP", "role": "Data engineer"}
+@export var career_history: Array[Dictionary] = []
 
 
 func full_name() -> String:

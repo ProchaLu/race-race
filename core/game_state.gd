@@ -22,6 +22,16 @@ var relationships: Dictionary = {}
 var tyre_compounds: Array[TyreCompound] = []
 ## Newest message last.
 var inbox: Array[InboxMessage] = []
+var agents: Dictionary[StringName, AgentData] = {}
+## What the player's team knows about each person (0..100), see Knowledge.
+var knowledge: Dictionary[StringName, int] = {}
+var shortlist: Array[StringName] = []
+## Open negotiations by person ID (kept while the player browses).
+var negotiations: Dictionary = {}
+## Agreed deals waiting for the signature: {"person_id", "terms", "sign_day", "kind"}
+var pending_signings: Array[Dictionary] = []
+## Person ID -> day until which they refuse new talks.
+var talk_cooldown: Dictionary = {}
 ## Number of rounds of the player's series already raced this season.
 var resolved_rounds: int = 0
 
@@ -42,6 +52,12 @@ func clear() -> void:
 	relationships.clear()
 	tyre_compounds.clear()
 	inbox.clear()
+	agents.clear()
+	knowledge.clear()
+	shortlist.clear()
+	negotiations.clear()
+	pending_signings.clear()
+	talk_cooldown.clear()
 	resolved_rounds = 0
 	player_team_id = &""
 
@@ -70,6 +86,78 @@ func drivers_of_team(team_id: StringName) -> Array[DriverData]:
 			if drivers.has(driver_id):
 				result.append(drivers[driver_id])
 	return result
+
+
+## Any person (driver, staff or agent) by ID.
+func find_person(id: StringName) -> PersonData:
+	if drivers.has(id):
+		return drivers[id]
+	if staff.has(id):
+		return staff[id]
+	return agents.get(id)
+
+
+func staff_of_team(team_id: StringName) -> Array[StaffData]:
+	var result: Array[StaffData] = []
+	var team := teams.get(team_id) as TeamData
+	if team:
+		for staff_id in team.staff_ids:
+			if staff.has(staff_id):
+				result.append(staff[staff_id])
+	return result
+
+
+func free_drivers() -> Array[DriverData]:
+	var result: Array[DriverData] = []
+	for d in drivers.values():
+		if d.team_id == &"":
+			result.append(d)
+	return result
+
+
+func free_staff() -> Array[StaffData]:
+	var result: Array[StaffData] = []
+	for s in staff.values():
+		if s.team_id == &"":
+			result.append(s)
+	return result
+
+
+func toggle_shortlist(id: StringName) -> void:
+	if shortlist.has(id):
+		shortlist.erase(id)
+	else:
+		shortlist.append(id)
+
+
+## Opens (or continues) talks with a person. Returns null if they refuse.
+func negotiation_with(id: StringName) -> Negotiation:
+	if negotiations.has(id) and negotiations[id].state == Negotiation.State.OPEN:
+		return negotiations[id]
+	if talk_cooldown.get(id, -1) > Calendar.day:
+		return null
+	var p := find_person(id)
+	var kind := Negotiation.Kind.EXTEND if p.team_id == player_team_id else Negotiation.Kind.SIGN
+	var n := Negotiation.new(p, kind)
+	negotiations[id] = n
+	return n
+
+
+## Called by the negotiation screen when talks end.
+func close_negotiation(n: Negotiation) -> void:
+	if n.state == Negotiation.State.AGREED:
+		pending_signings.append({"person_id": n.person.id, "terms": n.offer.duplicate(),
+			"sign_day": Calendar.day + randi_range(2, 4), "kind": n.kind})
+	elif n.state == Negotiation.State.FAILED:
+		talk_cooldown[n.person.id] = Calendar.day + 30
+	negotiations.erase(n.person.id)
+
+
+func pending_signing_of(id: StringName) -> Dictionary:
+	for p in pending_signings:
+		if p.person_id == id:
+			return p
+	return {}
 
 
 func teammate_of(driver: DriverData) -> DriverData:
@@ -126,7 +214,8 @@ func _pair_key(a: StringName, b: StringName) -> String:
 func driver_standings(series_id: StringName) -> Array[StringName]:
 	var ids: Array[StringName] = []
 	for driver in drivers.values():
-		if driver.series_id == series_id and season_stats.has(driver.id):
+		if season_stats.has(driver.id) and season_stats[driver.id].races() > 0 \
+				and (driver.series_id == series_id or driver.team_id == &""):
 			ids.append(driver.id)
 	ids.sort_custom(func(a, b): return season_stats[a].points > season_stats[b].points)
 	return ids

@@ -10,9 +10,10 @@ const RETIRE_CHANCE := 0.06
 ## Resolves one round of a series and updates all season statistics.
 ## Returns the finishing order (driver IDs, retired drivers last).
 static func resolve_round(series: SeriesData, round_index: int) -> Array:
+	# Only drivers in a race seat of a team in this series take part.
 	var ids: Array = []
-	for driver in GameState.drivers.values():
-		if driver.series_id == series.id:
+	for team_id in series.team_ids:
+		for driver in GameState.drivers_of_team(team_id):
 			ids.append(driver.id)
 			if not GameState.season_stats.has(driver.id):
 				var fresh := DriverSeasonStats.new()
