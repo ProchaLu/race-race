@@ -7,9 +7,9 @@ enum Group { ALL, DRIVERS, STAFF, SHORTLIST }
 enum Status { AVAILABLE, FREE_ONLY, EVERYONE }
 enum Col { STAR, NAME, POSITION, AGE, NATIONALITY, ABILITY, POTENTIAL, SALARY, STATUS, KNOWN }
 const COLUMNS := [
-	["", 36, false], ["Name", 220, true], ["Position", 210, false], ["Age", 60, false],
-	["Nationality", 140, false], ["Ability", 120, false], ["Potential", 120, false],
-	["Salary demand", 130, false], ["Status", 190, false], ["Known", 90, false],
+	["", 34, false], ["Name", 190, true], ["Position", 180, false], ["Age", 50, false],
+	["Nationality", 125, false], ["Ability", 105, false], ["Potential", 105, false],
+	["Salary demand", 115, false], ["Status", 165, false], ["Known", 75, false],
 ]
 const AGE_FILTERS := [["Any age", 0, 99], ["Under 21", 0, 20], ["21–30", 21, 30], ["Over 30", 31, 99]]
 
@@ -59,7 +59,7 @@ func setup(args: Dictionary) -> void:
 	row.add_child(left)
 
 	_preview_slot = VBoxContainer.new()
-	_preview_slot.custom_minimum_size.x = 400
+	_preview_slot.custom_minimum_size.x = 380
 	row.add_child(_preview_slot)
 	_rebuild()
 

@@ -401,14 +401,7 @@ func _shuffle(list: Array) -> void:
 
 
 func car_rank() -> int:
-	var levels := []
-	for t in GameState.teams.values():
-		levels.append([t.id, t.car.downforce + t.car.engine_power])
-	levels.sort_custom(func(a, b): return a[1] > b[1])
-	for i in levels.size():
-		if levels[i][0] == team.id:
-			return i + 1
-	return levels.size()
+	return TeamMood.car_rank(team.id)
 
 
 func _recent_success() -> bool:

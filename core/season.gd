@@ -17,6 +17,8 @@ func _ready() -> void:
 	EventBus.inbox_message_added.connect(func(msg: InboxMessage):
 		if msg.priority == InboxMessage.Priority.IMPORTANT:
 			_important_posted = true)
+	EventBus.contract_released.connect(_on_contract_released)
+	EventBus.contract_signed.connect(_on_contract_signed)
 
 
 ## Passive step: exactly one day (or the race, if today is race day).
@@ -50,6 +52,8 @@ func _step() -> bool:
 
 func _daily_world_update() -> void:
 	_process_signings()
+	_check_shortlist()
+	TeamMood.daily_update()
 	if Calendar.date_of().day == 1:
 		_pay_salaries()
 		_refresh_market()
@@ -81,12 +85,103 @@ func _process_signings() -> void:
 			msg.add_paragraph("A higher signing fee makes it less likely that rivals step in before the signature.")
 		else:
 			ContractLogic.sign(person, GameState.player_team(), pending.terms)
+			_record_contract_promise(person, pending.terms)
+			if pending.kind == Negotiation.Kind.SIGN and person.overall() >= 70:
+				TeamMood.add_event(GameState.player_team_id, "New signing: %s", [person.full_name()], 3)
 			msg.sender = "Sporting director"
 			msg.subject = "Contract signed: %s"
 			msg.subject_args = [person.full_name()]
 			msg.add_paragraph("%s has signed the contract: %s per year until the end of %d.",
 				[person.full_name(), UIStyle.money(pending.terms.salary), GameState.contract_of(person.id).end_year])
 		GameState.add_message(msg)
+
+
+## A promise made in the contract talks becomes a real promise (design doc 3.6).
+func _record_contract_promise(person: PersonData, terms: Dictionary) -> void:
+	if not terms.get("promise", false):
+		return
+	var p := PromiseData.new()
+	p.person_id = person.id
+	p.description = "New parts at the same time as the No.1"
+	p.made_on = "%s %d" % [Calendar.MONTHS[Calendar.date_of().month - 1], Calendar.year]
+	GameState.promises.append(p)
+
+
+## Promises with a deadline are judged when that round has been raced.
+func _check_promises() -> void:
+	for p in GameState.promises:
+		if p.status != PromiseData.Status.OPEN or p.deadline_round == 0 or GameState.resolved_rounds < p.deadline_round:
+			continue
+		var person := GameState.find_person(p.person_id)
+		if not person:
+			continue
+		# Only promise type with a deadline so far: "competitive car".
+		var kept: bool = TeamMood.car_rank(GameState.player_team_id) <= 5
+		p.status = PromiseData.Status.KEPT if kept else PromiseData.Status.BROKEN
+		var msg := InboxMessage.new()
+		msg.sender = "Sporting director"
+		msg.icon = "handshake"
+		msg.link_screen = &"driver_profile" if person is DriverData else &"staff_profile"
+		msg.link_args = {"driver_id": person.id} if person is DriverData else {"staff_id": person.id}
+		msg.link_label = "Open profile"
+		if kept:
+			TeamMood.change_morale(person, "Promise kept", 8)
+			msg.subject = "Promise kept: %s"
+			msg.add_paragraph("%s is pleased: you kept your promise (%s).", [person.full_name(), Loc.t(p.description)])
+		else:
+			TeamMood.change_morale(person, "Promise broken", p.morale_penalty)
+			TeamMood.add_event(GameState.player_team_id, "Broken promise to %s", [person.full_name()], -6)
+			msg.priority = InboxMessage.Priority.IMPORTANT
+			msg.subject = "Promise broken: %s"
+			msg.add_paragraph("You did not keep your promise to %s (%s). Morale and trust have dropped.", [person.full_name(), Loc.t(p.description)])
+		msg.subject_args = [person.full_name()]
+		GameState.add_message(msg)
+
+
+# --- Shortlist notices -------------------------------------------------------
+
+func _check_shortlist() -> void:
+	for id in GameState.shortlist:
+		var person := GameState.find_person(id)
+		var c := GameState.contract_of(id)
+		if person and c and c.team_id != GameState.player_team_id and c.end_year == Calendar.year \
+				and Calendar.date_of().month >= 7:
+			_shortlist_note(person, "expiring", "Contract running out: %s", [person.full_name()],
+				"%s's contract ends after this season. A good moment to start talks.", [person.full_name()])
+
+
+func _on_contract_released(person_id: StringName) -> void:
+	var person := GameState.find_person(person_id)
+	if person and GameState.shortlist.has(person_id):
+		_shortlist_note(person, "free_%d" % Calendar.day, "Now a free agent: %s", [person.full_name()],
+			"%s from your shortlist is now a free agent and can be signed without a fee.", [person.full_name()])
+
+
+func _on_contract_signed(person_id: StringName, team_id: StringName) -> void:
+	var person := GameState.find_person(person_id)
+	if person and team_id != GameState.player_team_id and GameState.shortlist.has(person_id):
+		var team: TeamData = GameState.teams[team_id]
+		_shortlist_note(person, "signed_%s" % team_id, "Shortlist: %s joins %s", [person.full_name(), team.name],
+			"%s from your shortlist has signed for %s.", [person.full_name(), team.name])
+
+
+## Sends one shortlist message per person and kind.
+func _shortlist_note(person: PersonData, kind: String, subject: String, subject_args: Array,
+		body: String, body_args: Array) -> void:
+	var key := "%s:%s" % [person.id, kind]
+	if GameState.shortlist_notes.has(key):
+		return
+	GameState.shortlist_notes[key] = true
+	var msg := InboxMessage.new()
+	msg.sender = "Chief scout"
+	msg.icon = "binoculars"
+	msg.subject = subject
+	msg.subject_args = subject_args
+	msg.add_paragraph(body, body_args)
+	msg.link_screen = &"driver_profile" if person is DriverData else &"staff_profile"
+	msg.link_args = {"driver_id": person.id} if person is DriverData else {"staff_id": person.id}
+	msg.link_label = "Open profile"
+	GameState.add_message(msg)
 
 
 ## Risk that a rival steps in before an agreed new signing becomes official.
@@ -205,6 +300,7 @@ func _run_race(round_index: int) -> void:
 	var order := QuickRace.resolve_round(s, round_index)
 	GameState.resolved_rounds += 1
 	EventBus.round_completed.emit(round_index)
+	_check_promises()
 
 	var track: TrackData = GameState.tracks[s.calendar[round_index]]
 	var msg := InboxMessage.new()

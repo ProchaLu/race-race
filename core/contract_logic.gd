@@ -118,6 +118,7 @@ static func release(person: PersonData) -> int:
 	var cost := severance(person)
 	if team:
 		team.budget -= cost
+		TeamMood.add_event(team.id, "%s released", [person.full_name()], -4)
 	var c := GameState.contract_of(person.id)
 	if c:
 		GameState.contracts.erase(c)

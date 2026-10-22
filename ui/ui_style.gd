@@ -128,6 +128,18 @@ static func box(bg: Color, border: Color = Color.TRANSPARENT, border_width: int 
 	return sb
 
 
+const MOOD_CALM := Color("9aa7b4")
+
+
+## Colour of a team mood step: Crisis, Tense, Calm, Good, Euphoria.
+static func mood_color_by_index(index: int) -> Color:
+	return [LV1, LV2, MOOD_CALM, LV3, LV4][clampi(index, 0, 4)]
+
+
+static func mood_color(value: int) -> Color:
+	return mood_color_by_index(TeamMood.level_index(value))
+
+
 ## Green for money you have or gain, red for debt or losses.
 static func money_color(amount: int) -> Color:
 	if amount > 0:

@@ -64,6 +64,8 @@ static func _panels(t: Theme) -> void:
 	selected.border_width_left = 3
 	_panel(t, &"RowSelected", selected)
 	_panel(t, &"Tile", UIStyle.box(Color.TRANSPARENT, Color.TRANSPARENT, 0, x, 10))
+	_panel(t, &"TopInfo", UIStyle.box(Color.TRANSPARENT, Color.TRANSPARENT, 0, 6, 4))
+	_panel(t, &"TopInfoHover", UIStyle.box(UIStyle.HOVER, Color.TRANSPARENT, 0, 6, 4))
 	_panel(t, &"TileHover", UIStyle.box(UIStyle.HOVER, Color.TRANSPARENT, 0, x, 10))
 	_panel(t, &"ValueBox", UIStyle.box(UIStyle.PANEL_DARK, UIStyle.LINE_STRONG, 1, 4, 1))
 	_panel(t, &"ResultBox", UIStyle.box(UIStyle.PANEL_DARK, UIStyle.LINE, 1, 4, 8))

@@ -13,6 +13,7 @@ func setup(_args: Dictionary) -> void:
 	left.add_theme_constant_override("separation", UIStyle.GAP)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.add_child(_next_race_card())
+	left.add_child(_mood_card())
 	left.add_child(_drivers_card(team))
 	row.add_child(left)
 	row.add_child(_standings_card())
@@ -45,6 +46,80 @@ func _next_race_card() -> UICard:
 	button.pressed.connect(func(): EventBus.race_requested.emit(&"test_ring"))
 	card.add_padded(button, 12, 0)
 	return card
+
+
+## Team mood (decision 42): gauge on the left, every factor on the right,
+## the five levels underneath.
+func _mood_card() -> UICard:
+	var team_id := GameState.player_team_id
+	var mood := TeamMood.value(team_id)
+	var trend := TeamMood.trend(team_id)
+	var trend_text := tr("%+d this week") % trend if trend != 0 else tr("No change this week")
+	var card := UICard.new("Team mood", trend_text)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 18)
+	var gauge_box := VBoxContainer.new()
+	gauge_box.add_theme_constant_override("separation", 0)
+	gauge_box.add_child(MoodGauge.new(mood))
+	var level := Label.new()
+	level.text = TeamMood.level_name(mood)
+	level.theme_type_variation = &"HeadingLabel"
+	level.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level.add_theme_color_override("font_color", UIStyle.mood_color(mood))
+	gauge_box.add_child(level)
+	var number := Label.new()
+	number.text = "%d / 100" % mood
+	number.theme_type_variation = &"SmallLabel"
+	number.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gauge_box.add_child(number)
+	row.add_child(gauge_box)
+
+	var factors := VBoxContainer.new()
+	factors.add_theme_constant_override("separation", 0)
+	factors.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var index := 0
+	var base := FactRow.new("Neutral base", "50", "", true)
+	base.set_zebra(false)
+	factors.add_child(base)
+	for f in TeamMood.factors(team_id):
+		index += 1
+		var delta: int = f[1]
+		var fact := FactRow.new(f[0], "%+d" % delta, "", true,
+			UIStyle.GOOD if delta > 0 else (UIStyle.BAD if delta < 0 else UIStyle.TEXT))
+		fact.set_zebra(index % 2 == 1)
+		factors.add_child(fact)
+	row.add_child(factors)
+	card.add_padded(row, 8, 4)
+
+	var legend := HFlowContainer.new()
+	legend.add_theme_constant_override("h_separation", 18)
+	for i in TeamMood.LEVELS.size():
+		var item := HBoxContainer.new()
+		item.add_theme_constant_override("separation", 6)
+		var swatch := ColorRect.new()
+		swatch.color = UIStyle.mood_color_by_index(i)
+		swatch.custom_minimum_size = Vector2(10, 10)
+		swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		item.add_child(swatch)
+		var low: int = 0 if i == 0 else TeamMood.LEVELS[i - 1][0]
+		var high: int = mini(TeamMood.LEVELS[i][0] - 1, 100)
+		var text := Label.new()
+		text.text = "%s %d–%d" % [tr(TeamMood.LEVELS[i][1]), low, high]
+		text.theme_type_variation = &"SmallLabel"
+		item.add_child(text)
+		legend.add_child(item)
+	card.add_padded(legend, 8, 0)
+	card.add_padded(_note("Affects the productivity of all departments (up to ±5 %), mistakes in the pit lane and how easily rivals poach your staff."), 4, 0)
+	return card
+
+
+func _note(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.theme_type_variation = &"SmallLabel"
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return l
 
 
 func _drivers_card(team: TeamData) -> UICard:

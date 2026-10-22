@@ -352,7 +352,7 @@ Delegiertes Personal meldet wichtige Entscheidungen in der Inbox (optional mit R
 Ein **übersichtlicher Gesamtwert** für die Stimmung im ganzen Team (z. B. 0–100 oder eine Stufe von „Krise“ bis „Euphorie“). Er entsteht aus den Einzelmoralen, den Ergebnissen und Ereignissen (Entlassungen, Erfolge, gebrochene Versprechen) und wirkt auf Produktivität, Fehlerquoten und darauf, wie leicht Personal abgeworben wird. Ein Tooltip zeigt, woraus er sich zusammensetzt.
 
 ### 5.6 Weitere Mechaniken
-- Personal entwickelt sich (jüngere verbessern sich, ältere bauen ab oder gehen in Rente).
+- Personal entwickelt sich (jüngere verbessern sich, ältere bauen ab oder gehen in Rente). **Training und Leistung** wirken bei allen: wer trainiert und gut abliefert, wird besser; wer nicht trainiert und schlecht abliefert, baut ab (Details: simulation_model.md, Abschnitt 13).
 - Moral und Zufriedenheit (Gehalt, Erfolg, Gebäudequalität, Respekt).
 - **Abwerben** von anderen Teams – und eigenes Personal wird abgeworben.
 - Synergien: Ein guter Technischer Direktor macht die ganze Abteilung besser.
@@ -434,6 +434,31 @@ Jedes Teil hat Werte, die zum Gesamtauto beitragen:
 - Die Setup-Qualität ergibt sich aus Fahrer-Feedback, Renningenieur, Chemie und Simulator-Vorbereitung.
 - Gut genutztes Training ⇒ kleiner Tempobonus und genauere Reifendaten für die Strategie.
 
+### 8.4b Entscheidungen des Teamchefs am Rennwochenende ✅ (R2)
+Vorbild: ein Teamchef wie Toto Wolff – er stellt kein Setup ein und ruft keine Stopps aus, sondern setzt den Rahmen, trifft die großen Entscheidungen und führt die Menschen. **Bei jeder Entscheidung gibt es „Mitarbeiter entscheiden lassen“** (Hilfe für Einsteiger; das Ergebnis hängt von der Qualität des Mitarbeiters ab).
+
+| Wann | Entscheidung | Wirkung |
+|---|---|---|
+| Vor dem Wochenende | **Wochenendziel** (z. B. „Beide in die Punkte“, „Angriff aufs Podium“) | Risikobereitschaft von Strategen und Fahrern; verfehlte Ziele kosten Moral |
+| Vor dem Wochenende | **Trainingsprogramm pro Fahrer** (Setup-Arbeit, Longruns/Reifen, Freitagseinsatz für Akademiefahrer) | Setup-Qualität, Reifenwissen, Erfahrung für den Nachwuchs |
+| Vor dem Wochenende | **Stallorder-Regel** (frei fahren, Positionen halten nach dem letzten Stopp, Priorität Fahrer X) | Teampunkte vs. Moral/Spannungen |
+| Vor dem Wochenende (bei Bedarf) | **Ersatzfahrer einsetzen** (Verletzung/Krankheit) | Wer fährt? |
+| Vor dem Rennen | **Strategie-Vorschlag** des Strategiechefs wählen (2–3 Pläne mit Prognose und Risiko) | Genauigkeit hängt vom Strategiechef ab |
+| Vor dem Rennen (bei Regenrisiko) | **Regen-Poker**: Setup trocken / nass / Kompromiss | Großer Ausschlag nach oben oder unten |
+| Vor dem Rennen | **Fahrerbesprechung** („Heimbringen“, „Angriff“, „Kein Druck“, „Teamplayer“) – Auswirkungen und Empfehlung des Renningenieurs stehen darunter | Selbstvertrauen, Aggressivität, Fehlerrisiko – je nach Persönlichkeit |
+| Vor dem Rennen | **1:1-Gespräch** mit jedem Fahrer (fix vor jedem Rennen); seltene **Gespräche auf Wunsch des Fahrers** mit mehr Tiefe | Kurzfristige Boosts, Moral, Beziehung, Versprechen |
+| Vor dem Rennen | **Flügelstufe** (nach Rücksprache mit dem Ingenieur) | Kurven vs. Geraden, Überholen, Reifen |
+| Im Rennen | **2–4 Schlüsselmomente** (Safety Car: reinholen?, Regen: Reifenwechsel?, Stallorder: tauschen?) | Rest entscheidet der Strategiechef automatisch |
+
+Später dazu: neue Teile mitbringen/verteilen (R3), Sponsoren-/PR-Termine (R6), Motorteile & Startplatzstrafen (R9).
+
+**Ergebnis-Ansicht im Detail** ✅: Klassement, jeder Boxenstopp mit Standzeit, Rundenzeiten-Grafik, Reifen-Stints, Positionsverlauf, Wetter- und Safety-Car-Phasen – Daten wie für einen echten Teamchef.
+
+**Simulation** ✅: Wetter (Vorhersage, Regen setzt ein/hört auf, abtrocknende Strecke, Intermediates/Regenreifen, Regenfahrer schneller, schwache Regenfahrer mehr Fehler) und **Safety Car**.
+
+### 8.6 Simulationsmodell ✅ (Herzstück)
+Alle Formeln, Startwerte und Zielwerte stehen in **[docs/simulation_model.md](simulation_model.md)**: Rundenzeit in Sekunden-Anteilen (erklärbar), Reifen mit Temperatur, Sprit-Strategie, Boxenstopps (Minimum 2,0 s), Strategiechef mit Schätzfehler, Überholzonen, Teilschäden, ereignisgesteuertes Safety Car, detailliertes Wetter, Quali Q1–Q3, Briefing und 1:1-Gespräche, Entwicklung durch Training und Leistung, Sim-Labor.
+
 ### 8.5 Eingriffe im Rennen ✅
 Das Rennen läuft größtenteils **passiv**. Kurzfristige taktische Entscheidungen trifft im echten Leben die Kommandozentrale, nicht der Teamchef allein. Der Spieler kann eingreifen bei:
 - Boxenstopps und Reifenwahl
@@ -481,6 +506,22 @@ Motorkontingente pro Saison mit Startplatzstrafen, Entwicklungseinfrierung.
 - Ablösen, Abfindungen, Strafen
 
 ✅ **Schon ab R1**: Gehälter werden **monatlich** vom Budget abgezogen, dazu Handgeld bei Verpflichtungen und Abfindungen bei Entlassungen. Die vollständigen Finanzen (Einnahmen, Übersichten, Prognosen) folgen in R6.
+
+### Wirtschafts-Zielwerte ✅ (Startpunkt, wird nachjustiert)
+Alle Preise werden an diesen Werten ausgerichtet. **Grundregel: Der Weltmeister kann sich den besten Fahrer leisten; Preisgeld muss für Gebäude-Ausbau reichen.**
+
+| Größe | Zielwert |
+|---|---|
+| Preisgeld Weltmeister (Konstrukteure) | ca. $140M |
+| Preisgeld letzter Platz | ca. $55M |
+| Gehalt des besten Fahrers | ca. $15–20M |
+| Gehalt eines Hinterbänkler-Fahrers | ca. $1–3M |
+| Personal eines Topteams pro Jahr | ca. $30–40M |
+| Großer Gebäude-Ausbau (R4) | ca. $20–60M |
+
+Faustregel: Ein Topteam stemmt jedes Jahr **einen Star + ein großes Bauprojekt**; ein Hinterbänkler muss sich entscheiden.
+
+**Entwicklermenü** ✅ (R2): per Taste aufrufbares Test-/Cheat-Menü (Geld, Datum springen, Moral/Stimmung setzen …) für Tests.
 
 ### Darstellung
 Übersicht mit Verlauf (Diagramm), Prognose bis Saisonende, Aufschlüsselung nach Kategorien, Warnungen bei drohendem Minus.
@@ -686,7 +727,23 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 | 38 | Mockups | ✅ Für jede neue Grafik oder Grafik-Idee zuerst ein HTML-Mockup |
 | 39 | Unsichere Werte | ✅ **Bereichsbalken** (Band auf der Skala 1–20, unsichere Sterne als Umriss) – in Markt-Tabelle und Personen-Vorschau |
 | 40 | Verhandlung | ✅ **Gespräch im Mittelpunkt**: Gesprächspunkte (teils riskant) beeinflussen die Stimmung, Angebote erscheinen als Karten im Gespräch; Zufriedenheit = Angebot + Gesprächsklima; Prioritäten des Beraters erst nach Nachfrage sichtbar |
+| 42 | Teamstimmung (Anzeige) | ✅ Wert 0–100 in fünf Stufen (Krise, Angespannt, Ruhig, Gut, Euphorie). Sichtbar als **Block in der Topbar** (mit Balken und Aufschlüsselung im Tooltip) und als **Karte auf der Startseite** (Halbkreis-Anzeige + alle Faktoren) |
+| 43 | 2D-Rennansicht | ✅ Wird von einer **zweiten Person** gebaut (Autos, Strecken, Test Ring). Test Ring und „Testrennen ansehen“-Button bleiben bestehen. Unser Fokus: die Simulation. |
+| 44 | Rennwochenende-Tempo | ✅ Session für Session, aber **schnell** – wer es detaillierter will, schaut/spielt später das 2D-Rennen |
+| 45 | Preisgeld | ✅ Realistische Größenordnung, muss für Gebäude-Ausbau reichen; **der Weltmeister muss sich den besten Fahrer leisten können**. Alle Preise (Gehälter, Gebäude, Teile) werden darauf abgestimmt – wird mehrfach nachjustiert. |
+| 46 | Wetter in der Simulation | ✅ Schon in R2: Regen macht gute Regenfahrer schneller, schlechte machen mehr Fehler; realistische, detaillierte Ergebnisse |
+| 47 | F2/F3 | ✅ Bleibt in R7 (Nachwuchs, Jugendfahrer, Training, Supertalente) |
 | 41 | Abwechslung im Gespräch | ✅ Großer Pool an Gesprächspunkten, pro Gespräch eine zufällige Auswahl (verbrauchte werden ersetzt), Antworten in mehreren Varianten und abhängig von Berater-Persönlichkeit und Situation, **riskante Optionen mit großen Ausschlägen** nach oben und unten. Darf auch nach vielen Verhandlungen nicht langweilig werden. |
+| 48 | Simulationsmodell | ✅ Rundenzeit in Sekunden-Anteilen, alles ab Anfang im Detail (Reifentemperatur, Sprit, Teilschäden, Wetter, SC); Formeln in simulation_model.md |
+| 49 | Gewichtung | ✅ Auto ~70 %, Fahrer und Personal sollen sich lohnen (mehr als in der echten F1) |
+| 50 | Siegquoten | ✅ Abhängig vom Auto-Vorsprung: dominant + Top-Fahrer 70–85 %, dominant + schwacher Fahrer 15–30 %, enges Feld 30–40 % |
+| 51 | Boxenstopp | ✅ Minimum 2,0 s, große Unterschiede je nach Crew; perfekte Crews machen keine schweren Fehler |
+| 52 | Safety Car | ✅ Nur durch Ereignisse (Unfälle, Ausfälle, Trümmer), beliebig oft pro Rennen; VSC und rote Flagge |
+| 53 | Strecke | ✅ Vorerst nur Test Ring (wird nicht verändert), Rennen mit unterschiedlichen Bedingungen; echte Strecken kommen von der zweiten Person |
+| 54 | Fahrergespräche | ✅ Variante B: Briefing als schnelle Taktikwahl (mit Auswirkungen + Empfehlung), **1:1 fix vor jedem Rennen**, seltene Gespräche auf Wunsch des Fahrers mit mehr Tiefe; große Abwechslung |
+| 55 | Fahrmodus | ✅ Nur im 2D-Modus; in der Simulation nur Briefing, 1:1, Strategie, Schlüsselmomente |
+| 56 | Flügelstufe | ✅ Entscheidung des Teamchefs nach Rücksprache mit dem Ingenieur |
+| 57 | Entwicklung | ✅ Fahrer und Personal (inkl. Boxencrew) werden durch Training/Leistung besser und bauen ohne Training/bei schlechter Leistung ab |
 | 32 | Gesichter | ✅ Prozedurale Porträts im Stil **„Flat“** mit vielen Merkmalen für alle Personen (R0). Helm-Designs vorerst **nicht** im UI – überall werden Gesichter verwendet. |
 
 ## 19. Offene Fragen ❓

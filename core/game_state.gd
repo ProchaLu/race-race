@@ -32,6 +32,12 @@ var negotiations: Dictionary = {}
 var pending_signings: Array[Dictionary] = []
 ## Person ID -> day until which they refuse new talks.
 var talk_cooldown: Dictionary = {}
+## One-off events for the team mood: {"team_id", "when", "key", "args", "delta"}
+var mood_events: Array = []
+## Team ID -> {career day: mood value}, for the trend.
+var mood_history: Dictionary = {}
+## Shortlist notices already sent: "person_id:kind" -> true
+var shortlist_notes: Dictionary = {}
 ## Number of rounds of the player's series already raced this season.
 var resolved_rounds: int = 0
 
@@ -58,6 +64,9 @@ func clear() -> void:
 	negotiations.clear()
 	pending_signings.clear()
 	talk_cooldown.clear()
+	mood_events.clear()
+	mood_history.clear()
+	shortlist_notes.clear()
 	resolved_rounds = 0
 	player_team_id = &""
 
@@ -145,11 +154,17 @@ func negotiation_with(id: StringName) -> Negotiation:
 
 ## Called by the negotiation screen when talks end.
 func close_negotiation(n: Negotiation) -> void:
+	var own := n.kind == Negotiation.Kind.EXTEND
 	if n.state == Negotiation.State.AGREED:
 		pending_signings.append({"person_id": n.person.id, "terms": n.offer.duplicate(),
 			"sign_day": Calendar.day + randi_range(2, 4), "kind": n.kind})
+		if own:
+			TeamMood.change_morale(n.person, "New contract agreed", 6)
 	elif n.state == Negotiation.State.FAILED:
 		talk_cooldown[n.person.id] = Calendar.day + 30
+		if own:
+			TeamMood.change_morale(n.person, "Contract talks failed", -10)
+			TeamMood.add_event(player_team_id, "Contract talks with %s failed", [n.person.full_name()], -3)
 	negotiations.erase(n.person.id)
 
 

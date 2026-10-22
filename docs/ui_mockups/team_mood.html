@@ -1,0 +1,200 @@
+<title>Team Mood Mockups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: chrome (variant switch) on top, then a miniature game shell
+   (sidebar, top bar, content) showing where the team mood appears. */
+:root {
+  --chrome-bg: #f3f4f6; --chrome-fg: #1b2230; --chrome-muted: #5d6676; --chrome-line: #d6dae1;
+  --chrome-btn: #ffffff; --chrome-active: #1b2230; --chrome-active-fg: #ffffff;
+  --bg: #0e1216; --panel: #141a20; --panel-2: #10151a; --sidebar: #0b0e12; --text: #dfe5ea; --muted: #7f8b96;
+  --line: #232c35; --line-strong: #34404b; --zebra: #171e25; --hover: #1d2731; --amber: #f2a93b; --team: #e8471c;
+  --lv1: #ef5b5b; --lv2: #e0a13a; --lv3: #8fc46a; --lv4: #4fd1a5; --calm: #9aa7b4;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36;
+    --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36;
+  --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--chrome-bg); color: var(--chrome-fg); font-family: var(--f-body); font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.lab { max-width: 1440px; margin: 0 auto; display: grid; gap: 12px; }
+.lab-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.lab-head h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.lab-head p { margin: 4px 0 0; color: var(--chrome-muted); font-size: .875rem; max-width: 76ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.controls button { font: inherit; font-size: .875rem; padding: 8px 14px; border-radius: 4px; cursor: pointer; border: 1px solid var(--chrome-line); background: var(--chrome-btn); color: var(--chrome-fg); }
+.controls button[aria-pressed="true"] { background: var(--chrome-active); color: var(--chrome-active-fg); border-color: var(--chrome-active); }
+.controls button:focus-visible { outline: 2px solid var(--team); outline-offset: 2px; }
+.note { margin: 0; font-size: .875rem; color: var(--chrome-muted); max-width: 110ch; }
+.note b { color: var(--chrome-fg); }
+
+/* ---------- Mini game shell ---------- */
+.shell-wrap { overflow-x: auto; border-radius: 2px; }
+.shell { display: grid; grid-template-columns: 220px 1fr; min-width: 1100px; background: var(--bg); color: var(--text); min-height: 640px; }
+.side { background: var(--sidebar); border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+.side .team { padding: 16px 18px; border-left: 4px solid var(--team); }
+.side .team b { display: block; font-family: var(--f-display); font-size: 1.3rem; text-transform: uppercase; }
+.side .team span { color: var(--muted); font-size: .75rem; }
+.nav { display: grid; gap: 2px; padding-top: 6px; border-top: 1px solid var(--line); }
+.nav div { padding: 8px 18px; color: var(--muted); font-size: .9rem; }
+.nav div.on { background: var(--hover); color: var(--amber); border-left: 3px solid var(--amber); }
+.main { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+.top { display: flex; align-items: center; gap: 20px; padding: 10px 20px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.top .title { flex: 1; font-family: var(--f-display); font-size: 1.6rem; font-weight: 700; text-transform: uppercase; }
+.info { display: flex; align-items: center; gap: 10px; }
+.info .ico { width: 20px; height: 20px; border: 1.5px solid var(--muted); border-radius: 50%; opacity: .7; }
+.info small { display: block; font-family: var(--f-display); font-weight: 600; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.info b { font-weight: 600; font-size: 1.05rem; white-space: nowrap; }
+.sep { width: 1px; height: 34px; background: var(--line); }
+.btn { font-family: var(--f-display); font-weight: 700; font-size: 1.05rem; padding: 8px 18px; background: var(--amber); color: #0e1216; letter-spacing: .05em; }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line-strong); font-family: var(--f-body); font-weight: 500; font-size: .85rem; }
+.content { padding: 18px; display: grid; gap: 14px; align-content: start; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding-bottom: 10px; min-width: 0; }
+.card > h3 { margin: 0 0 4px; padding: 8px 16px 7px; border-bottom: 1px solid var(--line); font-family: var(--f-display); font-weight: 700; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); display: flex; justify-content: space-between; gap: 10px; }
+.card > h3 small { font-family: var(--f-body); font-weight: 400; font-size: .75rem; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.row { display: grid; gap: 14px; }
+.fact { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 5px 16px; }
+.fact:nth-child(even of .fact) { background: var(--zebra); }
+.fact .k { color: var(--muted); }
+.fact .v { font-family: var(--f-mono); font-weight: 600; }
+.placeholder { color: var(--muted); padding: 10px 16px; font-size: .85rem; }
+
+.good { color: var(--lv3); } .great { color: var(--lv4); } .warn { color: var(--lv2); } .bad { color: var(--lv1); } .calm { color: var(--calm); }
+.meter { height: 5px; background: var(--line); position: relative; }
+.meter i { position: absolute; inset: 0 auto 0 0; background: var(--lv3); }
+
+/* Tooltip (shown open as an example) */
+.tip { position: absolute; z-index: 5; width: 320px; background: #0a0d10; border: 1px solid var(--amber); padding: 10px 12px; font-size: .8125rem; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.tip h4 { margin: 0 0 6px; font-size: .85rem; }
+.tip ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.tip li { display: flex; justify-content: space-between; gap: 16px; }
+.tip li span:last-child { font-family: var(--f-mono); font-weight: 600; }
+.tip p { margin: 6px 0 0; color: var(--muted); font-size: .75rem; }
+.anchor { position: relative; }
+
+/* Variant B: sidebar module */
+.mood-side { margin: 12px 14px 4px; padding: 10px 12px; border: 1px solid var(--line); background: var(--panel-2); display: grid; gap: 6px; position: relative; }
+.mood-side .k { font-family: var(--f-display); font-weight: 600; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.mood-side .v { display: flex; justify-content: space-between; align-items: baseline; }
+.mood-side .v b { font-family: var(--f-display); font-size: 1.5rem; font-weight: 700; }
+.mood-side .v span { font-family: var(--f-mono); font-size: .8rem; }
+.steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+.steps i { height: 6px; background: var(--line-strong); }
+.steps i.on { background: var(--lv3); }
+.mood-side small { color: var(--muted); font-size: .72rem; }
+
+/* Variant C: gauge card */
+.gauge-card { display: grid; grid-template-columns: 260px 1fr; gap: 6px; align-items: center; }
+.gauge { padding: 8px 16px; text-align: center; }
+.gauge svg { width: 220px; height: auto; display: block; margin: 0 auto; }
+.gauge b { display: block; font-family: var(--f-display); font-size: 1.8rem; margin-top: -40px; }
+.gauge span { color: var(--muted); font-size: .8rem; }
+.factors { display: grid; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border: 1px solid var(--line-strong); background: var(--panel-2); font-size: .85rem; white-space: nowrap; }
+.chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--lv3); display: inline-block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .8rem; color: var(--muted); padding: 8px 16px; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+.strip { display: grid; grid-template-columns: repeat(7, 1fr); }
+.strip > div { padding: 10px 14px; border-right: 1px solid var(--line); display: grid; gap: 4px; }
+.strip > div:last-child { border-right: none; }
+.strip small { font-family: var(--f-display); font-weight: 600; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.strip b { font-weight: 600; }
+.strip .first { background: color-mix(in srgb, var(--lv3) 8%, var(--panel)); }
+</style>
+
+<div class="lab">
+  <div class="lab-head">
+    <div>
+      <h1>Team mood: where and how to show it</h1>
+      <p>One value from 0 to 100 in five steps (Crisis, Tense, Calm, Good, Euphoria). The tooltip with the breakdown is shown open as an example; in the game it appears on hover.</p>
+    </div>
+    <div class="controls" role="group" aria-label="Variant">
+      <button data-v="a" aria-pressed="true">A · Top bar</button>
+      <button data-v="b" aria-pressed="false">B · Sidebar</button>
+      <button data-v="c" aria-pressed="false">C · Home card + chip</button>
+    </div>
+  </div>
+  <p class="note" id="note"></p>
+  <div class="shell-wrap"><div class="shell" id="shell"></div></div>
+</div>
+
+<script>
+const MOOD = { value: 66, label: "Good", trend: "+4 this week" };
+const FACTORS = [
+  ["Neutral base", "50", ""], ["Driver morale (avg 61)", "+6", "good"], ["Staff morale (avg 64)", "+7", "good"],
+  ["Recent results (P3, P8)", "+5", "good"], ["Pit crew chief released", "−4", "bad"], ["Relationship with you", "+2", "good"]
+];
+const LEVELS = [["Crisis", "0–19", "var(--lv1)"], ["Tense", "20–39", "var(--lv2)"], ["Calm", "40–59", "var(--calm)"], ["Good", "60–79", "var(--lv3)"], ["Euphoria", "80–100", "var(--lv4)"]];
+const NOTES = {
+  a: "<b>A · Top bar.</b> A fourth info block next to budget and date, with a small meter. Always visible on every screen, takes no extra space.",
+  b: "<b>B · Sidebar.</b> A small module under the team name: big word, five-step bar and the weekly trend. Visible everywhere, feels like part of the team identity.",
+  c: "<b>C · Home card + chip.</b> Full explanation on the home screen (gauge and all factors), plus a small coloured chip in the top bar and a first tile in the staff strip."
+};
+const tip = (style) => `<div class="tip" style="${style}"><h4>Team mood: ${MOOD.label} (${MOOD.value} / 100)</h4><ul>${FACTORS.map(f => `<li><span>${f[0]}</span><span class="${f[2]}">${f[1]}</span></li>`).join("")}</ul><p>Affects productivity of all departments (up to ±5 %), mistakes in the pit lane and how easily rivals can poach your staff.</p></div>`;
+const legend = `<div class="legend">${LEVELS.map(l => `<span style="--c:${l[2]}">${l[0]} ${l[1]}</span>`).join("")}</div>`;
+
+function sidebar(extra = "") {
+  return `<aside class="side"><div class="team"><b>Vortex Racing</b><span>Formula Apex</span></div>${extra}
+    <div class="nav">${["Home", "Inbox (3)", "Calendar", "Drivers", "Staff", "Car development", "Engine", "Headquarters", "Finances", "Sponsors", "Scouting", "Academy", "Transfer market", "Standings", "Owner"].map((n, i) => `<div class="${i === 0 ? "on" : ""}">${n}</div>`).join("")}</div></aside>`;
+}
+function topbar(extraBlock = "") {
+  return `<div class="top"><div class="title">Home</div>
+    <div class="info"><div class="ico"></div><div><small>Next race</small><b>R14 · Monteverde</b></div></div>
+    <div class="sep"></div><div class="info"><div class="ico"></div><div><small>Budget</small><b class="good">$180M</b></div></div>
+    <div class="sep"></div>${extraBlock}<div class="info"><div class="ico"></div><div><small>Date</small><b>Mon 27 Jul 2026</b></div></div>
+    <div class="sep"></div><div class="btn ghost">+1 day</div><div class="btn">CONTINUE ▷</div></div>`;
+}
+const homeCards = `<div class="row" style="grid-template-columns:1.4fr 1fr">
+  <div class="card"><h3>Next race</h3><div class="fact"><span class="k">Round</span><span class="v">14 of 24</span></div><div class="fact"><span class="k">Event</span><span class="v">Monteverde Grand Prix</span></div><div class="fact"><span class="k">Date</span><span class="v">Wed 5 Aug 2026</span></div></div>
+  <div class="card"><h3>Drivers' championship <small>Top 10</small></h3><div class="placeholder">…</div></div></div>`;
+
+function variantA() {
+  const block = `<div class="info anchor"><div class="ico" style="border-color:var(--lv3)"></div><div><small>Team mood</small><b class="good">${MOOD.label} · ${MOOD.value}</b><div class="meter" style="margin-top:3px"><i style="width:${MOOD.value}%"></i></div></div>${tip("top:58px;left:-120px")}</div><div class="sep"></div>`;
+  return sidebar() + `<div class="main">${topbar(block)}<div class="content" style="padding-top:150px">${homeCards}<div class="card"><h3>Mood levels</h3>${legend}</div></div></div>`;
+}
+function variantB() {
+  const module = `<div class="mood-side anchor"><span class="k">Team mood</span><div class="v"><b class="good">${MOOD.label}</b><span class="good">▲ ${MOOD.value}</span></div>
+    <div class="steps"><i class="on" style="background:var(--lv1)"></i><i class="on" style="background:var(--lv2)"></i><i class="on" style="background:var(--calm)"></i><i class="on"></i><i></i></div>
+    <small>${MOOD.trend}</small>${tip("top:0;left:212px")}</div>`;
+  return sidebar(module) + `<div class="main">${topbar()}<div class="content" style="padding-left:360px">${homeCards}<div class="card"><h3>Mood levels</h3>${legend}</div></div></div>`;
+}
+function variantC() {
+  const chip = `<div class="chip"><i></i>Mood: ${MOOD.label}</div><div class="sep"></div>`;
+  // Semicircle gauge: 180° arc split into five coloured steps, needle at the value.
+  const cx = 110, cy = 100, r = 80;
+  const arc = (a0, a1) => { const p = a => [cx + r * Math.cos(Math.PI * (1 - a)), cy - r * Math.sin(Math.PI * (1 - a))]; const [x0, y0] = p(a0), [x1, y1] = p(a1); return `M${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)}`; };
+  const segs = LEVELS.map((l, i) => `<path d="${arc(i / 5 + .006, (i + 1) / 5 - .006)}" stroke="${l[2]}" stroke-width="14" fill="none" opacity="${i === 3 ? 1 : .35}"/>`).join("");
+  const a = MOOD.value / 100, nx = cx + (r - 22) * Math.cos(Math.PI * (1 - a)), ny = cy - (r - 22) * Math.sin(Math.PI * (1 - a));
+  const svg = `<svg viewBox="0 0 220 112" role="img" aria-label="Team mood gauge at ${MOOD.value} of 100">${segs}<line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="var(--text)" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="5" fill="var(--text)"/></svg>`;
+  const card = `<div class="card"><h3>Team mood <small>${MOOD.trend}</small></h3><div class="gauge-card">
+    <div class="gauge">${svg}<b class="good">${MOOD.label}</b><span>${MOOD.value} / 100</span></div>
+    <div class="factors">${FACTORS.map(f => `<div class="fact"><span class="k">${f[0]}</span><span class="v ${f[2]}">${f[1]}</span></div>`).join("")}</div></div>${legend}</div>`;
+  const strip = `<div class="card" style="padding:0"><div class="strip"><div class="first"><small>Team mood</small><b class="good">${MOOD.label} · ${MOOD.value}</b></div>${["Technical", "Engine", "Production", "Race operations", "Youth", "Driver care"].map(d => `<div><small>${d}</small><b>Key people: ${d === "Technical" ? 4 : d === "Race operations" ? 5 : d === "Youth" || d === "Driver care" ? 2 : 1}</b></div>`).join("")}</div></div>`;
+  return sidebar() + `<div class="main">${topbar(chip)}<div class="content">${card}${homeCards}<div class="placeholder" style="padding:0">Staff screen, top strip:</div>${strip}</div></div>`;
+}
+
+const RENDER = { a: variantA, b: variantB, c: variantC };
+function show(v) {
+  document.getElementById("shell").innerHTML = RENDER[v]();
+  document.getElementById("note").innerHTML = NOTES[v];
+  document.querySelectorAll("[data-v]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+}
+document.querySelectorAll("[data-v]").forEach(b => b.addEventListener("click", () => show(b.dataset.v)));
+show("a");
+</script>

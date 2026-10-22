@@ -48,6 +48,9 @@ var _date_label: Label
 var _budget_label: Label
 var _next_race_label: Label
 var _countdown_label: Label
+var _mood_block: HoverRow
+var _mood_label: Label
+var _mood_meter: Meter
 var _day_button: Button
 var _continue_button: Button
 
@@ -110,6 +113,9 @@ func navigate(id: StringName, args: Dictionary = {}, add_history: bool = true) -
 	_current_entry = {"id": id, "args": args}
 	if _current:
 		_current.queue_free()
+	# Values like the team mood can change through actions on any screen.
+	if is_node_ready():
+		_refresh_top_bar()
 
 	var script: GDScript = SCREENS.get(id, PlaceholderScreen)
 	_current = script.new()
@@ -267,7 +273,7 @@ func _build_top_bar() -> Control:
 	var bar := PanelContainer.new()
 	bar.theme_type_variation = &"TopBar"
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 28)
+	row.add_theme_constant_override("separation", 16)
 	bar.add_child(row)
 
 	_back_button = Button.new()
@@ -281,16 +287,19 @@ func _build_top_bar() -> Control:
 	_title_label.theme_type_variation = &"HeadingLabel"
 	_title_label.uppercase = true
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Long titles are cut instead of pushing the whole layout wider.
+	_title_label.clip_text = true
+	_title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_title_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_title_label)
 
 	# Fixed widths so the bar never shifts when values change.
-	_next_race_label = _add_top_info(row, "Next race", "trophy", 230)
+	_next_race_label = _add_top_info(row, "Next race", "trophy", 200)
 	_countdown_label = Label.new()
 	_countdown_label.theme_type_variation = &"StrongLabel"
 	_countdown_label.add_theme_color_override("font_color", UIStyle.ACCENT)
 	_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_countdown_label.custom_minimum_size.x = 100
+	_countdown_label.custom_minimum_size.x = 90
 	var countdown := PanelContainer.new()
 	countdown.add_theme_stylebox_override("panel",
 		UIStyle.box(Color(UIStyle.ACCENT, 0.12), Color(UIStyle.ACCENT, 0.5), 1, 10, 4))
@@ -300,7 +309,9 @@ func _build_top_bar() -> Control:
 	row.add_child(_top_separator())
 	_budget_label = _add_top_info(row, "Budget", "wallet", 110)
 	row.add_child(_top_separator())
-	_date_label = _add_top_info(row, "Date", "calendar", 170)
+	row.add_child(_build_mood_block())
+	row.add_child(_top_separator())
+	_date_label = _add_top_info(row, "Date", "calendar", 160)
 	row.add_child(_top_separator())
 
 	var time_controls := HBoxContainer.new()
@@ -361,6 +372,42 @@ func _add_top_info(row: HBoxContainer, caption: String, icon_name: String, value
 	return value
 
 
+## Team mood block (decision 42): level and value, a small meter and the
+## full breakdown as tooltip. Fixed width like the other blocks.
+func _build_mood_block() -> Control:
+	_mood_block = HoverRow.new(&"TopInfo", &"TopInfoHover")
+	_mood_block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var block := HBoxContainer.new()
+	block.add_theme_constant_override("separation", 10)
+	var icon := TextureRect.new()
+	icon.texture = UIStyle.icon("users")
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.custom_minimum_size = Vector2(22, 22)
+	icon.modulate = UIStyle.MUTED
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	block.add_child(icon)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", -2)
+	column.custom_minimum_size.x = 120
+	var caption := Label.new()
+	caption.text = "Team mood"
+	caption.uppercase = true
+	caption.theme_type_variation = &"SectionLabel"
+	caption.add_theme_font_size_override("font_size", 13)
+	column.add_child(caption)
+	_mood_label = Label.new()
+	_mood_label.theme_type_variation = &"StrongLabel"
+	_mood_label.add_theme_font_size_override("font_size", 18)
+	_mood_label.clip_text = true
+	column.add_child(_mood_label)
+	_mood_meter = Meter.new(0, UIStyle.OK, 4)
+	column.add_child(_mood_meter)
+	block.add_child(column)
+	_mood_block.add_child(block)
+	return _mood_block
+
+
 func _top_separator() -> VSeparator:
 	var line := VSeparator.new()
 	line.custom_minimum_size.y = 36
@@ -374,6 +421,12 @@ func _refresh_top_bar() -> void:
 	_budget_label.text = UIStyle.money(budget)
 	_budget_label.add_theme_color_override("font_color", UIStyle.money_color(budget))
 	_continue_button.text = tr("Continue").to_upper()
+	var mood := TeamMood.value(GameState.player_team_id)
+	var mood_color := UIStyle.mood_color(mood)
+	_mood_label.text = "%s · %d" % [tr(TeamMood.level_name(mood)), mood]
+	_mood_label.add_theme_color_override("font_color", mood_color)
+	_mood_meter.set_value(mood, mood_color)
+	_mood_block.set_breakdown(TeamMood.breakdown(GameState.player_team_id))
 	var next := GameState.next_round_index()
 	if next == -1:
 		_next_race_label.text = tr("Season finished")
