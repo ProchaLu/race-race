@@ -4,6 +4,87 @@ class_name ContractLogic
 extends RefCounted
 
 const RACE_SEATS := 2
+const RESERVE_SEATS := 1
+
+
+# --- Positions -----------------------------------------------------------------
+# Every position has a fixed number of places: two race seats, one reserve
+# driver, two race engineers, one of every other staff role. If it is full,
+# someone has to make room before a new person can sign.
+
+## Whether a driver contract with this role takes a reserve place.
+static func is_reserve_role(driver_role: int) -> bool:
+	return driver_role == ContractData.DriverRole.RESERVE
+
+
+## People who hold the position `person` would take (without `person`).
+static func position_holders(team: TeamData, person: PersonData, driver_role: int = -1) -> Array[PersonData]:
+	var out: Array[PersonData] = []
+	if person is DriverData:
+		var ids: Array[StringName] = team.reserve_driver_ids if is_reserve_role(driver_role) else team.driver_ids
+		for id in ids:
+			if id != person.id and GameState.drivers.has(id):
+				out.append(GameState.drivers[id])
+	else:
+		for s in GameState.staff_of_team(team.id):
+			if s != person and s.role == (person as StaffData).role:
+				out.append(s)
+	return out
+
+
+static func position_capacity(person: PersonData, driver_role: int = -1) -> int:
+	if person is DriverData:
+		return RESERVE_SEATS if is_reserve_role(driver_role) else RACE_SEATS
+	return StaffRoles.TEAM_POSITIONS.count((person as StaffData).role)
+
+
+static func position_full(team: TeamData, person: PersonData, driver_role: int = -1) -> bool:
+	return position_holders(team, person, driver_role).size() >= position_capacity(person, driver_role)
+
+
+## Ways to free the position, for the player to choose from:
+## [{"id": holder id, "action": "release" | "reserve", "cost": severance}]
+## "reserve" moves a race driver to the free reserve place instead.
+static func room_options(team: TeamData, person: PersonData, driver_role: int = -1) -> Array:
+	if not position_full(team, person, driver_role):
+		return []
+	var reserve_free := team.reserve_driver_ids.filter(func(id): return id != person.id).size() < RESERVE_SEATS
+	var out := []
+	for holder in position_holders(team, person, driver_role):
+		if person is DriverData and not is_reserve_role(driver_role) and reserve_free:
+			out.append({"id": holder.id, "action": "reserve", "cost": 0})
+		out.append({"id": holder.id, "action": "release", "cost": severance(holder)})
+	return out
+
+
+## Frees the position before a signing. choice: one of room_options();
+## empty = the weakest holder is released (AI teams, fallback).
+## Returns {"person": who made room, "action": ...} or {} if nothing was needed.
+static func make_room(team: TeamData, person: PersonData, driver_role: int, choice: Dictionary = {}) -> Dictionary:
+	if not position_full(team, person, driver_role):
+		return {}
+	var holders := position_holders(team, person, driver_role)
+	var holder: PersonData = null
+	var action := "release"
+	if not choice.is_empty():
+		var chosen := GameState.find_person(choice.id)
+		if chosen and chosen in holders:
+			holder = chosen
+			action = choice.action
+	if not holder:
+		holders.sort_custom(func(a: PersonData, b: PersonData): return a.overall() < b.overall())
+		holder = holders[0]
+	if action == "reserve" and team.reserve_driver_ids.size() < RESERVE_SEATS:
+		team.driver_ids.erase(holder.id)
+		team.reserve_driver_ids.append(holder.id)
+		var c := GameState.contract_of(holder.id)
+		if c:
+			c.role = ContractData.DriverRole.RESERVE
+		TeamMood.change_morale(holder, "Moved to reserve driver", -15)
+	else:
+		action = "release"
+		release(holder)
+	return {"person": holder, "action": action}
 
 
 # --- Values ------------------------------------------------------------------
@@ -67,7 +148,10 @@ static func payroll_per_month(team_id: StringName) -> int:
 # --- Changes -----------------------------------------------------------------
 
 ## Signs a person to a team with the agreed terms (new or extended contract).
-static func sign(person: PersonData, team: TeamData, terms: Dictionary) -> void:
+## If the position is full, terms.make_room (one of room_options()) says who
+## makes room; without it the weakest holder is released.
+## Returns make_room()'s result ({} if nobody had to leave).
+static func sign(person: PersonData, team: TeamData, terms: Dictionary) -> Dictionary:
 	var c := GameState.contract_of(person.id)
 	var old_team_id := person.team_id
 	if c and c.team_id != team.id:
@@ -95,14 +179,20 @@ static func sign(person: PersonData, team: TeamData, terms: Dictionary) -> void:
 		if old_team and old_team != team:
 			old_team.budget += transfer_fee
 
-	if old_team_id != team.id:
+	var role: int = c.role if person is DriverData else -1
+	var moves_position := old_team_id != team.id
+	if person is DriverData and not moves_position:
+		# Own driver changing between race seat and reserve place.
+		moves_position = is_reserve_role(role) != team.reserve_driver_ids.has(person.id)
+	var made_room := {}
+	if moves_position:
 		_remove_from_team(person)
+		made_room = make_room(team, person, role, terms.get("make_room", {}))
 		person.team_id = team.id
 		if person is DriverData:
 			var d := person as DriverData
 			d.series_id = team.series_id
-			if c.role == ContractData.DriverRole.RESERVE or team.driver_ids.size() >= RACE_SEATS:
-				c.role = ContractData.DriverRole.RESERVE
+			if is_reserve_role(role):
 				team.reserve_driver_ids.append(person.id)
 			else:
 				team.driver_ids.append(person.id)
@@ -110,6 +200,7 @@ static func sign(person: PersonData, team: TeamData, terms: Dictionary) -> void:
 			team.staff_ids.append(person.id)
 		GameState.knowledge[person.id] = 100
 	EventBus.contract_signed.emit(person.id, team.id)
+	return made_room
 
 
 ## Ends a contract early: pays severance, person becomes a free agent.

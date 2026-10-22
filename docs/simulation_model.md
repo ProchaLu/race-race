@@ -353,9 +353,24 @@ Ausgabe: Tabelle + Verteilungen (Siege, Positionen, Stopps, Überholmanöver, SC
 | `race_engine.gd` | Rennen Sektor für Sektor in Zeitreihenfolge (Verkehr, Überholen, Kontakte, SC/VSC/rote Flagge, Stopps) |
 | `weekend_setup.gd` | Autos aus der Spielwelt, Training, Wochenend-Form |
 
-**Ergänzt beim Testen:** Wochenend-Form (Tagesform des Fahrers + „Auto passt zu den Bedingungen“ pro Team), sonst waren Rennen zu vorhersehbar. Auf Geraden zählen auch Abtrieb/mech. Grip (Kurvenausgang). Überholzonen nur auf Geraden ab ~300 m. Reifentemperatur milder, Stratege rechnet mit Betriebstemperatur. Härtere Klippe + Reifenschaden weit über der Klippe. Höherer Reifenabbau (Soft 0,11 / Medium 0,075 / Hard 0,05 s pro Runde), damit 2 Stopps sich lohnen können. Spritsparen 1–3 s pro kg; knapp tanken nur mit gutem Spritsparer. Safety-Car-Entscheidung einmal pro Phase. Stratege reagiert auf Undercut-Versuche (Cover).
+**Ergänzt beim Testen:** Wochenend-Form (Tagesform des Fahrers + „Auto passt zu den Bedingungen“ pro Team), sonst waren Rennen zu vorhersehbar. Auf Geraden zählen auch Abtrieb/mech. Grip (Kurvenausgang). Überholzonen nur auf Geraden ab ~300 m. Reifentemperatur milder, Stratege rechnet mit Betriebstemperatur. Härtere Klippe + Reifenschaden weit über der Klippe. Höherer Reifenabbau (Soft 0,11 / Medium 0,075 / Hard 0,05 s pro Runde), damit 2 Stopps sich lohnen können. Spritsparen 1–3 s pro kg; knapp tanken nur mit gutem Spritsparer. Safety-Car-Entscheidung einmal pro Phase. Stratege deckt Undercut-Versuche (Cover) nur, wenn die frischen Reifen des Hintermanns den Abstand wirklich aufholen würden. Regen: Regenreifen werden bei voll nasser Strecke rechtzeitig aufgezogen, Regenkönnen zählt auch im Duell. **Eigener Zufallsstrom pro Auto und Runde** – macht „Was wäre wenn“-Vergleiche fair.
 
 **Geschwindigkeit:** ein ganzes Wochenende (Quali + 64 Runden) ≈ 0,9 s.
 
 **Sim-Labor:** `godot --headless --path . res://tools/sim_lab.tscn -- <szenario> [rennen] [strecke]` – Rennen i läuft auf Strecke i % 24 (wie eine Saison). Personal-Szenarien sind **gepaarte Vergleiche**: dieselben Rennen zweimal (alle 60 vs. 95/25), so verschwindet der Zufall.
 Szenarien: `single`, `tracks`, `baseline`, `dominant_top`, `dominant_weak`, `close_field`, `top_driver_midfield`, `staff`, `crew`, `strategist`, `engineers`, `attr`, `rain`, `setup`, `strategy`, `track`, `all`.
+
+**Gemessen (Stand 23.10.2026, 24 Platzhalter-Strecken):**
+
+| Test | Ergebnis |
+|---|---|
+| Dominantes Auto + Top-Fahrer | 76–85 % Siege |
+| Dominantes Auto + schwacher Fahrer | ~10 % (Teamkollege ~23 %) |
+| Enges Feld, bester Fahrer | ~38 % |
+| Elite-Fahrer im Mittelfeldauto | 4–11 % Siege, Ø P7 statt P15 wie der Teamkollege |
+| Boxencrew 95 / 25 vs. 60 | ±44 Punkte pro Saison, Standzeit 2,45 / 3,4 / 4,8 s |
+| Stratege 95 / 25 vs. 60 | ≈ 0 / −30 Punkte pro Saison |
+| Renningenieure 95 / 25 vs. 60 | +150 / −75 Punkte pro Saison (Setup) |
+| Regenkönner (95 vs. 35) | Ø P10 vs. P13, deutlich mehr Siege |
+| Überholmanöver | Ø ~35 pro Rennen, Monaco ~8, Las Vegas ~85 |
+| Safety Car / DNF / Pole→Sieg | ~50–60 % der Rennen / ~5 % / ~55 % |

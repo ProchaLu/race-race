@@ -23,7 +23,7 @@ func init_estimates(car: SimCar) -> void:
 	var skill: float = (car.ops.tyre_model * 0.7 + (eng.tyre_knowledge + eng.data_analysis) * 0.15) / 100.0
 	var sigma: float = SimTuning.ESTIMATE_SIGMA * (1.0 - skill) * (1.0 - SimTuning.TYRE_DATA_SIGMA_CUT * car.tyre_data)
 	for id in SimTuning.COMPOUNDS:
-		car.deg_estimate[id] = maxf(0.4, 1.0 + rng.randfn(0.0, sigma))
+		car.deg_estimate[id] = maxf(0.4, 1.0 + car.rng.randfn(0.0, sigma))
 
 
 ## Each lap on a compound the estimate moves towards the truth.
@@ -228,20 +228,32 @@ func start_fuel(car: SimCar) -> float:
 # --- Decisions in the race -----------------------------------------------------
 
 ## Compound the strategist would fit for the expected wetness.
+## A good weather reader looks up to three laps ahead and calls the stop
+## before the conditions change; a weak one only reacts to what the track
+## is doing now and needs a lap or two longer to make up their mind.
 func weather_call(car: SimCar, now_s: float, laps_left: int) -> StringName:
 	var accuracy := (car.ops.weather_reading * 0.8 + car.ops.calm_decisions * 0.2) / 100.0
-	var ahead := model.reference_lap_s * 2.0
+	var ahead := model.reference_lap_s * lerpf(0.5, 3.0, accuracy)
 	var expected := conditions.weather.forecast_wetness(now_s, ahead, accuracy, hash(car.team.id))
 	var dry_choice := _dry_compound_for(laps_left)
 	var ideal := PaceModel.ideal_compound_for(expected, dry_choice)
-	if ideal == car.compound or (not PaceModel.is_wet_compound(ideal) and not PaceModel.is_wet_compound(car.compound)):
+	var change := not (ideal == car.compound \
+		or (not PaceModel.is_wet_compound(ideal) and not PaceModel.is_wet_compound(car.compound)))
+	if change:
+		# Only change if the gain over the next laps beats the stop.
+		var gain := PaceModel.wet_tyre_penalty(car.compound, expected) - PaceModel.wet_tyre_penalty(ideal, expected)
+		change = gain * model.scale * mini(laps_left, 12) > model.pit_lane_loss_s * 0.8
+	if not change:
+		car.set_meta("weather_doubt", 0)
 		return &""
-	# Only change if the gain over the next laps beats the stop.
-	var gain := PaceModel.wet_tyre_penalty(car.compound, expected) - PaceModel.wet_tyre_penalty(ideal, expected)
-	var horizon := mini(laps_left, 6)
-	if gain * model.scale * horizon > model.pit_lane_loss_s * 0.8:
-		return ideal
-	return &""
+	# Hesitation: the call has to hold for a few laps with a weak reader.
+	var laps_needed := 1 if accuracy > 0.7 else (2 if accuracy > 0.4 else 3)
+	var doubt: int = car.get_meta("weather_doubt", 0) + 1
+	car.set_meta("weather_doubt", doubt)
+	if doubt < laps_needed:
+		return &""
+	car.set_meta("weather_doubt", 0)
+	return ideal
 
 
 func _dry_compound_for(laps_left: int) -> StringName:
@@ -259,16 +271,16 @@ func safety_car_call(car: SimCar, laps_left: int, is_vsc: bool) -> bool:
 	var used_share := car.tyre_wear_laps / life
 	if used_share < 0.15:
 		return false  # just stopped
-	var planned_soon: bool = not car.plan.is_empty() and car.plan[0][0] - car.laps_done <= (10 if not is_vsc else 6)
+	var planned_soon: bool = not car.plan.is_empty() and car.plan[0][0] - car.laps_done <= (7 if not is_vsc else 5)
 	# A fresh set must reach the end, or a later stop must still be planned anyway.
 	var reaches_end := PaceModel.tyre_life(&"hard", conditions) * 1.15 >= laps_left
-	var worth: bool = (planned_soon or used_share > 0.45) and (reaches_end or car.plan.size() > 1)
+	var worth: bool = (planned_soon or used_share > 0.55) and (reaches_end or car.plan.size() > 1)
 	var reading := (car.ops.race_reading * 0.7 + car.ops.calm_decisions * 0.3) / 100.0
 	# Good race readers take every chance; weak ones miss some and
 	# now and then stop when it does not pay off.
 	if worth:
-		return rng.randf() < 0.45 + 0.55 * reading
-	return rng.randf() < 0.12 * (1.0 - reading)
+		return car.rng.randf() < 0.45 + 0.55 * reading
+	return car.rng.randf() < 0.12 * (1.0 - reading)
 
 
 ## Undercut: stuck behind a slower car with the stop window open.
@@ -278,23 +290,48 @@ func undercut_call(car: SimCar) -> bool:
 	var to_stop: int = car.plan[0][0] - car.laps_done
 	if to_stop > 5 or to_stop <= 0:
 		return false
-	return rng.randf() < car.ops.race_reading / 100.0 * 0.5
+	return car.rng.randf() < car.ops.race_reading / 100.0 * 0.5
 
 
-## Cover: the car behind just stopped – answer next lap if our own stop is
-## close anyway. Good race readers react, weak ones lose the position.
-func cover_call(car: SimCar, threat: bool) -> bool:
-	if not threat or car.plan.is_empty():
+## Cover: the car behind just stopped. Answer next lap only if its fresh
+## tyres would really make up the gap – a good race reader judges that
+## well, a weak one reacts to the wrong threats and misses real ones.
+func cover_call(car: SimCar, gap_s: float) -> bool:
+	if is_inf(gap_s) or car.plan.is_empty():
 		return false
 	var to_stop: int = car.plan[0][0] - car.laps_done
 	if to_stop > 7 or to_stop <= 0:
 		return false
+	var next: StringName = car.plan[0][1]
+	var now := PaceModel.compound_info(car.compound)
+	var fresh := PaceModel.compound_info(next)
+	# Estimated time per lap the old tyres lose against a fresh set.
+	var deficit: float = now[0] + now[1] * conditions.tyre_wear_factor * car.deg_estimate[car.compound] \
+		* car.tyre_wear_laps - fresh[0]
+	var gain: float = (2.0 * deficit - fresh[3]) * model.scale
 	var reading := (car.ops.race_reading * 0.7 + car.ops.calm_decisions * 0.3) / 100.0
-	return rng.randf() < 0.1 + 0.85 * reading
+	gain += car.rng.randfn(0.0, 1.0 * (1.0 - reading))
+	return gain > gap_s and car.rng.randf() < 0.3 + 0.7 * reading
+
+
+## Clean air: if the car would rejoin behind a slower car, a good race
+## reader keeps it out a lap longer (twice at most, while the tyres last).
+func clean_air_delay(car: SimCar, in_traffic: bool) -> bool:
+	if not in_traffic:
+		return false
+	var delays: int = car.get_meta("stop_delays", 0)
+	if delays >= 2 or car.tyre_wear_laps > PaceModel.tyre_life(car.compound, conditions) - 1.0:
+		return false
+	var reading := (car.ops.race_reading * 0.7 + car.ops.calm_decisions * 0.3) / 100.0
+	if car.rng.randf() > reading * reading:
+		return false  # weak readers do not see it coming
+	car.set_meta("stop_delays", delays + 1)
+	return true
 
 
 ## Re-plans the remaining race after a stop.
 func replan_after_stop(car: SimCar) -> void:
+	car.set_meta("stop_delays", 0)
 	# On wet tyres the weather calls decide the next stop.
 	if PaceModel.is_wet_compound(car.compound):
 		car.plan = []

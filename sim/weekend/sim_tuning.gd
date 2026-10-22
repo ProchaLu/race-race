@@ -159,10 +159,12 @@ const VSC_TIME_S := [60.0, 150.0]
 
 # --- Weather (9) ---------------------------------------------------------
 const WET_GENERAL_FRAC := 0.12
-const WET_SKILL_S := 0.02
+const WET_SKILL_S := 0.025
 const WET_SKILL_CENTER := 60.0
 const SPRAY_MISTAKE := 1.5
-const SPRAY_PASS := 0.7
+const SPRAY_PASS := 0.85
+## Wet braking zones make passing easier for whoever is faster.
+const WET_PASS_BONUS := 0.6
 
 # --- Qualifying (10.2) ---------------------------------------------------
 const QUALI_FUEL_KG := 5.0

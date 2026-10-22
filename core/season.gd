@@ -84,7 +84,7 @@ func _process_signings() -> void:
 				[person.full_name(), rival.name, person.first_name, rival.name])
 			msg.add_paragraph("A higher signing fee makes it less likely that rivals step in before the signature.")
 		else:
-			ContractLogic.sign(person, GameState.player_team(), pending.terms)
+			var made_room := ContractLogic.sign(person, GameState.player_team(), pending.terms)
 			_record_contract_promise(person, pending.terms)
 			if pending.kind == Negotiation.Kind.SIGN and person.overall() >= 70:
 				TeamMood.add_event(GameState.player_team_id, "New signing: %s", [person.full_name()], 3)
@@ -93,6 +93,12 @@ func _process_signings() -> void:
 			msg.subject_args = [person.full_name()]
 			msg.add_paragraph("%s has signed the contract: %s per year until the end of %d.",
 				[person.full_name(), UIStyle.money(pending.terms.salary), GameState.contract_of(person.id).end_year])
+			if not made_room.is_empty():
+				var left: PersonData = made_room.person
+				if made_room.action == "reserve":
+					msg.add_paragraph("To make room, %s has been moved to the reserve driver role.", [left.full_name()])
+				else:
+					msg.add_paragraph("To make room, %s has been released.", [left.full_name()])
 		GameState.add_message(msg)
 
 

@@ -29,9 +29,11 @@ func run(cars: Array[SimCar]) -> Array[SimCar]:
 	var out_q1 := maxi(0, (n - 10) / 2)
 	var out_q2 := maxi(0, n - 10 - out_q1)
 	var alive: Array[SimCar] = cars.duplicate()
+	var quali_seed := rng.randi()
 	var eliminated: Array[SimCar] = []
 	for car in cars:
 		results[car] = {"out": ""}
+		car.seed_random(quali_seed)
 		car.sector_frac = PaceModel.car_sector_fracs(car, model)
 
 	for si in SESSIONS.size():
@@ -42,6 +44,7 @@ func run(cars: Array[SimCar]) -> Array[SimCar]:
 			for run_index in 2:
 				var minute: float = session[1 + run_index]
 				var last_run := run_index == 1
+				car.reseed_lap(30000 + si * 2 + run_index)
 				best = minf(best, _lap(car, minute, last_run, si))
 			results[car][name] = best
 		alive.sort_custom(func(a: SimCar, b: SimCar): return results[a][name] < results[b][name])
@@ -82,7 +85,7 @@ func _lap(car: SimCar, minute: float, last_run: bool, session_index: int) -> flo
 	t += PaceModel.weather_s(car, model, wet)
 	# The track gets faster through the session.
 	t -= SimTuning.QUALI_EVOLUTION_S * model.scale * (minute / 60.0)
-	t += rng.randfn(0.0, PaceModel.form_sigma_s(car, model) * 0.6)
+	t += car.rng.randfn(0.0, PaceModel.form_sigma_s(car, model) * 0.6)
 
 	car.compound = keep[0]
 	car.tyre_wear_laps = keep[1]
@@ -91,17 +94,17 @@ func _lap(car: SimCar, minute: float, last_run: bool, session_index: int) -> flo
 	car.fuel_kg = keep[4]
 
 	# Traffic: a good strategist finds a clear gap.
-	if rng.randf() < SimTuning.QUALI_TRAFFIC_CHANCE * (1.5 - car.ops.race_reading / 100.0):
-		t += rng.randf_range(0.2, 0.6) * model.scale
+	if car.rng.randf() < SimTuning.QUALI_TRAFFIC_CHANCE * (1.5 - car.ops.race_reading / 100.0):
+		t += car.rng.randf_range(0.2, 0.6) * model.scale
 	# Mistakes: pressure on the last run, more in the wet.
 	var composure := PaceModel.composure_value(car)
 	var chance := SimTuning.QUALI_MISTAKE_CHANCE * lerpf(2.0, 0.5, car.driver.consistency / 100.0) \
 		* (1.0 + 2.0 * wet) * (1.0 + (0.6 * (1.0 - composure / 100.0) if last_run else 0.0)) \
 		* (1.0 + 0.15 * session_index)
-	if rng.randf() < chance:
-		if rng.randf() < 0.35:
+	if car.rng.randf() < chance:
+		if car.rng.randf() < 0.35:
 			if car.is_player:
 				events.append("%s: lap deleted (track limits)" % car.label())
 			return INF
-		t += rng.randf_range(0.3, 1.5) * model.scale
+		t += car.rng.randf_range(0.3, 1.5) * model.scale
 	return t

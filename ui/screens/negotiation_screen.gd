@@ -23,6 +23,9 @@ var _cost_label: Label
 var _budget_label: Label
 var _risk_label: Label
 var _result_label: Label
+## "Who makes room?" when the position is full.
+var _room_box: VBoxContainer
+var _room_key := "-"
 
 
 func setup(args: Dictionary) -> void:
@@ -273,6 +276,10 @@ func _offer_view(terms: Dictionary) -> Control:
 	lines.append(["Release clause", tr("Yes") if terms.release_clause else tr("None")])
 	if terms.promise:
 		lines.append(["Promise", tr("New parts at the same time as the No.1")])
+	var room: Dictionary = terms.get("make_room", {})
+	if not room.is_empty():
+		var who := GameState.find_person(room.id)
+		lines.append(["Makes room", tr("%s to reserve") % who.full_name() if room.action == "reserve" else tr("%s released") % who.full_name()])
 	for line in lines:
 		var k := Label.new()
 		k.text = line[0]
@@ -376,6 +383,10 @@ func _offer_card() -> UICard:
 		var roles := [[ContractData.DriverRole.NUMBER_ONE, "No.1"], [ContractData.DriverRole.EQUAL, "Equal"],
 			[ContractData.DriverRole.NUMBER_TWO, "No.2"], [ContractData.DriverRole.RESERVE, "Reserve"]]
 		_add_choice(card, "Role", &"role", roles)
+	_room_box = VBoxContainer.new()
+	_room_box.add_theme_constant_override("separation", 4)
+	card.add_padded(_room_box, 6, 4)
+	if n.is_driver():
 		_add_slider(card, "Bonus per win", &"win_bonus", 0, maxi(n.demand.win_bonus * 3, 100_000), 10_000, true)
 	_add_slider(card, "Signing fee (one-off)", &"signing_fee", 0, mini(3_000_000, maxi(n.team.budget, 0)), 50_000, true)
 	_add_check(card, "Release clause", &"release_clause")
@@ -475,7 +486,7 @@ func _refresh_all() -> void:
 	_render_points()
 	_refresh_offer()
 	var open := n.state == Negotiation.State.OPEN
-	_send_button.disabled = not open
+	_send_button.disabled = not open or n.needs_room_choice()
 	_end_button.disabled = not open
 	for c in _offer_controls:
 		if c is BaseButton:
@@ -521,8 +532,51 @@ func _refresh_offer() -> void:
 		var risk := roundi(Season.hijack_chance(n.offer) * 100)
 		_risk_label.text = "%d %%" % risk
 		_risk_label.add_theme_color_override("font_color", UIStyle.GOOD if risk <= 3 else UIStyle.WARN)
+	_refresh_room()
+	_send_button.disabled = n.state != Negotiation.State.OPEN or n.needs_room_choice()
 	_refresh_priorities()
 	_refresh_patience()
+
+
+## Rebuilt only when the options change (e.g. a different driver role).
+func _refresh_room() -> void:
+	var options: Array = n.room_options()
+	var key := str(options)
+	if key == _room_key:
+		return
+	_room_key = key
+	for child in _room_box.get_children():
+		child.queue_free()
+	_room_box.visible = not options.is_empty()
+	if options.is_empty():
+		return
+	var title := Label.new()
+	title.text = tr("Who makes room?")
+	title.theme_type_variation = &"MutedLabel"
+	_room_box.add_child(title)
+	var hint := Label.new()
+	hint.text = tr("This position is full. The choice takes effect when the contract is signed.")
+	hint.theme_type_variation = &"MutedLabel"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_color_override("font_color", UIStyle.WARN)
+	_room_box.add_child(hint)
+	var group := ButtonGroup.new()
+	group.allow_unpress = false
+	var chosen: Dictionary = n.offer.get("make_room", {})
+	for option in options:
+		var who := GameState.find_person(option.id)
+		var b := Button.new()
+		b.toggle_mode = true
+		b.button_group = group
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.text = tr("Move %s to reserve driver") % who.full_name() if option.action == "reserve" \
+			else tr("Release %s (severance %s)") % [who.full_name(), UIStyle.money(option.cost)]
+		b.button_pressed = chosen.get("id", &"") == option.id and chosen.get("action", "") == option.action
+		b.pressed.connect(func():
+			n.offer.make_room = option.duplicate()
+			_refresh_offer())
+		_room_box.add_child(b)
+		_offer_controls.append(b)
 
 
 func _refresh_priorities() -> void:

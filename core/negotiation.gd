@@ -43,7 +43,8 @@ var agent: AgentData
 var team: TeamData
 var kind: Kind
 var state := State.OPEN
-## salary, years, role (drivers), win_bonus (drivers), signing_fee, release_clause, promise
+## salary, years, role (drivers), win_bonus (drivers), signing_fee, release_clause, promise,
+## make_room (who leaves the position if it is full, see ContractLogic.room_options)
 var offer := {}
 var demand := {}
 ## Aspect -> importance 1..3
@@ -116,6 +117,7 @@ func _build_first_offer() -> void:
 	offer.signing_fee = 0
 	offer.release_clause = true
 	offer.promise = false
+	offer.make_room = {}
 	# Signing from another team: their release clause must be paid.
 	offer.transfer_fee = current.release_clause if current and not own else 0
 	if is_driver():
@@ -240,6 +242,8 @@ func use_point(id: StringName) -> void:
 func send_offer() -> void:
 	if state != State.OPEN:
 		return
+	if needs_room_choice():
+		return
 	patience = maxi(0, patience - 1)
 	thread.append({"who": "offer", "terms": offer.duplicate()})
 	var sat := satisfaction()
@@ -261,6 +265,28 @@ func send_offer() -> void:
 	else:
 		_say(["Is this a joke? I'll pretend I didn't see that.", "With respect, that offer is an insult to %s."][_rng.randi() % 2])
 	_check_patience()
+
+
+
+## Ways to free the position this offer needs (empty if it is free).
+func room_options() -> Array:
+	var options := ContractLogic.room_options(team, person, offer.get("role", -1))
+	# People already leaving for another signing do not count twice.
+	for p in GameState.pending_signings:
+		var chosen: Dictionary = p.terms.get("make_room", {})
+		if not chosen.is_empty() and p.person_id != person.id:
+			options = options.filter(func(o): return o.id != chosen.id)
+	return options
+
+
+## True while the position is full and nobody was chosen to make room.
+func needs_room_choice() -> bool:
+	var options := room_options()
+	if options.is_empty():
+		offer.make_room = {}
+		return false
+	var chosen: Dictionary = offer.get("make_room", {})
+	return chosen.is_empty() or not options.any(func(o): return o.id == chosen.id and o.action == chosen.action)
 
 
 func walk_away() -> void:

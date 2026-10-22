@@ -38,10 +38,19 @@ func _init(person: PersonData, shell: AppShell, wide: bool = false) -> void:
 		add_child(row)
 	elif person.team_id == &"":
 		add_child(_primary(tr("Start talks")))
+		_position_note()
 	elif contract and contract.release_clause > 0:
 		add_child(_primary(tr("Start talks (clause %s)") % UIStyle.money(contract.release_clause)))
+		_position_note()
 	else:
 		_note(tr("Under contract until %d – no release clause") % contract.end_year if contract else "", UIStyle.MUTED)
+
+
+## Warns early that someone in the team will have to make room.
+func _position_note() -> void:
+	var role := ContractData.DriverRole.EQUAL if _person is DriverData else -1
+	if ContractLogic.position_full(GameState.player_team(), _person, role):
+		_note(tr("Position full: someone has to make room when signing."), UIStyle.WARN)
 
 
 func _button(text: String, icon_name: String, action: Callable) -> Button:

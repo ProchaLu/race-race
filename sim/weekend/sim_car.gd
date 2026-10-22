@@ -11,6 +11,9 @@ var team: TeamData
 var car_data: CarData
 var ops: TeamOps
 var is_player: bool = false
+## Own random numbers for everything that happens to this car, so one
+## car's different decision does not reshuffle the luck of all others.
+var rng := RandomNumberGenerator.new()
 
 # --- Weekend inputs --------------------------------------------------------
 var setup_pct: float = 75.0
@@ -103,6 +106,21 @@ func _init(p_driver: DriverData, p_team: TeamData, p_ops: TeamOps) -> void:
 	team = p_team
 	car_data = p_team.car
 	ops = p_ops
+
+
+## Seeds the car's random numbers from a session seed and the driver.
+func seed_random(session_seed: int) -> void:
+	_seed_base = hash("%d:%s" % [session_seed, driver.id])
+	rng.seed = _seed_base
+
+
+## Fresh random numbers per lap: lap 30 gets the same luck no matter
+## what the car did before (makes "what if" comparisons fair).
+func reseed_lap(lap: int) -> void:
+	rng.seed = hash("%d:%d" % [_seed_base, lap])
+
+
+var _seed_base: int = 0
 
 
 func is_running() -> bool:

@@ -61,6 +61,9 @@ func _init(p_model: TrackModel, p_conditions: RaceConditions, grid: Array[SimCar
 	planner = StrategyPlanner.new(model, conditions, rng)
 	cars = grid
 	_running = grid.duplicate()
+	var car_seed := rng.randi()
+	for car in cars:
+		car.seed_random(car_seed)
 	for s in model.sectors:
 		_records.append([])
 	_setup_start()
@@ -86,14 +89,14 @@ func _setup_start() -> void:
 		car.tyre_temp = SimTuning.NEW_TYRE_TEMP
 		car.fuel_kg = planner.start_fuel(car)
 		var reaction := 0.15 + 0.2 * (1.0 - (car.driver.reactions + car.driver.starts) / 200.0) \
-			+ absf(rng.randfn(0.0, 0.05))
+			+ absf(car.rng.randfn(0.0, 0.05))
 		car.t_next = i * SimTuning.GRID_SLOT_S + reaction
 		car.lap_start_t = 0.0
 		car.position = i + 1
 		_prepare_lap(car, 0.0)
 		# Launch: standing start plus the driver's start skill.
 		var launch := SimTuning.STANDING_START_S + (50.0 - car.driver.starts) / 50.0 * SimTuning.LAUNCH_SKILL_S \
-			+ rng.randfn(0.0, SimTuning.LAUNCH_SIGMA_S)
+			+ car.rng.randfn(0.0, SimTuning.LAUNCH_SIGMA_S)
 		if car.driver.traits.has(&"rocket_start"):
 			launch -= 0.15
 		car.lap_incident.append([0, launch, "start"])
@@ -248,7 +251,7 @@ func _delay(si: int, other: SimCar, new_exit: float) -> void:
 
 
 func _resolve_traffic(car: SimCar, ahead: Array, si: int, sector: TrackModel.Sector,
-		t_in: float, exit: float, gap_in: float) -> float:
+		t_in: float, exit: float, _gap_in: float) -> float:
 	var other: SimCar = ahead[0]
 	var other_exit: float = ahead[2]
 	var min_gap := SimTuning.SC_GAP_S if flag == Flag.SAFETY_CAR else SimTuning.MIN_GAP_S
@@ -288,18 +291,19 @@ func _resolve_traffic(car: SimCar, ahead: Array, si: int, sector: TrackModel.Sec
 		contact *= 2.0
 	if lap1:
 		contact *= 2.0
-	if rng.randf() < contact:
+	if car.rng.randf() < contact:
 		return _contact(car, other, si, exit, other_exit)
 
 	var d := car.driver
 	var o := other.driver
-	var skill := 1.0 + (d.overtaking + d.braking / 2.0 - o.defending - o.racecraft / 2.0) / 150.0
-	var chance := zone * SimTuning.PASS_ZONE_FACTOR * skill \
+	var skill := 1.0 + (d.overtaking + d.braking / 2.0 - o.defending - o.racecraft / 2.0) / 150.0 \
+		+ (d.wet_skill - o.wet_skill) / 150.0 * wet
+	var chance := zone * SimTuning.PASS_ZONE_FACTOR * skill * (1.0 + SimTuning.WET_PASS_BONUS * wet) \
 		/ (1.0 + exp(-(margin - SimTuning.PASS_CENTER_S) / SimTuning.PASS_SIGMOID_S))
 	if spray:
 		chance *= SimTuning.SPRAY_PASS
 	chance = clampf(chance, 0.0, SimTuning.PASS_MAX_CHANCE)
-	if rng.randf() < chance:
+	if car.rng.randf() < chance:
 		var my_exit := minf(exit, other_exit - 0.05)
 		# Only one pass per sector: respect the car ahead of the passed one.
 		var second := _second_record(si, car, other)
@@ -339,33 +343,33 @@ func _contact(car: SimCar, other: SimCar, si: int, exit: float, other_exit: floa
 	_log(car, "contact", "Contact between %s and %s" % [car.label(), other.label()])
 	var victims: Array[SimCar] = [car, other]
 	for victim in victims:
-		_apply_damage(victim, rng.randf())
+		_apply_damage(victim, victim.rng.randf())
 	# A retirement already called the incident; otherwise debris may.
-	if car.is_running() and other.is_running() and rng.randf() < 0.4:
+	if car.is_running() and other.is_running() and car.rng.randf() < 0.4:
 		_incident("debris")
 	if not car.is_running():
 		return exit
 	# Both lose time; the order stays as it was.
 	if other.is_running():
-		_delay(si, other, other_exit + rng.randf_range(0.5, 2.0))
-	return maxf(exit, other.t_next if other.is_running() else exit) + rng.randf_range(0.5, 3.0)
+		_delay(si, other, other_exit + car.rng.randf_range(0.5, 2.0))
+	return maxf(exit, other.t_next if other.is_running() else exit) + car.rng.randf_range(0.5, 3.0)
 
 
 ## Damage from contacts and off-track moments (section 7).
 func _apply_damage(car: SimCar, roll: float) -> void:
 	if roll < 0.45:
-		car.damage["front_wing"] = car.damage.get("front_wing", 0.0) + rng.randf_range(0.1, 0.3) * model.scale
+		car.damage["front_wing"] = car.damage.get("front_wing", 0.0) + car.rng.randf_range(0.1, 0.3) * model.scale
 	elif roll < 0.65:
-		car.damage["front_wing"] = car.damage.get("front_wing", 0.0) + rng.randf_range(1.0, 3.0) * model.scale
+		car.damage["front_wing"] = car.damage.get("front_wing", 0.0) + car.rng.randf_range(1.0, 3.0) * model.scale
 		car.needs_nose = true
 	elif roll < 0.77:
 		car.puncture = true
 		# Limps for the rest of the lap, then pits.
-		car.lap_extra_s += rng.randf_range(15.0, 30.0) * model.scale
-		if rng.randf() < 0.3:
-			car.damage["floor"] = car.damage.get("floor", 0.0) + rng.randf_range(0.1, 0.3) * model.scale
+		car.lap_extra_s += car.rng.randf_range(15.0, 30.0) * model.scale
+		if car.rng.randf() < 0.3:
+			car.damage["floor"] = car.damage.get("floor", 0.0) + car.rng.randf_range(0.1, 0.3) * model.scale
 	elif roll < 0.88:
-		car.damage["floor"] = car.damage.get("floor", 0.0) + rng.randf_range(0.1, 0.5) * model.scale
+		car.damage["floor"] = car.damage.get("floor", 0.0) + car.rng.randf_range(0.1, 0.5) * model.scale
 	elif roll < 0.93:
 		car.damage["rear_wing"] = 0.2 * model.scale
 		car.drs_broken = true
@@ -466,6 +470,7 @@ func _end_of_lap_wear(car: SimCar, t: float) -> void:
 
 ## Lap time extras and random events for the coming lap.
 func _prepare_lap(car: SimCar, t: float) -> void:
+	car.reseed_lap(car.laps_done + 1)
 	var wet := conditions.weather.wetness_at(t)
 	var progress := float(car.laps_done) / conditions.laps
 	var b := {}
@@ -482,7 +487,7 @@ func _prepare_lap(car: SimCar, t: float) -> void:
 	for v in car.damage.values():
 		damage += v
 	b["damage"] = damage
-	b["form"] = rng.randfn(0.0, PaceModel.form_sigma_s(car, model))
+	b["form"] = car.rng.randfn(0.0, PaceModel.form_sigma_s(car, model))
 	# Fuel saving if the fuel will not last.
 	var laps_left := conditions.laps - car.laps_done
 	var projected := car.fuel_kg - PaceModel.fuel_per_lap(model) * laps_left
@@ -505,21 +510,21 @@ func _roll_lap_events(car: SimCar, t: float, wet: float, progress: float, in_due
 	var reliability := car.car_data.reliability
 	var failure := SimTuning.FAILURE_PER_RACE * (1.5 - reliability / 100.0) \
 		* (1.3 - car.ops.reliability_staff / 100.0 * 0.6) / conditions.laps
-	if rng.randf() < failure:
-		if rng.randf() < SimTuning.FAILURE_FATAL_SHARE:
-			car.lap_incident.append([rng.randi() % n, 0.0, "failure", FAILURES[rng.randi() % FAILURES.size()]])
+	if car.rng.randf() < failure:
+		if car.rng.randf() < SimTuning.FAILURE_FATAL_SHARE:
+			car.lap_incident.append([car.rng.randi() % n, 0.0, "failure", FAILURES[car.rng.randi() % FAILURES.size()]])
 		else:
-			var p: Array = PARTIAL_FAILURES[rng.randi() % PARTIAL_FAILURES.size()]
+			var p: Array = PARTIAL_FAILURES[car.rng.randi() % PARTIAL_FAILURES.size()]
 			if not car.damage.has(p[0]):
-				car.damage[p[0]] = rng.randf_range(p[2], p[3]) * model.scale
+				car.damage[p[0]] = car.rng.randf_range(p[2], p[3]) * model.scale
 				_log(car, "failure", "%s: %s" % [car.label(), p[1]])
 	# Tyres far past their cliff can fail.
 	var over_cliff := car.tyre_wear_laps - PaceModel.tyre_life(car.compound, conditions) - SimTuning.PUNCTURE_AFTER_CLIFF_LAPS
-	if over_cliff > 0.0 and not car.puncture and rng.randf() < SimTuning.PUNCTURE_PER_LAP * over_cliff:
+	if over_cliff > 0.0 and not car.puncture and car.rng.randf() < SimTuning.PUNCTURE_PER_LAP * over_cliff:
 		car.puncture = true
-		car.lap_extra_s += rng.randf_range(15.0, 30.0) * model.scale
-		if rng.randf() < 0.3:
-			car.damage["floor"] = car.damage.get("floor", 0.0) + rng.randf_range(0.1, 0.3) * model.scale
+		car.lap_extra_s += car.rng.randf_range(15.0, 30.0) * model.scale
+		if car.rng.randf() < 0.3:
+			car.damage["floor"] = car.damage.get("floor", 0.0) + car.rng.randf_range(0.1, 0.3) * model.scale
 		_log(car, "puncture", "%s: puncture on worn tyres" % car.label())
 	# Driver mistakes.
 	var context := {
@@ -530,18 +535,18 @@ func _roll_lap_events(car: SimCar, t: float, wet: float, progress: float, in_due
 		"stint_share": clampf(car.tyre_laps / 30.0, 0.0, 1.0),
 		"tyre_over_cliff": maxf(0.0, car.tyre_wear_laps - PaceModel.tyre_life(car.compound, conditions)),
 	}
-	if flag == Flag.GREEN and rng.randf() < PaceModel.mistake_chance(car, context):
+	if flag == Flag.GREEN and car.rng.randf() < PaceModel.mistake_chance(car, context):
 		car.mistakes += 1
-		var roll := rng.randf()
-		var sector := rng.randi() % n
+		var roll := car.rng.randf()
+		var sector := car.rng.randi() % n
 		if roll < SimTuning.MISTAKE_SEVERITY[0]:
-			car.lap_incident.append([sector, rng.randf_range(SimTuning.MISTAKE_SMALL[0], SimTuning.MISTAKE_SMALL[1]) * model.scale, "mistake"])
-			if rng.randf() < 0.25:
+			car.lap_incident.append([sector, car.rng.randf_range(SimTuning.MISTAKE_SMALL[0], SimTuning.MISTAKE_SMALL[1]) * model.scale, "mistake"])
+			if car.rng.randf() < 0.25:
 				car.tyre_wear_laps += 1.5  # flat spot
 		elif roll < SimTuning.MISTAKE_SEVERITY[0] + SimTuning.MISTAKE_SEVERITY[1]:
-			car.lap_incident.append([sector, rng.randf_range(SimTuning.MISTAKE_OFF[0], SimTuning.MISTAKE_OFF[1]) * model.scale, "off"])
-			if rng.randf() < 0.25:
-				_apply_damage(car, rng.randf() * 0.65)
+			car.lap_incident.append([sector, car.rng.randf_range(SimTuning.MISTAKE_OFF[0], SimTuning.MISTAKE_OFF[1]) * model.scale, "off"])
+			if car.rng.randf() < 0.25:
+				_apply_damage(car, car.rng.randf() * 0.65)
 			if car.is_player:
 				_log(car, "mistake", "%s goes off track" % car.label())
 		else:
@@ -555,6 +560,8 @@ func _strategy_decisions(car: SimCar) -> void:
 	if car.pit_now or chequered:
 		return
 	var laps_left := conditions.laps - car.laps_done - 1
+	# Own random stream for the strategy calls of this lap.
+	car.reseed_lap(10000 + car.laps_done)
 	if laps_left <= 0:
 		return
 	if car.puncture or car.needs_nose:
@@ -573,16 +580,39 @@ func _strategy_decisions(car: SimCar) -> void:
 			_request_pit(car, planner.compound_for_stop_now(car))
 			return
 	var dry_rule_open := car.used_dry_compounds.size() < 2 and conditions.weather.max_rain() < 0.05
-	if not car.plan.is_empty() and (car.plan[0][0] <= car.laps_done + 1 or planner.undercut_call(car) \
-			or planner.cover_call(car, _undercut_threat(car))):
+	var planned_now: bool = not car.plan.is_empty() and car.plan[0][0] <= car.laps_done + 1
+	if planned_now and planner.clean_air_delay(car, _rejoins_in_traffic(car)):
+		car.plan[0][0] += 1
+		return
+	if planned_now or (not car.plan.is_empty() and (planner.undercut_call(car) \
+			or planner.cover_call(car, _undercut_threat(car)))):
 		_request_pit(car, car.plan[0][1])
 	elif car.plan.is_empty() and dry_rule_open and laps_left <= 2:
 		_request_pit(car, planner.compound_for_stop_now(car))
 
 
-## True if a car that was just behind stopped at the end of the last lap
-## (it is trying to undercut us).
-func _undercut_threat(car: SimCar) -> bool:
+## Would the car come out of the pits right behind a slower car? Estimated
+## from when the others will pass the pit exit and how fast they lap.
+func _rejoins_in_traffic(car: SimCar) -> bool:
+	var stop_s := SimTuning.curve(SimTuning.STOP_CURVE, car.ops.stop_speed)
+	var rejoin: float = time_s + model.sectors.back().reference_s + model.pit_lane_loss_s + stop_s
+	var my_pace: float = (car.lap_times[-1] if not car.lap_times.is_empty() else model.reference_lap_s) - 1.0 * model.scale
+	for other in _running:
+		if other == car or other.laps_done < car.laps_done or other.lap_times.is_empty():
+			continue
+		var pace: float = other.lap_times[-1]
+		var cross := other.lap_start_t
+		while cross < rejoin - 1.5:
+			cross += pace
+		# Just ahead of us at the pit exit and clearly slower than us on fresh tyres.
+		if cross <= rejoin and pace > my_pace + 0.4 * model.scale:
+			return true
+	return false
+
+
+## Gap (s) to a car that was just behind and stopped at the end of the
+## last lap – it is trying to undercut us. INF if there is none.
+func _undercut_threat(car: SimCar) -> float:
 	for other in _running:
 		if other == car or other.stops.is_empty():
 			continue
@@ -590,8 +620,8 @@ func _undercut_threat(car: SimCar) -> bool:
 		if last.lap == car.laps_done and other.lap_positions.size() >= car.laps_done \
 				and other.lap_positions[car.laps_done - 1] in [car.position + 1, car.position + 2] \
 				and last.t - car.lap_start_t < 3.0:
-			return true
-	return false
+			return last.t - car.lap_start_t
+	return INF
 
 
 func _request_pit(car: SimCar, compound: StringName) -> void:
@@ -601,6 +631,7 @@ func _request_pit(car: SimCar, compound: StringName) -> void:
 
 func _pit_stop(car: SimCar) -> void:
 	car.pit_now = false
+	car.reseed_lap(20000 + car.laps_done)
 	var pressure := 1.0
 	var wait := 0.0
 	# Double stack: the teammate stopped moments ago.
@@ -615,7 +646,7 @@ func _pit_stop(car: SimCar) -> void:
 	if PaceModel.is_wet_compound(car.next_compound) or PaceModel.is_wet_compound(car.compound):
 		pressure *= SimTuning.PRESSURE_WET
 	var extra := SimTuning.NOSE_CHANGE_S if car.needs_nose else 0.0
-	var result := PitCrew.stop(car.ops, extra + wait, pressure, rng)
+	var result := PitCrew.stop(car.ops, extra + wait, pressure, car.rng)
 	var lane := model.pit_lane_loss_s
 	if flag == Flag.SAFETY_CAR:
 		lane *= SimTuning.PIT_LOSS_SC
