@@ -1,0 +1,315 @@
+<title>Season Screens Mockups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: chrome (screen tabs) on top, then the dark Pit Wall stage with one
+   screen: standings, home card, calendar or season review. */
+:root {
+  --chrome-bg: #f3f4f6; --chrome-fg: #1b2230; --chrome-muted: #5d6676; --chrome-line: #d6dae1;
+  --chrome-btn: #ffffff; --chrome-active: #1b2230; --chrome-active-fg: #ffffff;
+  --bg: #0e1216; --panel: #141a20; --panel-2: #10151a; --text: #dfe5ea; --muted: #7f8b96;
+  --line: #232c35; --line-strong: #34404b; --zebra: #171e25; --amber: #f2a93b; --team: #e8471c;
+  --lv1: #ef5b5b; --lv2: #e0a13a; --lv3: #8fc46a; --lv4: #4fd1a5; --rain: #5aa9e6;
+  --gold: #f2c94c; --silver: #c9d1d9; --bronze: #d08a4f;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36; --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36; --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--chrome-bg); color: var(--chrome-fg); font-family: var(--f-body); font-size: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+.lab { max-width: 1500px; margin: 0 auto; display: grid; gap: 12px; }
+.lab-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.lab-head h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.lab-head p { margin: 4px 0 0; color: var(--chrome-muted); font-size: .875rem; max-width: 80ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.controls button { font: inherit; font-size: .875rem; padding: 8px 14px; border-radius: 4px; cursor: pointer; border: 1px solid var(--chrome-line); background: var(--chrome-btn); color: var(--chrome-fg); }
+.controls button[aria-pressed="true"] { background: var(--chrome-active); color: var(--chrome-active-fg); border-color: var(--chrome-active); }
+.note { margin: 0; font-size: .875rem; color: var(--chrome-muted); max-width: 120ch; }
+.note b { color: var(--chrome-fg); }
+
+.stage { background: var(--bg); color: var(--text); padding: 16px; border-radius: 2px; display: grid; gap: 14px; overflow-x: auto; }
+.row { display: grid; gap: 14px; min-width: 0; align-items: start; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding-bottom: 10px; min-width: 0; }
+.card > h3 { margin: 0 0 4px; padding: 8px 16px 7px; border-bottom: 1px solid var(--line); font-family: var(--f-display); font-weight: 700; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.card > h3 small { font-family: var(--f-body); font-weight: 400; font-size: .75rem; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.pad { padding: 6px 16px; }
+.muted { color: var(--muted); }
+.good { color: var(--lv4); } .ok { color: var(--lv3); } .warn { color: var(--lv2); } .bad { color: var(--lv1); } .amber { color: var(--amber); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.fact { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 5px 16px; align-items: baseline; }
+.fact:nth-child(even of .fact) { background: var(--zebra); }
+.fact .k { color: var(--muted); }
+.fact .v { font-weight: 600; text-align: right; }
+
+.tabs { display: flex; gap: 0; padding: 0 16px; border-bottom: 1px solid var(--line); }
+.tabs button { font: inherit; font-family: var(--f-display); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 1rem; padding: 10px 18px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--muted); cursor: pointer; }
+.tabs button[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--team); }
+.tabs button:focus-visible, .controls button:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .84rem; }
+th { text-align: left; font-family: var(--f-display); font-weight: 600; letter-spacing: .06em; color: var(--muted); padding: 7px 8px; background: var(--panel-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+th.num, td.num { text-align: right; }
+td { padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tr:nth-child(even) td { background: var(--zebra); }
+tr.mine td { background: color-mix(in srgb, var(--team) 13%, transparent); }
+tr.mine td:first-child { box-shadow: inset 3px 0 0 var(--team); }
+.teambar { display: inline-block; width: 4px; height: 14px; vertical-align: -2px; margin-right: 8px; }
+.pos { font-family: var(--f-display); font-weight: 700; font-size: 1rem; width: 34px; }
+.p1 { color: var(--gold); } .p2 { color: var(--silver); } .p3 { color: var(--bronze); }
+.trend-up { color: var(--lv4); } .trend-down { color: var(--lv1); }
+
+/* Results grid (one cell per round) */
+.grid-cell { display: inline-grid; place-items: center; width: 24px; height: 20px; font-family: var(--f-mono); font-size: .68rem; margin-right: 1px; }
+.c-win { background: var(--gold); color: #0e1216; font-weight: 700; }
+.c-pod { background: color-mix(in srgb, var(--silver) 70%, transparent); color: #0e1216; }
+.c-pts { background: color-mix(in srgb, var(--lv4) 28%, transparent); color: var(--text); }
+.c-out { background: var(--panel-2); color: var(--muted); }
+.c-dnf { background: color-mix(in srgb, var(--lv1) 35%, transparent); color: var(--text); }
+.c-none { background: transparent; color: var(--line-strong); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 8px 16px 0; font-size: .78rem; color: var(--muted); align-items: center; }
+
+/* Points bar for the team table */
+.bar { height: 8px; background: var(--line); position: relative; min-width: 120px; }
+.bar i { position: absolute; inset: 0 auto 0 0; }
+
+/* Home card */
+.home-grid { grid-template-columns: 1fr 1fr 1fr; }
+.mini-row { display: grid; grid-template-columns: 28px 4px 1fr auto auto; gap: 10px; padding: 5px 16px; align-items: center; }
+.mini-row:nth-child(even of .mini-row) { background: var(--zebra); }
+.mini-row.mine, .mini-row.mine:nth-child(even of .mini-row) { background: color-mix(in srgb, var(--team) 13%, transparent); box-shadow: inset 3px 0 0 var(--team); }
+.mini-row .gap { color: var(--muted); font-size: .78rem; min-width: 60px; text-align: right; }
+.mini-row i { height: 16px; }
+.dots { text-align: center; color: var(--line-strong); letter-spacing: .3em; padding: 0 16px; }
+.big { font-family: var(--f-display); font-size: 2.4rem; font-weight: 700; line-height: 1; }
+
+/* Calendar */
+.cal { grid-template-columns: repeat(4, 1fr); }
+.round { background: var(--panel); border: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 6px; position: relative; min-width: 0; }
+.round.done { opacity: .82; }
+.round.next { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber) inset; }
+.round .rn { font-family: var(--f-display); font-weight: 700; color: var(--muted); letter-spacing: .08em; font-size: .8rem; display: flex; justify-content: space-between; }
+.round .nm { font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; text-transform: uppercase; line-height: 1.05; }
+.round .sub { font-size: .78rem; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: .7rem; padding: 1px 6px; border: 1px solid var(--line-strong); color: var(--muted); }
+.chip.rain { color: var(--rain); border-color: color-mix(in srgb, var(--rain) 50%, transparent); }
+.chip.hot { color: var(--lv2); border-color: color-mix(in srgb, var(--lv2) 50%, transparent); }
+.chip.good { color: var(--lv4); border-color: color-mix(in srgb, var(--lv4) 50%, transparent); }
+.chip.bad { color: var(--lv1); border-color: color-mix(in srgb, var(--lv1) 50%, transparent); }
+.res { display: flex; justify-content: space-between; font-size: .8rem; border-top: 1px solid var(--line); padding-top: 6px; }
+.suit { height: 5px; background: var(--line); position: relative; }
+.suit i { position: absolute; inset: 0 auto 0 0; }
+
+/* Review */
+.hero { display: grid; grid-template-columns: repeat(4, 1fr); }
+.hero > div { padding: 14px 16px; border-right: 1px solid var(--line); display: grid; gap: 2px; }
+.hero > div:last-child { border-right: none; }
+.hero small { font-family: var(--f-display); font-weight: 600; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.hero b { font-family: var(--f-display); font-size: 2rem; }
+.hero span { color: var(--muted); font-size: .8rem; }
+.moment { display: grid; grid-template-columns: 60px 1fr; gap: 10px; padding: 6px 16px; font-size: .85rem; }
+.moment:nth-child(even of .moment) { background: var(--zebra); }
+.moment span:first-child { font-family: var(--f-mono); color: var(--muted); font-size: .78rem; }
+.change { display: grid; grid-template-columns: 20px 1fr auto; gap: 8px; padding: 5px 16px; font-size: .84rem; align-items: baseline; }
+.change:nth-child(even of .change) { background: var(--zebra); }
+
+@media (max-width: 1100px) { .stage .row, .cal, .hero { grid-template-columns: 1fr !important; } }
+</style>
+
+<div class="lab">
+  <div class="lab-head">
+    <div>
+      <h1>R2 mockups, part 2: standings, calendar, season review</h1>
+      <p>Sample data from a fictional season after round 14 of 24. Your team: Vortex Racing.</p>
+    </div>
+    <div class="controls" role="group" aria-label="Screen">
+      <button data-s="standings" aria-pressed="true">1 · Standings</button>
+      <button data-s="home" aria-pressed="false">2 · Home cards</button>
+      <button data-s="calendar" aria-pressed="false">3 · Calendar</button>
+      <button data-s="review" aria-pressed="false">4 · Season review</button>
+    </div>
+  </div>
+  <p class="note" id="note"></p>
+  <section class="stage" id="stage"></section>
+</div>
+
+<script>
+// ---------- Sample season ----------
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const R = rng(7);
+const TEAMS = [
+  ["AUR", "Aurum Motorsport", "#ffd23f", 9.0], ["SCA", "Scuderia Corsa Alta", "#dc143c", 8.4], ["MER", "Meridian F1 Team", "#1fb5a8", 7.6],
+  ["VRT", "Vortex Racing", "#e8471c", 7.2], ["NRD", "Nordline GP", "#1e90ff", 6.9], ["BWM", "Brightwater Motorsport", "#4a6cf7", 5.5],
+  ["KES", "Kestrel Racing", "#32cd32", 5.0], ["SOL", "Solace Racing", "#9370db", 4.1], ["HAL", "Halcyon Racing", "#ff69b4", 3.6],
+  ["IRB", "Ironbridge Engineering", "#c0c0c0", 3.2], ["TUN", "Tundra Performance", "#9fd3f0", 2.5]];
+const DRIVERS = [["Duarte", "AUR", 1.2], ["Morita", "AUR", 0.4], ["Ferraro", "SCA", 0.9], ["Lemaire", "SCA", 0.3], ["Alstad", "MER", 0.8], ["Achterberg", "MER", 0.1],
+  ["Hale", "VRT", 0.9], ["Brandt", "VRT", 0.0], ["Okafor", "NRD", 0.6], ["Lindqvist", "NRD", -0.2], ["Reyes", "BWM", 0.3], ["Kessler", "BWM", 0.0],
+  ["Ferrand", "KES", 0.4], ["Vidal", "KES", -0.1], ["Price", "SOL", 0.5], ["Saari", "SOL", -0.3], ["Menon", "HAL", 0.1], ["Arrieta", "HAL", -0.2],
+  ["Calder", "IRB", 0.2], ["de Wit", "IRB", -0.1], ["Koskinen", "TUN", 0.0], ["Whitlock", "TUN", -0.4]];
+const CAL = [["Port Aurel", "AE", "Bahrain"], ["Sandhaven", "SA", "Jeddah"], ["Kingsbridge", "AU", "Melbourne"], ["Kaigan", "JP", "Suzuka"], ["Linhai", "CN", "Shanghai"], ["Coral Coast", "US", "Miami"],
+  ["Sierra Alta", "ES", "Barcelona"], ["Port Monique", "MC", "Monaco"], ["Valdera", "IT", "Imola"], ["Kessling", "BE", "Spa"], ["Sorrento Ring", "IT", "Monza"], ["Harrow Park", "GB", "Silverstone"],
+  ["Oakmere", "US", "Las Vegas"], ["Monteverde", "MX", "Mexico"], ["Alpenring", "AT", "Spielberg"], ["Duinen", "NL", "Zandvoort"], ["Pusztavár", "HU", "Hungaroring"], ["Lakeshore", "CA", "Montreal"],
+  ["Marina Kota", "SG", "Singapore"], ["Caspian City", "AZ", "Baku"], ["Lone Star", "US", "Austin"], ["Rio Celeste", "BR", "Interlagos"], ["Desert Mirage", "QA", "Qatar"], ["Al Noor", "AE", "Abu Dhabi"]];
+const DONE = 13, POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+const teamOf = id => TEAMS.find(t => t[0] === id);
+// Results: per round, finishing order by strength + luck; some DNFs.
+const results = DRIVERS.map(() => []);
+for (let r = 0; r < DONE; r++) {
+  const score = DRIVERS.map(([n, t, d], i) => ({ i, s: teamOf(t)[3] + d + R() * 3.2, dnf: R() < 0.05 }));
+  const order = score.filter(x => !x.dnf).sort((a, b) => b.s - a.s);
+  order.forEach((x, k) => results[x.i][r] = k + 1);
+  score.filter(x => x.dnf).forEach(x => results[x.i][r] = 0);
+}
+const drv = DRIVERS.map(([n, t], i) => {
+  const res = results[i];
+  return { n, t, res, pts: res.reduce((a, p) => a + (p > 0 && p <= 10 ? POINTS[p - 1] : 0), 0), wins: res.filter(p => p === 1).length,
+    pods: res.filter(p => p > 0 && p <= 3).length, dnf: res.filter(p => p === 0).length, poles: Math.max(0, res.filter(p => p === 1).length + Math.round(R() * 2) - 1) };
+}).sort((a, b) => b.pts - a.pts);
+const teams = TEAMS.map(([id, name, color]) => {
+  const ds = drv.filter(d => d.t === id);
+  const prev = Math.round(ds.reduce((a, d) => a + d.pts, 0) * (0.86 + R() * 0.08));
+  return { id, name, color, ds, pts: ds.reduce((a, d) => a + d.pts, 0), wins: ds.reduce((a, d) => a + d.wins, 0), pods: ds.reduce((a, d) => a + d.pods, 0),
+    best: Math.min(...ds.flatMap(d => d.res.filter(p => p > 0))), prevPts: prev };
+}).sort((a, b) => b.pts - a.pts);
+// Rank before the last race for the trend arrow.
+const prevRank = [...teams].sort((a, b) => b.prevPts - a.prevPts).map(t => t.id);
+const PRIZE = [140, 125, 112, 100, 90, 81, 73, 66, 60, 57, 55]; // $M, design doc targets
+
+// ---------- Helpers ----------
+const card = (title, body, small = "") => `<div class="card"><h3>${title}${small ? `<small>${small}</small>` : ""}</h3>${body}</div>`;
+const posCls = p => p === 1 ? "p1" : p === 2 ? "p2" : p === 3 ? "p3" : "";
+function cell(p) {
+  if (p === undefined) return `<span class="grid-cell c-none">·</span>`;
+  if (p === 0) return `<span class="grid-cell c-dnf">R</span>`;
+  const cls = p === 1 ? "c-win" : p <= 3 ? "c-pod" : p <= 10 ? "c-pts" : "c-out";
+  return `<span class="grid-cell ${cls}">${p}</span>`;
+}
+
+// ---------- 1. Standings ----------
+let standingsTab = "teams";
+function standings() {
+  const tabs = `<div class="tabs" role="group" aria-label="Table">${[["drivers", "Drivers"], ["teams", "Teams"]].map(([k, l]) =>
+    `<button data-tab="${k}" aria-pressed="${standingsTab === k}">${l}</button>`).join("")}</div>`;
+  const leader = standingsTab === "teams" ? teams[0].pts : drv[0].pts;
+  let table;
+  if (standingsTab === "teams") {
+    table = `<table><thead><tr><th>Pos</th><th>Team</th><th class="num">Points</th><th></th><th class="num">Gap</th><th class="num">Wins</th><th class="num">Podiums</th><th class="num">Best</th><th>Drivers</th><th class="num">Prize money now</th></tr></thead><tbody>
+      ${teams.map((t, i) => {
+        const moved = prevRank.indexOf(t.id) - i;
+        return `<tr class="${t.id === "VRT" ? "mine" : ""}"><td class="pos ${posCls(i + 1)}">${i + 1} ${moved > 0 ? '<span class="trend-up">▲</span>' : moved < 0 ? '<span class="trend-down">▼</span>' : ""}</td>
+        <td><span class="teambar" style="background:${t.color}"></span><b>${t.name}</b></td><td class="num mono"><b>${t.pts}</b></td>
+        <td><div class="bar"><i style="width:${t.pts / leader * 100}%;background:${t.color}"></i></div></td>
+        <td class="num mono muted">${i === 0 ? "–" : "−" + (leader - t.pts)}</td><td class="num">${t.wins}</td><td class="num">${t.pods}</td><td class="num">P${t.best}</td>
+        <td class="muted">${t.ds.map(d => `${d.n} ${d.pts}`).join(" · ")}</td><td class="num mono">$${PRIZE[i]}M</td></tr>`;
+      }).join("")}</tbody></table>
+      <div class="legend">▲▼ = change since the last race · Prize money paid after the final round (design doc: champion ~$140M, last ~$55M)</div>`;
+  } else {
+    table = `<div style="overflow-x:auto"><table><thead><tr><th>Pos</th><th>Driver</th><th class="num">Points</th><th class="num">Gap</th><th class="num">Wins</th><th class="num">Pod.</th><th class="num">Poles</th><th class="num">DNF</th><th>Results per round</th></tr></thead><tbody>
+      ${drv.map((d, i) => `<tr class="${d.t === "VRT" ? "mine" : ""}"><td class="pos ${posCls(i + 1)}">${i + 1}</td>
+        <td><span class="teambar" style="background:${teamOf(d.t)[2]}"></span><b>${d.n}</b> <span class="muted">${d.t}</span></td><td class="num mono"><b>${d.pts}</b></td>
+        <td class="num mono muted">${i === 0 ? "–" : "−" + (leader - d.pts)}</td><td class="num">${d.wins}</td><td class="num">${d.pods}</td><td class="num">${d.poles}</td><td class="num">${d.dnf}</td>
+        <td>${CAL.map((_, r) => cell(d.res[r])).join("")}</td></tr>`).join("")}</tbody></table></div>
+      <div class="legend"><span class="grid-cell c-win">1</span> win <span class="grid-cell c-pod">3</span> podium <span class="grid-cell c-pts">7</span> points <span class="grid-cell c-out">14</span> no points <span class="grid-cell c-dnf">R</span> retired · hover a cell in the game for the race details</div>`;
+  }
+  return `<div class="card" style="padding:0">${tabs}${table}</div>
+    <div class="row" style="grid-template-columns:1fr 1fr 1fr">
+      ${card("Constructors' fight", `<div class="fact"><span class="k">Your position</span><span class="v">P${teams.findIndex(t => t.id === "VRT") + 1}</span></div>
+        <div class="fact"><span class="k">To the team ahead</span><span class="v warn">${(() => { const i = teams.findIndex(t => t.id === "VRT"); return i ? "−" + (teams[i - 1].pts - teams[i].pts) + " pts" : "–"; })()}</span></div>
+        <div class="fact"><span class="k">Lead over the team behind</span><span class="v good">+${(() => { const i = teams.findIndex(t => t.id === "VRT"); return teams[i].pts - teams[i + 1].pts; })()} pts</span></div>
+        <div class="fact"><span class="k">Each place is worth</span><span class="v">~$8–12M</span></div>`, "every point is money")}
+      ${card("Owner's target", `<div class="fact"><span class="k">Target</span><span class="v">Top 5 constructors</span></div><div class="fact"><span class="k">Currently</span><span class="v good">On track</span></div><div class="fact"><span class="k">Rounds left</span><span class="v">${24 - DONE}</span></div>`)}
+      ${card("Points still available", `<div class="fact"><span class="k">Per team</span><span class="v">${(24 - DONE) * 43} pts</span></div><div class="fact"><span class="k">Title still possible for</span><span class="v">${teams.filter(t => teams[0].pts - t.pts <= (24 - DONE) * 43).length} teams</span></div>`)}
+    </div>`;
+}
+
+// ---------- 2. Home cards ----------
+function home() {
+  const i = teams.findIndex(t => t.id === "VRT");
+  const show = [0, 1, 2].concat([i - 1, i, i + 1].filter(k => k > 2));
+  const rows = (list, mine, gapOf, label) => list.map((x, k) => {
+    const idx = k;
+    return x === null ? `<div class="dots">···</div>` : `<div class="mini-row ${mine(x) ? "mine" : ""}"><b class="pos ${posCls(x.pos)}">${x.pos}</b><i style="background:${x.color}"></i><span>${label(x)}</span><b class="mono">${x.pts}</b><span class="gap mono">${gapOf(x)}</span></div>`;
+  }).join("");
+  const tlist = [];
+  let last = -1;
+  show.forEach(k => { if (k - last > 1) tlist.push(null); tlist.push({ ...teams[k], pos: k + 1 }); last = k; });
+  const dI = drv.map((d, k) => ({ ...d, pos: k + 1, color: teamOf(d.t)[2] }));
+  const mineD = dI.filter(d => d.t === "VRT");
+  const dlist = [];
+  let lastD = -1;
+  [0, 1, 2, ...mineD.map(d => d.pos - 1)].filter((v, k, a) => a.indexOf(v) === k).sort((a, b) => a - b).forEach(k => { if (k - lastD > 1) dlist.push(null); dlist.push(dI[k]); lastD = k; });
+  return `<div class="row home-grid">
+    ${card("Constructors' standings", rows(tlist, t => t.id === "VRT", t => t.pos === 1 ? "leader" : "−" + (teams[0].pts - t.pts), t => t.name) +
+      `<div class="pad muted" style="font-size:.8rem;margin-top:6px">${teams[i - 1].name} is ${teams[i - 1].pts - teams[i].pts} pts ahead · open the full table ▸</div>`, "after round " + DONE)}
+    ${card("Drivers' standings", rows(dlist, d => d.t === "VRT", d => d.pos === 1 ? "leader" : "−" + (drv[0].pts - d.pts), d => `${d.n} <span class="muted">${d.t}</span>`) +
+      `<div class="pad muted" style="font-size:.8rem;margin-top:6px">Hale vs. Brandt: quali 9–4 · race 8–5</div>`, "after round " + DONE)}
+    ${card("Next race", `<div class="pad"><div class="muted" style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase">Round ${DONE + 1} of 24 · in 9 days</div><div class="big">${CAL[DONE][0]}</div><div class="muted">Like ${CAL[DONE][2]} · thin air, long run to turn 1</div></div>
+      <div class="fact"><span class="k">Suits our car</span><span class="v ok">Good (mech. grip)</span></div><div class="fact"><span class="k">Rain risk</span><span class="v">15 %</span></div><div class="fact"><span class="k">Last year</span><span class="v">Hale P4 · Brandt P9</span></div>`)}
+  </div>
+  <p class="note" style="color:var(--muted);margin:0">The home screen keeps its existing cards (team mood, inbox, finances…). These three cards are added: both standings show the top 3 and the area around your team, so you always see who is just ahead and behind.</p>`;
+}
+
+// ---------- 3. Calendar ----------
+function calendar() {
+  const chars = [[0.7, "Power"], [0.4, "Balanced"], [0.6, "Power"], [0.3, "Downforce"], [0.5, "Balanced"], [0.6, "Power"], [0.25, "Downforce"], [0.15, "Slow corners"], [0.45, "Balanced"], [0.65, "Power"], [0.85, "Power"], [0.4, "Balanced"],
+    [0.9, "Power"], [0.45, "Mech. grip"], [0.5, "Balanced"], [0.25, "Downforce"], [0.2, "Slow corners"], [0.75, "Power"], [0.25, "Slow corners"], [0.8, "Power"], [0.55, "Balanced"], [0.5, "Balanced"], [0.3, "Downforce"], [0.6, "Power"]];
+  const rain = [2, 2, 20, 30, 25, 30, 10, 15, 30, 45, 15, 35, 2, 15, 30, 30, 15, 25, 30, 5, 15, 40, 1, 1];
+  const suits = [62, 70, 74, 58, 66, 71, 55, 49, 63, 72, 78, 64, 80, 68, 66, 52, 50, 74, 47, 76, 65, 67, 55, 70];
+  const mine = drv.filter(d => d.t === "VRT");
+  return `<div class="row cal">${CAL.map(([name, cc, like], r) => {
+    const done = r < DONE, next = r === DONE;
+    const winIdx = done ? drv.findIndex(d => d.res[r] === 1) : -1;
+    const best = done ? Math.min(...mine.map(d => d.res[r] || 99)) : null;
+    const ch = chars[r];
+    return `<div class="round ${done ? "done" : ""} ${next ? "next" : ""}">
+      <div class="rn"><span>R${r + 1} · ${cc}</span><span>${next ? '<span class="amber">NEXT · in 9 days</span>' : done ? "✓" : `${["Mar", "Mar", "Apr", "Apr", "May", "May", "May", "Jun", "Jun", "Jun", "Jul", "Jul", "Jul", "Aug", "Aug", "Sep", "Sep", "Sep", "Oct", "Oct", "Oct", "Nov", "Nov", "Dec"][r]}`}</span></div>
+      <div class="nm">${name}</div><div class="sub">like ${like}</div>
+      <div class="chips"><span class="chip">${ch[1]}</span>${rain[r] >= 25 ? `<span class="chip rain">Rain ${rain[r]} %</span>` : ""}${[0, 5, 13, 16, 22].includes(r) ? '<span class="chip hot">Hot</span>' : ""}${[1, 7, 18, 19].includes(r) ? '<span class="chip bad">Safety car likely</span>' : ""}</div>
+      <div><div class="sub" style="display:flex;justify-content:space-between"><span>Suits our car</span><span class="${suits[r] >= 70 ? "good" : suits[r] < 55 ? "bad" : ""}">${suits[r] >= 70 ? "Good" : suits[r] < 55 ? "Weak" : "OK"}</span></div><div class="suit"><i style="width:${suits[r]}%;background:${suits[r] >= 70 ? "var(--lv4)" : suits[r] < 55 ? "var(--lv1)" : "var(--lv2)"}"></i></div></div>
+      ${done ? `<div class="res"><span>🏆 ${drv[winIdx]?.n ?? "–"}</span><span class="${best <= 3 ? "good" : best <= 10 ? "" : "muted"}">Us: ${best === 99 ? "DNF" : "P" + best}</span></div>` : `<div class="res muted"><span>${next ? "Practice Fri · Race Sun" : "Not raced yet"}</span></div>`}
+    </div>`;
+  }).join("")}</div>`;
+}
+
+// ---------- 4. Season review ----------
+function review() {
+  const i = teams.findIndex(t => t.id === "VRT");
+  return `<div class="card" style="padding:0"><div class="hero">
+      <div><small>Constructors</small><b class="good">P${i + 1}</b><span>Target: top 5 · achieved</span></div>
+      <div><small>Prize money</small><b>$${PRIZE[i]}M</b><span>+$${PRIZE[i] - PRIZE[i + 1]}M vs. one place lower</span></div>
+      <div><small>Best driver</small><b>Hale P${drv.findIndex(d => d.n === "Hale") + 1}</b><span>${drv.find(d => d.n === "Hale").pts} pts · ${drv.find(d => d.n === "Hale").wins} wins</span></div>
+      <div><small>Owner</small><b class="good">Pleased</b><span>Confidence 72 → 81</span></div></div></div>
+  <div class="row" style="grid-template-columns:1.1fr 1fr 1fr">
+    ${card("Season in numbers", `<div class="fact"><span class="k">Points</span><span class="v">${teams[i].pts}</span></div><div class="fact"><span class="k">Wins · podiums</span><span class="v">${teams[i].wins} · ${teams[i].pods}</span></div>
+      <div class="fact"><span class="k">Average pit stop</span><span class="v">2.61 s <span class="good">(P3 of 11)</span></span></div><div class="fact"><span class="k">Retirements</span><span class="v">3</span></div>
+      <div class="fact"><span class="k">Strategy calls that gained places</span><span class="v good">9</span></div><div class="fact"><span class="k">Hale vs. Brandt (quali · race)</span><span class="v">15–9 · 14–10</span></div>`)}
+    ${card("Big moments", [["R4", "First podium of the season – Hale P3 in the rain"], ["R9", "Safety car gamble: double stop, Hale from P8 to P2"], ["R12", "Brandt asked to talk: promised equal parts – kept"], ["R17", "Stuck wheel nut costs Brandt 14 s"], ["R22", "Win at Rio Celeste – first win since 2019"]].map(([r, t]) => `<div class="moment"><span>${r}</span><span>${t}</span></div>`).join(""))}
+    ${card("Before next season", [["⚠", "Brandt's contract ends – extend or replace?", "warn"], ["↓", "Alstad (40) retires", "muted"], ["↑", "Hale +3 overall (now 82)", "good"], ["↑", "Pit crew improved: 2.74 s → 2.61 s", "good"], ["↓", "Strategy chief Matsuda 61 → 59 (no training budget)", "bad"], ["★", "12 new young drivers in the market", "amber"]].map(([i2, t, c]) => `<div class="change"><span class="${c}">${i2}</span><span>${t}</span><span></span></div>`).join(""), "changes over the winter")}
+  </div>`;
+}
+
+// ---------- Page ----------
+const NOTES = {
+  standings: "<b>Standings.</b> Team table (constructors) with gap, trend arrow, both drivers and the prize money if the season ended now. Driver table with a results grid per round. The cards below show what is at stake for you.",
+  home: "<b>Home screen cards.</b> The team ranking you asked for: compact standings on the home screen (top 3 plus the teams around you), drivers' standings and the next race.",
+  calendar: "<b>Calendar.</b> All 24 rounds: done, next, upcoming. Each round shows the track character, rain and heat risk, how well it suits our car, the winner and our best result.",
+  review: "<b>Season review</b> after the final round: result vs. target, prize money, owner reaction, the season in numbers, big moments and what changes over the winter (contracts, retirements, development)."
+};
+const RENDER = { standings, home, calendar, review };
+let current = "standings";
+function show(s) {
+  current = s;
+  document.getElementById("stage").innerHTML = RENDER[s]();
+  document.getElementById("note").innerHTML = NOTES[s];
+  document.querySelectorAll("[data-s]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === s)));
+  document.querySelectorAll("#stage [data-tab]").forEach(b => b.addEventListener("click", () => { standingsTab = b.dataset.tab; show("standings"); }));
+}
+document.querySelectorAll("[data-s]").forEach(b => b.addEventListener("click", () => show(b.dataset.s)));
+show("standings");
+</script>

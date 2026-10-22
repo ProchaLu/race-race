@@ -13,6 +13,10 @@ var sponsors: Dictionary[StringName, SponsorData] = {}
 var tracks: Dictionary[StringName, TrackData] = {}
 var contracts: Array[ContractData] = []
 var promises: Array[PromiseData] = []
+## Constructors' points this season per team.
+var team_points: Dictionary[StringName, int] = {}
+## Detailed results of the player series this season, one per round (RaceWeekend.summarize).
+var race_results: Array[Dictionary] = []
 ## Current season statistics per driver.
 var season_stats: Dictionary[StringName, DriverSeasonStats] = {}
 ## Relationships between two people. Key: "id_a|id_b" (sorted).
@@ -55,6 +59,8 @@ func clear() -> void:
 	contracts.clear()
 	promises.clear()
 	season_stats.clear()
+	team_points.clear()
+	race_results.clear()
 	relationships.clear()
 	tyre_compounds.clear()
 	inbox.clear()

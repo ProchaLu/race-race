@@ -303,7 +303,7 @@ func _announce_race(round_index: int) -> void:
 
 func _run_race(round_index: int) -> void:
 	var s := _player_series()
-	var order := QuickRace.resolve_round(s, round_index)
+	var summary := RaceWeekend.run_round(s, round_index)
 	GameState.resolved_rounds += 1
 	EventBus.round_completed.emit(round_index)
 	_check_promises()
@@ -315,17 +315,26 @@ func _run_race(round_index: int) -> void:
 	msg.subject_args = [track.name]
 	msg.priority = InboxMessage.Priority.IMPORTANT
 	msg.icon = "trophy"
-	var winner: DriverData = GameState.drivers[order[0]]
+	var winner: DriverData = GameState.drivers[summary.entries[0].driver_id]
 	msg.add_paragraph("%s won the race.", [winner.full_name()])
 	var first_own: StringName = &""
 	for driver in GameState.drivers_of_team(GameState.player_team_id):
-		var result: Dictionary = GameState.season_stats[driver.id].results.back()
-		if result.finish > 0:
-			msg.add_paragraph("%s finished P%d.", [driver.full_name(), result.finish])
+		var entry := RaceWeekend.entry_of(summary, driver.id)
+		if entry.is_empty():
+			continue
+		if entry.finish > 0:
+			msg.add_paragraph("%s started P%d and finished P%d (%d pts).", [driver.full_name(), entry.grid, entry.finish, entry.points])
 		else:
-			msg.add_paragraph("%s retired.", [driver.full_name()])
+			msg.add_paragraph("%s retired on lap %d: %s.", [driver.full_name(), entry.retire_lap, tr(entry.retire_reason)])
 		if first_own == &"":
 			first_own = driver.id
+	var sc: int = summary.phases.filter(func(p): return p.kind == "SC").size()
+	if sc > 0:
+		msg.add_paragraph("Safety car periods: %d.", [sc])
+	var standings := SeasonRecords.team_standings(s)
+	for i in standings.size():
+		if standings[i][0] == GameState.player_team_id:
+			msg.add_paragraph("Constructors' championship: P%d with %d points.", [i + 1, standings[i][1]])
 	msg.link_screen = &"driver_profile"
 	msg.link_args = {"driver_id": first_own}
 	msg.link_label = "Open driver profile"
