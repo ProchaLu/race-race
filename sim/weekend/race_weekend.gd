@@ -4,11 +4,12 @@
 ## Every decision starts as the responsible staff member's choice, so
 ## run_round() plays a weekend without the player. Stores a detailed summary
 ## (GameState.race_results) and updates the standings.
-## Key moments in the race and the 1-on-1 talks plug in here later.
+## In the race the simulation pauses at key moments (safety car, weather,
+## team orders) when the player races it himself.
 class_name RaceWeekend
 extends RefCounted
 
-enum Stage { PLANNING, STRATEGY, FINISHED }
+enum Stage { PLANNING, STRATEGY, RACE, FINISHED }
 enum Target { POINTS, PODIUM, BRING_HOME }
 enum Orders { FREE, HOLD_AFTER_STOPS, PRIORITY }
 
@@ -70,6 +71,9 @@ var quali: QualifyingSim
 var grid: Array[SimCar] = []
 ## Driver ID -> proposals of the strategy chief (StrategyPlanner.plans()).
 var strategy_options := {}
+## Driver ID -> DriverTalk (weekly 1-on-1 or a talk he asked for).
+var talks := {}
+var engine: RaceEngine
 var summary := {}
 
 
@@ -183,6 +187,9 @@ func run_practice_and_qualifying() -> void:
 	grid = quali.run(cars)
 	_make_strategy_options()
 	staff_strategy()
+	for car in player_cars():
+		var request := DriverTalk.request(car, self)
+		talks[car.driver.id] = request if request else DriverTalk.weekly(car, self)
 	stage = Stage.STRATEGY
 
 
@@ -243,7 +250,8 @@ static func rain_setup_name(r: SimCar.RainSetup) -> String:
 
 # --- Race --------------------------------------------------------------------
 
-func run_race() -> Dictionary:
+## Lights out. ask_player: pause at key moments (see advance()).
+func start_race(ask_player: bool) -> void:
 	if stage == Stage.PLANNING:
 		run_practice_and_qualifying()
 	for car in cars:
@@ -251,9 +259,44 @@ func run_race() -> Dictionary:
 			_apply_player_decisions(car)
 		else:
 			car.rain_setup = staff_rain_setup(conditions.rain_chance)
-	var engine := RaceEngine.new(model, conditions, grid, rng.randi())
-	engine.run()
+	engine = RaceEngine.new(model, conditions, grid, rng.randi())
+	engine.ask_player = ask_player
+	stage = Stage.RACE
 
+
+## Races on to the next key moment. Returns true while a decision is
+## waiting (engine.moment), false once the race is over and summarized.
+func advance() -> bool:
+	if engine.run_until_moment():
+		return true
+	_finish_race()
+	return false
+
+
+func answer(index: int) -> void:
+	engine.answer_moment(index)
+
+
+## The strategy chief takes every remaining decision.
+func finish_with_staff() -> Dictionary:
+	if stage != Stage.RACE:
+		start_race(false)
+	engine.ask_player = false
+	if not engine.moment.is_empty():
+		engine.answer_moment(engine.moment.recommended)
+	engine.run()
+	_finish_race()
+	return summary
+
+
+## Plays the race without the player (the staff decides the key moments).
+func run_race() -> Dictionary:
+	if stage == Stage.FINISHED:
+		return summary
+	return finish_with_staff()
+
+
+func _finish_race() -> void:
 	summary = summarize(engine, quali, round_index, track)
 	_apply(series, round_index, engine)
 	summary.points = {}
@@ -262,13 +305,43 @@ func run_race() -> Dictionary:
 	summary.target = _judge_target()
 	summary.decisions = _decision_notes()
 	_orders_morale()
+	for effect in engine.morale_effects:
+		TeamMood.change_morale(effect[0], effect[1], effect[2])
+	summary.moments = engine.moments_asked
 	GameState.race_results.append(summary)
 	stage = Stage.FINISHED
-	return summary
+
+
+## How well the mental coach talks for you (0..1).
+func coach_skill() -> float:
+	for s in GameState.staff_of_team(GameState.player_team_id):
+		if s.role == StaffData.Role.MENTAL_COACH:
+			return s.attribute(&"motivation") / 100.0
+	return 0.3
+
+
+## Talks not held by the team principal are held by the mental coach.
+func coach_talks() -> void:
+	for id in talks:
+		var talk: DriverTalk = talks[id]
+		if not talk.done:
+			talk.auto_answer(coach_skill(), rng)
 
 
 func _apply_player_decisions(car: SimCar) -> void:
 	var id := car.driver.id
+	var talk: DriverTalk = talks.get(id)
+	if talk:
+		if not talk.done:
+			talk.auto_answer(coach_skill(), rng)
+		for key in talk.race_fx:
+			match key:
+				"setup":
+					car.setup_pct = clampf(car.setup_pct + talk.race_fx.setup, 0.0, 100.0)
+				"team_orders":
+					car.talk["team_orders"] = true
+				_:
+					car.talk[key] = car.talk.get(key, 0.0) + talk.race_fx[key]
 	car.rain_setup = rain_setup
 	car.briefing = briefings.get(id, SimCar.Briefing.NORMAL)
 	var options: Array = strategy_options.get(id, [])

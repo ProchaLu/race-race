@@ -3,8 +3,8 @@
 Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt und am Ende jeder Runde abgearbeitet. Erledigtes wird abgehakt und bleibt als Verlauf stehen.
 
 ## 📍 Stand (24.10.2026)
-**R2 Teil 1 fertig – eine ganze Saison ist spielbar:** Rennwochenende (Ziel, Training, Stallorder → Training & Quali → Strategie, Regen-Poker, Briefing → Rennen), detailliertes Rennergebnis, Tabellen, Kalender, Startseiten-Karten, Saisonrückblick mit Preisgeld, Saisonwechsel (Verträge laufen aus, Ersatzfahrer rückt nach, Statistiken auf null).
-**Nächster Schritt – R2 Teil 2:** Schlüsselmomente im Rennen (Safety Car / Regen / Stallorder, Hook `RaceEngine.decide` ist vorbereitet) und 1:1-Gespräche (Mockup `r2_driver_talk.html`, Effekte über `SimCar.talk`).
+**R2 Teil 1 + 2 fertig:** ganze Saison spielbar – Rennwochenende (Ziel, Training, Stallorder → Training & Quali → Strategie, Regen-Poker, Briefing, **1:1-Gespräche** → Rennen mit **Schlüsselmomenten**), detailliertes Rennergebnis, Tabellen, Kalender, Startseiten-Karten, Saisonrückblick mit Preisgeld, Saisonwechsel.
+**Nächster Schritt:** Rest von R2 = Altern und Entwicklung von Fahrern/Personal über den Winter (siehe „Offen aus R2“). Danach Styling-Änderungen, UI-Feinschliff und Kleinkram.
 
 ## 🐞 Bugs
 - [ ] *(noch keine offenen)*
@@ -18,8 +18,9 @@ Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt u
 - [ ] **KI-Teams werben eigenes Personal ab** (Interesse anderer → Angebote, Inbox-Meldung)
 
 ## 📌 Offen aus R2 (Saison)
-- [ ] **Schlüsselmomente im Rennen** (2–4 pro Rennen, Simulation pausiert) – R2 Teil 2
-- [ ] **1:1-Gespräche** vor jedem Rennen + Gespräche auf Wunsch des Fahrers – R2 Teil 2
+- [ ] 1:1-Gespräche: mehr Themen und Formulierungen (Design-Dok.: ~30 Themen, mehrere Formulierungen je Persönlichkeit), Inhalte später in Datendateien; weitere Auslöser für Gesprächswünsche (Angebot eines Rivalen, Streit mit dem Ingenieur, Angst nach Unfall)
+- [ ] Versprechen aus Gesprächen („Gleichbehandlung“, „bald Vertragsgespräche“) haben noch keine Frist und werden nicht geprüft
+- [ ] Schlüsselmoment „Reparatur“ (Design-Dok. 11.3) fehlt noch
 - [ ] Altern und Entwicklung von Fahrern und Personal über den Winter; Rücktritte alter Fahrer
 - [ ] Ersatzfahrer bei Verletzung/Krankheit einsetzen; Flügelstufe als Entscheidung
 - [ ] Besitzer-Ziel im Saisonrückblick (kommt mit R6 Besitzer)
@@ -33,6 +34,7 @@ Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt u
 - [ ] Vorgespielte Runden der Testwelt laufen noch über `QuickRace` (schneller Spielstart) – Detail-Ergebnisse gibt es erst ab dem ersten echten Rennen
 
 ## ✅ Erledigt
+- [x] **R2 Teil 2:** Schlüsselmomente im Rennen (Safety Car/VSC: wer stoppt, Regen/abtrocknende Strecke: Reifenwechsel, Stallorder: tauschen/fahren lassen/halten – mit Weigerungsrisiko), max. 4 pro Rennen, Empfehlung des Strategiechefs, „Bis zum Ende simulieren“; 1:1-Gespräche (wöchentlich: Thema aus der Lage des Fahrers, 4 Antworten, Wirkung je nach Persönlichkeit, unbekannte Reaktionen, Abnutzung; auf Wunsch des Fahrers: 3 Fragen, Gesprächsstimmung skaliert bleibende Effekte, Versprechen, Wechselwunsch/Loyalität), Mentaltrainer kann übernehmen
 - [x] **R2 Teil 1 – Saison spielbar:** Rennwochenende in Schritten (alle Entscheidungen auch an das Personal delegierbar), Rennergebnis mit Rundenzeiten-Grafik, Boxenstopps, Reifen-Stints und Ereignissen, Tabellen (Fahrer mit Ergebnis-Raster, Teams mit Preisgeld), Kalender mit Streckencharakter und „passt zu unserem Auto“, Saisonrückblick, Preisgeld, Saisonwechsel inkl. **Vertragsende zum Saisonende**
 - [x] Absturz bei leerer Saisonstatistik (Startseite, Fahrerprofil) zu Beginn einer neuen Saison
 - [x] **Major Bug:** Unterschrift trotz besetzter Stelle (z. B. 4 Fahrer). Jetzt feste Plätze (2 Cockpits, 1 Ersatzfahrer, 2 Renningenieure, je 1 andere Rolle); in der Verhandlung wählen, wer Platz macht (entlassen oder Ersatzfahrer), wird bei der Unterschrift umgesetzt; KI-Teams entlassen automatisch den Schwächsten

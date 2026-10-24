@@ -42,6 +42,8 @@ var talk_cooldown: Dictionary = {}
 var mood_events: Array = []
 ## Team ID -> {career day: mood value}, for the trend.
 var mood_history: Dictionary = {}
+## 1-on-1 talks per driver: {"known": {tone: true}, "last_tone", "history", "last_request"}
+var talk_memory: Dictionary = {}
 ## Shortlist notices already sent: "person_id:kind" -> true
 var shortlist_notes: Dictionary = {}
 ## Number of rounds of the player's series already raced this season.
@@ -76,6 +78,7 @@ func clear() -> void:
 	mood_events.clear()
 	mood_history.clear()
 	shortlist_notes.clear()
+	talk_memory.clear()
 	resolved_rounds = 0
 	player_team_id = &""
 

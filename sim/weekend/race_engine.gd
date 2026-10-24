@@ -35,9 +35,17 @@ var events: Array = []
 var phases: Array = []
 ## Per leader lap: [wetness, rain]
 var lap_weather: Array = []
-## Optional: called for the player's key moments (safety car, rain).
-## Signature: func(car: SimCar, moment: Dictionary) -> Variant (null = strategist decides).
-var decide: Callable
+## Key moments of the player's team (design doc 8.4b): with ask_player on,
+## the race pauses at a safety car, a weather change or a fight between the
+## teammates until answer_moment() is called. Off: the strategy chief decides.
+var ask_player := false
+## The open question, or {}: {"kind", "lap", "title", "text", "facts": [[label, value]],
+## "options": [[title, description]], "recommended": int, "cars": [SimCar], "actions": [Callable]}.
+## Every text is [format, args] so the screen can translate it.
+var moment := {}
+var moments_asked := 0
+## Lasting consequences of the team principal's calls: [[driver, reason, morale delta]]
+var morale_effects: Array = []
 
 # Per sector: recent cars as [car, entry_t, exit_t], ordered by exit time.
 var _records: Array = []
@@ -110,7 +118,16 @@ func _setup_start() -> void:
 ## Runs the whole race.
 func run() -> void:
 	while step():
-		pass
+		if not moment.is_empty():
+			answer_moment(moment.recommended)
+
+
+## Runs until the next key moment (true) or the end of the race (false).
+func run_until_moment() -> bool:
+	while step():
+		if not moment.is_empty():
+			return true
+	return false
 
 
 ## Processes one car entering its next sector. Returns false when done.
@@ -261,8 +278,13 @@ func _resolve_traffic(car: SimCar, ahead: Array, si: int, sector: TrackModel.Sec
 	if flag != Flag.GREEN:
 		return other_exit + min_gap
 
-	# Blue flags: a lapped car lets the faster car through.
-	if other.laps_done < car.laps_done:
+	# Team orders and blue flags: the car ahead lets the faster car through.
+	var let_by: bool = other.orders.get("let_by") == car
+	if let_by:
+		other.orders.erase("let_by")
+		other.orders["yield"] = true
+		_log(car, "team_orders", "%s lets %s through" % [other.label(), car.label()])
+	if let_by or other.laps_done < car.laps_done:
 		var loss := SimTuning.BLUE_FLAG_LOSS_S * (1.3 - other.driver.racecraft / 100.0)
 		var my_exit := maxf(exit, other_exit - 0.1) + 0.1
 		_delay(si, other, maxf(other_exit + loss, my_exit + SimTuning.MIN_GAP_S))
@@ -422,6 +444,7 @@ func _on_line(car: SimCar) -> void:
 		if not car.is_running():
 			return
 	_prepare_lap(car, t)
+	_team_orders_moment(car)
 
 
 ## Adds this lap's components to the race totals. Whatever the components
@@ -575,6 +598,12 @@ func _strategy_decisions(car: SimCar) -> void:
 		_request_pit(car, planner.compound_for_stop_now(car) if not PaceModel.is_wet_compound(car.compound) else car.compound)
 		return
 	var weather := planner.weather_call(car, time_s, laps_left)
+	# The team principal said "stay out" a moment ago.
+	if weather != &"" and car.get_meta("weather_hold", -1) >= car.laps_done:
+		weather = &""
+	if weather != &"" and car.is_player and _can_ask() and car.get_meta("weather_asked", &"") != weather:
+		_weather_moment(car, weather, laps_left)
+		return
 	if weather != &"":
 		_request_pit(car, weather if PaceModel.is_wet_compound(weather) else planner.compound_for_stop_now(car))
 		return
@@ -583,7 +612,9 @@ func _strategy_decisions(car: SimCar) -> void:
 	# One call per safety car phase, at the first pass of the pit entry.
 	if (flag == Flag.SAFETY_CAR or flag == Flag.VSC) and not car.has_meta("flag_call_made"):
 		car.set_meta("flag_call_made", true)
-		if planner.safety_car_call(car, laps_left, flag == Flag.VSC):
+		var box: bool = car.get_meta("player_sc_call") if car.has_meta("player_sc_call") \
+			else planner.safety_car_call(car, laps_left, flag == Flag.VSC)
+		if box:
 			_request_pit(car, planner.compound_for_stop_now(car))
 			return
 	var dry_rule_open := car.used_dry_compounds.size() < 2 and conditions.weather.max_rain() < 0.05
@@ -683,6 +714,241 @@ func _pit_stop(car: SimCar) -> void:
 	planner.replan_after_stop(car)
 
 
+# --- Key moments ---------------------------------------------------------------
+
+const MAX_MOMENTS := 4
+
+
+func _can_ask() -> bool:
+	return ask_player and moment.is_empty() and moments_asked < MAX_MOMENTS and not chequered
+
+
+func answer_moment(index: int) -> void:
+	var m := moment
+	moment = {}
+	var actions: Array = m.get("actions", [])
+	if index >= 0 and index < actions.size():
+		(actions[index] as Callable).call()
+
+
+func _player_running() -> Array[SimCar]:
+	var out: Array[SimCar] = []
+	for car in _running:
+		if car.is_player:
+			out.append(car)
+	out.sort_custom(func(a: SimCar, b: SimCar): return a.position < b.position)
+	return out
+
+
+## Current running order: most laps first, then who crossed the line first;
+## retired cars at the end.
+func running_order() -> Array[SimCar]:
+	var out: Array[SimCar] = cars.duplicate()
+	out.sort_custom(func(a: SimCar, b: SimCar):
+		if a.is_running() != b.is_running():
+			return a.is_running()
+		if a.laps_done != b.laps_done:
+			return a.laps_done > b.laps_done
+		return a.lap_start_t < b.lap_start_t)
+	return out
+
+
+## Gap to the leader, measured where both crossed the line on the same lap:
+## [laps behind, seconds]. The leader gets [0, 0.0].
+func gap_to_leader(car: SimCar) -> Array:
+	var order := running_order()
+	var lead: SimCar = order[0]
+	if car == lead or car.laps_done == 0:
+		return [0, 0.0]
+	var k := mini(car.laps_done, lead.laps_done)
+	var lead_t := 0.0
+	for i in k:
+		lead_t += lead.lap_times[i]
+	var gap: float = car.lap_start_t - lead_t
+	var laps := lead.laps_done - car.laps_done
+	# One lap less but still within a lap of the leader: same lap, not lapped.
+	if laps == 1 and k < lead.lap_times.size() and gap < lead.lap_times[k]:
+		laps = 0
+	return [laps, gap]
+
+
+func _open_moment(m: Dictionary) -> void:
+	moments_asked += 1
+	m["lap"] = leader_laps + 1
+	moment = m
+
+
+## A translatable text: format plus arguments.
+static func _tx(format: String, args: Array = []) -> Array:
+	return [format, args]
+
+
+const COMPOUND_NAMES := {&"soft": "Soft", &"medium": "Medium", &"hard": "Hard", &"inter": "Intermediate", &"wet": "Wet"}
+
+
+static func _tyre_text(car: SimCar) -> Array:
+	return _tx("%s · %d laps", [COMPOUND_NAMES.get(car.compound, String(car.compound)), car.tyre_laps])
+
+
+## Safety car or VSC: stop now for a cheap pit stop?
+func _safety_car_moment(is_vsc: bool) -> void:
+	if not _can_ask():
+		return
+	var own := _player_running().filter(func(c: SimCar): return not PaceModel.is_wet_compound(c.compound) and not c.pit_now)
+	var laps_left := conditions.laps - leader_laps - 1
+	if own.is_empty() or laps_left < 4:
+		return
+	# What the strategy chief would do (without using up the car's luck).
+	var calls := {}
+	for car: SimCar in own:
+		var state := car.rng.state
+		calls[car] = planner.safety_car_call(car, conditions.laps - car.laps_done - 1, is_vsc)
+		car.rng.state = state
+	var normal := model.pit_lane_loss_s + 2.5
+	var cheap := model.pit_lane_loss_s * (SimTuning.PIT_LOSS_VSC if is_vsc else SimTuning.PIT_LOSS_SC) + 2.5
+	var options := []
+	var plans := []
+	if own.size() == 1:
+		options.append([_tx("Box now"), _tx("A cheap stop under the virtual safety car." if is_vsc else "A cheap stop under the safety car.")])
+		plans.append({own[0]: true})
+	else:
+		options.append([_tx("Box both now"), _tx("Cheap stop for both cars. The second car may wait behind the first (double stop, +3 s).")])
+		plans.append({own[0]: true, own[1]: true})
+		for car: SimCar in own:
+			var other: SimCar = own[1] if car == own[0] else own[0]
+			options.append([_tx("Box %s only", [car.driver.last_name]), _tx("%s keeps track position and stays out on his tyres.", [other.driver.last_name])])
+			plans.append({car: true, other: false})
+	options.append([_tx("Stay out"), _tx("Keep track position. Stop later at full pit lane loss.")])
+	var stay := {}
+	for car in own:
+		stay[car] = false
+	plans.append(stay)
+	var recommended := plans.size() - 1
+	for i in plans.size():
+		var same := true
+		for car in own:
+			if plans[i][car] != calls[car]:
+				same = false
+		if same:
+			recommended = i
+	var facts := []
+	for car: SimCar in own:
+		var tyres: Array = _tyre_text(car)[1]
+		var planned := _tx("%s · %d laps · no stop planned", tyres) if car.plan.is_empty() \
+			else _tx("%s · %d laps · next stop planned on lap %d", tyres + [car.plan[0][0]])
+		facts.append([_tx("%s · P%d", [car.driver.last_name, car.position]), planned])
+	facts.append([_tx("Pit stop now"), _tx("about %d s instead of %d s", [roundi(cheap), roundi(normal)])])
+	facts.append([_tx("Laps left"), _tx("%d", [laps_left])])
+	var actions := []
+	for p in plans:
+		actions.append(func():
+			for car in p:
+				car.set_meta("player_sc_call", p[car]))
+	var cause := _tx("")
+	for i in range(events.size() - 1, -1, -1):
+		if events[i].kind in ["retired", "contact", "damage", "mistake"]:
+			cause = _tx(events[i].text)
+			break
+	_open_moment({"kind": "vsc" if is_vsc else "sc", "title": _tx("Virtual safety car" if is_vsc else "Safety car"),
+		"text": cause, "facts": facts, "options": options, "recommended": recommended, "cars": own, "actions": actions})
+
+
+## Rain starts or the track dries: change tyres now?
+func _weather_moment(car: SimCar, compound: StringName, laps_left: int) -> void:
+	var to_wet := PaceModel.is_wet_compound(compound)
+	var target := compound if to_wet else planner.compound_for_stop_now(car)
+	var wet := conditions.weather.wetness_at(time_s)
+	var name: String = COMPOUND_NAMES.get(target, String(target))
+	var title := _tx("Rain – change to %s?", [name]) if to_wet else _tx("Track drying – back to %s?", [name])
+	var options := [
+		[_tx("Box now for %s", [name]), _tx("The strategy chief's call: the new tyres are faster from now on.")],
+		[_tx("Stay out two more laps"), _tx("Wait and see. After that the strategy chief decides.")],
+	]
+	var facts := [
+		[_tx("%s · P%d", [car.driver.last_name, car.position]), _tyre_text(car)],
+		[_tx("Track"), _tx("%d %% wet", [roundi(wet * 100)])],
+		[_tx("Rain now"), _tx("Yes" if conditions.weather.rain_at(time_s) > 0.1 else "No")],
+		[_tx("Laps left"), _tx("%d", [laps_left])],
+	]
+	var actions := [
+		func():
+			car.set_meta("weather_asked", compound)
+			_request_pit(car, target),
+		func():
+			car.set_meta("weather_asked", compound)
+			car.set_meta("weather_hold", car.laps_done + 2),
+	]
+	_open_moment({"kind": "weather", "title": title, "text": _tx(""), "facts": facts, "options": options,
+		"recommended": 0, "cars": [car], "actions": actions})
+
+
+## The faster teammate is stuck behind the other: swap them?
+func _team_orders_moment(car: SimCar) -> void:
+	if not car.is_player or not _can_ask() or flag != Flag.GREEN or car.position <= 1:
+		return
+	var laps_left := conditions.laps - car.laps_done
+	if laps_left < 5 or car.lap_times.size() < 4:
+		return
+	var mate: SimCar = null
+	for other in _running:
+		if other != car and other.team == car.team:
+			mate = other
+	if not mate or mate.laps_done != car.laps_done or mate.position != car.position - 1:
+		return
+	if not car.orders.is_empty() or not mate.orders.is_empty() or car.briefing == SimCar.Briefing.TEAM_PLAYER:
+		return
+	if car.get_meta("orders_asked_lap", -99) > car.laps_done - 12:
+		return
+	var gap := car.lap_start_t - mate.lap_start_t
+	var mine := _recent_pace(car)
+	var theirs := _recent_pace(mate)
+	if gap > 1.5 or theirs - mine < 0.25 * model.scale:
+		return
+	car.set_meta("orders_asked_lap", car.laps_done)
+	var fast := car.driver.last_name
+	var slow := mate.driver.last_name
+	var gain := (theirs - mine) * laps_left
+	var options := [
+		[_tx("Swap positions"), _tx("%s lets %s through. %s's morale −3 – and he may refuse.", [slow, fast, slow])],
+		[_tx("Let them race"), _tx("They may fight. Risk of contact between your own cars.")],
+		[_tx("Hold positions"), _tx("%s stays behind. %s's morale −2.", [fast, fast])],
+	]
+	var facts := [
+		[_tx("%s · P%d", [slow, mate.position]), _tx("%s · %d laps · %.3f s per lap", _tyre_text(mate)[1] + [theirs])],
+		[_tx("%s · P%d", [fast, car.position]), _tx("%s · %d laps · %.3f s per lap", _tyre_text(car)[1] + [mine])],
+		[_tx("Gap"), _tx("%.1f s", [gap])],
+		[_tx("Laps left"), _tx("%d", [laps_left])],
+	]
+	var actions := [
+		func():
+			# Hot heads and unhappy drivers may ignore the call.
+			var refuse := clampf((50.0 - mate.driver.temperament) / 120.0 + (45.0 - mate.driver.morale) / 120.0
+				+ (50.0 - mate.driver.loyalty) / 200.0, 0.0, 0.45)
+			if car.rng.randf() < refuse:
+				_log(mate, "team_orders", "%s ignores the team order" % mate.label())
+				morale_effects.append([car.driver, "Teammate ignored team orders", -3])
+			else:
+				mate.orders["let_by"] = car
+				morale_effects.append([mate.driver, "Team orders: let teammate pass", -3]),
+		func(): pass,
+		func():
+			car.orders["yield"] = true
+			morale_effects.append([car.driver, "Team orders: hold position", -2]),
+	]
+	_open_moment({"kind": "orders", "title": _tx("Team orders – %s is faster than %s", [fast, slow]), "text": _tx(""),
+		"facts": facts, "options": options, "recommended": 0 if gain > 3.0 * model.scale else 1,
+		"cars": [mate, car], "actions": actions})
+
+
+## Average of the last three green laps (s).
+func _recent_pace(car: SimCar) -> float:
+	var n := mini(3, car.lap_times.size())
+	var total := 0.0
+	for i in n:
+		total += car.lap_times[car.lap_times.size() - 1 - i]
+	return total / maxf(n, 1)
+
+
 # --- Flags and incidents -------------------------------------------------------
 
 func _update_flags() -> void:
@@ -730,6 +996,7 @@ func _deploy_sc() -> void:
 	_clear_flag_stops()
 	phases.append({"kind": "SC", "from_lap": leader_laps + 1, "to_lap": leader_laps + 1})
 	_log(null, "sc", "Safety car deployed")
+	_safety_car_moment(false)
 
 
 func _deploy_vsc() -> void:
@@ -740,11 +1007,13 @@ func _deploy_vsc() -> void:
 	_clear_flag_stops()
 	phases.append({"kind": "VSC", "from_lap": leader_laps + 1, "to_lap": leader_laps + 1})
 	_log(null, "vsc", "Virtual safety car")
+	_safety_car_moment(true)
 
 
 func _clear_flag_stops() -> void:
 	for car in cars:
 		car.remove_meta("flag_call_made")
+		car.remove_meta("player_sc_call")
 
 
 func _end_phase() -> void:

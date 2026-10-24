@@ -1,7 +1,7 @@
-## The race weekend (mockup r2_weekend.html, steps 1 and 2): before practice
+## The race weekend (mockup r2_weekend.html, steps 1–3): before practice
 ## the weekend target, practice programmes and team orders; after
-## qualifying the strategy, rain gamble and driver briefing. Every block
-## can be left to the responsible staff member.
+## qualifying the strategy, rain gamble and driver briefing; in the race the
+## key moments. Every decision can be left to the responsible staff member.
 extends UIScreen
 
 const STEPS := ["Practice", "Qualifying", "Race"]
@@ -24,10 +24,13 @@ func setup(_args: Dictionary) -> void:
 		_page.add_child(_no_weekend_card())
 		return
 	_page.add_child(_header())
-	if _weekend.stage == RaceWeekend.Stage.PLANNING:
-		_build_planning()
-	else:
-		_build_strategy()
+	match _weekend.stage:
+		RaceWeekend.Stage.PLANNING:
+			_build_planning()
+		RaceWeekend.Stage.STRATEGY:
+			_build_strategy()
+		_:
+			_build_moment()
 
 
 func screen_title() -> String:
@@ -259,13 +262,28 @@ func _build_strategy() -> void:
 	var brief := _briefing_card()
 	brief.size_flags_stretch_ratio = 1.4
 	bottom.add_child(brief)
+	_page.add_child(_talks_card())
 	_page.add_child(_quali_card())
 	_page.add_child(_actions("Start race", _start_race, func():
 		w.staff_strategy()
+		w.coach_talks()
 		_rebuild()))
 
 
 func _start_race() -> void:
+	_weekend.start_race(true)
+	_continue_race()
+
+
+## Races on until the next key moment or the flag.
+func _continue_race() -> void:
+	if _weekend.advance():
+		_rebuild()
+	else:
+		_finish_race()
+
+
+func _finish_race() -> void:
 	var summary := Season.race_weekend()
 	shell.navigate(&"race_result", {"round": summary.round}, false)
 
@@ -429,6 +447,49 @@ func _briefing_card() -> UICard:
 	return card
 
 
+## Weekly 1-on-1 with each driver, or a talk he asked for.
+func _talks_card() -> UICard:
+	var w := _weekend
+	var card := UICard.new("1-on-1 talks", "before every race")
+	for id in w.talks:
+		var talk: DriverTalk = w.talks[id]
+		var request := talk.kind == DriverTalk.Kind.REQUEST
+		var status := ""
+		var color := UIStyle.MUTED
+		if talk.done:
+			var last: Dictionary = talk.rounds[talk.picks.size() - 1].answers[talk.picks.back()]
+			status = tr("✓ done · %s") % tr(last.name)
+			color = UIStyle.GOOD
+		elif request:
+			status = tr("⚠ Asked to talk – more is at stake")
+			color = UIStyle.WARN
+		else:
+			status = tr("Weekly 1-on-1 · not held yet")
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.add_child(_driver_label(talk.driver, 190))
+		var label := Label.new()
+		label.text = status
+		label.add_theme_color_override("font_color", color)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(label)
+		var b := Button.new()
+		b.text = "Open talk" if talk.done else ("Talk to him" if not request else "Answer his request")
+		b.icon = UIStyle.icon("user")
+		if request and not talk.done:
+			b.theme_type_variation = &"AccentButton"
+		var driver_id: StringName = id
+		b.pressed.connect(func(): shell.navigate(&"driver_talk", {"driver_id": driver_id}))
+		row.add_child(b)
+		card.add_padded(row, 6, 6)
+	card.add_padded(_delegate("mental coach", func():
+		w.coach_talks()
+		_rebuild()), 6, 0)
+	card.add_padded(_note("Talks not held before the race are held by your mental coach."), 2, 2)
+	return card
+
+
 ## "Mistakes −15 % · Overtaking attempts −30 % · Tyre wear −5 %"
 func _briefing_effects(car: SimCar, b: SimCar.Briefing) -> String:
 	var parts := []
@@ -491,6 +552,153 @@ func _quali_card() -> UICard:
 		flow.add_child(row)
 	card.add_padded(flow, 6, 6)
 	return card
+
+
+# --- Step 3: key moments in the race -----------------------------------------
+
+func _build_moment() -> void:
+	var w := _weekend
+	var m: Dictionary = w.engine.moment
+	if m.is_empty():
+		# Opened again after the race was decided: finish it.
+		_continue_race.call_deferred()
+		return
+	var row := _row()
+	var tower := _tower_card(m)
+	tower.size_flags_stretch_ratio = 0.8
+	row.add_child(tower)
+	var card := UICard.new()
+	card.size_flags_stretch_ratio = 2.0
+	row.add_child(card)
+
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 14)
+	var lap := Label.new()
+	lap.text = tr("Lap %d / %d") % [m.lap, w.conditions.laps]
+	lap.theme_type_variation = &"HeadingLabel"
+	head.add_child(lap)
+	var flag_text := {"sc": "Safety car", "vsc": "Virtual safety car", "weather": "Weather", "orders": "Team orders"}
+	var flag := Label.new()
+	flag.text = tr(flag_text.get(m.kind, "")).to_upper()
+	flag.theme_type_variation = &"StrongLabel"
+	flag.add_theme_color_override("font_color", UIStyle.SAFETY_CAR if m.kind in ["sc", "vsc"] else (UIStyle.RAIN if m.kind == "weather" else UIStyle.ACCENT))
+	flag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(flag)
+	var paused := _note("Simulation paused for your decision")
+	paused.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	head.add_child(paused)
+	card.add_padded(head, 10, 2)
+	card.add_padded(Meter.new(100.0 * m.lap / w.conditions.laps, UIStyle.ACCENT, 4), 2, 6)
+
+	var title := Label.new()
+	title.text = _t(m.title)
+	title.theme_type_variation = &"HeadingLabel"
+	title.add_theme_font_size_override("font_size", 24)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	card.add_padded(title, 4, 0)
+	if m.text[0] != "":
+		card.add_padded(_note(_t(m.text)), 0, 4)
+	for f in m.facts:
+		card.add_row(FactRow.new(_t(f[0]), _t(f[1])))
+
+	card.add_section("Your call")
+	var options := []
+	for i in m.options.size():
+		options.append([_t(m.options[i][0]), _t(m.options[i][1]), tr("Recommended") if i == m.recommended else ""])
+	var choice := [m.recommended]
+	ChoiceRow.make_group(card.body, options, m.recommended, func(i): choice[0] = i)
+	var chief := _staff(StaffData.Role.STRATEGY_CHIEF)
+	card.add_padded(_quote(chief, "Strategy chief", tr("My call: %s.") % _t(m.options[m.recommended][0])), 8, 4)
+
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 12)
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	var rest := Button.new()
+	rest.text = "Simulate to the end"
+	rest.tooltip_text = "The strategy chief takes all remaining decisions."
+	rest.pressed.connect(func():
+		w.finish_with_staff()
+		_finish_race())
+	actions.add_child(rest)
+	var delegate := Button.new()
+	delegate.text = tr("Let %s decide") % tr("strategy chief")
+	delegate.icon = UIStyle.icon("users")
+	delegate.pressed.connect(func():
+		w.answer(m.recommended)
+		_continue_race())
+	actions.add_child(delegate)
+	var go := Button.new()
+	go.text = tr("Confirm").to_upper()
+	go.icon = UIStyle.icon("play")
+	go.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	go.theme_type_variation = &"AccentButton"
+	go.pressed.connect(func():
+		w.answer(choice[0])
+		_continue_race())
+	actions.add_child(go)
+	card.add_padded(actions, 10, 4)
+
+	card.add_section("Race events")
+	var shown := 0
+	var events: Array = w.engine.events
+	for i in range(events.size() - 1, -1, -1):
+		var ev: Dictionary = events[i]
+		var own: bool = ev.driver != &"" and GameState.drivers.has(ev.driver) \
+			and GameState.drivers[ev.driver].team_id == GameState.player_team_id
+		if not own and not ev.kind in ["sc", "vsc", "red", "retired"]:
+			continue
+		card.add_row(FactRow.new(tr("Lap %d") % ev.lap, ev.text, "", false, UIStyle.ACCENT if own else UIStyle.TEXT))
+		shown += 1
+		if shown >= 6:
+			break
+
+
+## Live timing tower: position, team colour, driver, gap, tyre.
+func _tower_card(m: Dictionary) -> UICard:
+	var card := UICard.new(tr("Running order · lap %d") % m.lap, "your cars highlighted")
+	var order := _weekend.engine.running_order()
+	var leader: SimCar = order[0]
+	for i in order.size():
+		var car: SimCar = order[i]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var pos := Label.new()
+		pos.text = "%2d" % (i + 1) if car.is_running() else "–"
+		pos.theme_type_variation = &"MonoLabel"
+		pos.custom_minimum_size.x = 26
+		row.add_child(pos)
+		row.add_child(UIStyle.team_stripe(car.team.id, 16))
+		var name_label := Label.new()
+		name_label.text = car.driver.last_name
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if car.is_player:
+			name_label.add_theme_color_override("font_color", UIStyle.ACCENT)
+		row.add_child(name_label)
+		var gap := Label.new()
+		gap.theme_type_variation = &"SmallLabel"
+		if not car.is_running():
+			gap.text = tr("Out")
+		elif car == leader:
+			gap.text = tr("Leader")
+		else:
+			var g: Array = _weekend.engine.gap_to_leader(car)
+			gap.text = tr("+%d lap(s)") % g[0] if g[0] > 0 else "+%.1f" % g[1]
+		row.add_child(gap)
+		var tyre := Label.new()
+		tyre.text = UIStyle.compound_letter(car.compound)
+		tyre.theme_type_variation = &"MonoLabel"
+		tyre.custom_minimum_size.x = 16
+		tyre.add_theme_color_override("font_color", UIStyle.compound_color(car.compound))
+		row.add_child(tyre)
+		card.add_padded(row, 1, 1)
+	return card
+
+
+## Translates an engine text [format, args]; string args with a key
+## (tyre names) are translated too.
+func _t(text: Array) -> String:
+	var args: Array = text[1].map(func(a): return tr(a) if a is String else a)
+	return tr(text[0]) % args if not args.is_empty() else tr(text[0])
 
 
 # --- Helpers -----------------------------------------------------------------

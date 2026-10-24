@@ -317,7 +317,7 @@ func weekend_of_today() -> RaceWeekend:
 	var today := round_today()
 	if today < 0:
 		return null
-	if not weekend or weekend.round_index != today or weekend.stage == RaceWeekend.Stage.FINISHED:
+	if not weekend or weekend.round_index != today:
 		weekend = RaceWeekend.create(_player_series(), today)
 	return weekend
 
@@ -327,8 +327,9 @@ func weekend_pending() -> bool:
 	return round_today() >= 0
 
 
-## Runs the race of today's weekend (with whatever the player decided) and
-## does the bookkeeping. Returns the summary.
+## Finishes the race of today's weekend (with whatever the player decided;
+## the staff takes any decision still open) and does the bookkeeping.
+## Returns the summary.
 func race_weekend() -> Dictionary:
 	var w := weekend_of_today()
 	var summary := w.run_race()

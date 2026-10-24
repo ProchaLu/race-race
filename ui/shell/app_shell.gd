@@ -37,6 +37,7 @@ const SCREENS := {
 	&"weekend": preload("res://ui/screens/weekend_screen.gd"),
 	&"race_result": preload("res://ui/screens/race_result_screen.gd"),
 	&"season_review": preload("res://ui/screens/season_review_screen.gd"),
+	&"driver_talk": preload("res://ui/screens/driver_talk_screen.gd"),
 }
 const PlaceholderScreen := preload("res://ui/screens/placeholder_screen.gd")
 const LANGUAGES := [["en", "English"], ["de", "Deutsch"]]
