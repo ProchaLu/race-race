@@ -10,7 +10,12 @@ const HIJACK_CHANCE := 0.08
 const NEW_MARKET_DRIVERS_PER_MONTH := 2
 const NEW_MARKET_STAFF_PER_MONTH := 4
 
+## Constructors' prize money by final position, champion first (design doc 13).
+const PRIZE_MONEY_M := [140, 125, 112, 100, 90, 81, 73, 66, 60, 57, 55]
+
 var _important_posted := false
+## The race weekend of today, while the player makes the decisions.
+var weekend: RaceWeekend
 
 
 func _ready() -> void:
@@ -19,6 +24,7 @@ func _ready() -> void:
 			_important_posted = true)
 	EventBus.contract_released.connect(_on_contract_released)
 	EventBus.contract_signed.connect(_on_contract_signed)
+	EventBus.season_started.connect(_start_new_season)
 
 
 ## Passive step: exactly one day (or the race, if today is race day).
@@ -34,11 +40,13 @@ func continue_to_next_event() -> void:
 
 
 ## One step of time. Returns true if something important happened.
+## On race day time stops: the weekend waits for the team principal.
 func _step() -> bool:
 	_important_posted = false
 	var today := round_today()
 	if today >= 0:
-		_run_race(today)
+		weekend_of_today()
+		return true
 	else:
 		Calendar.advance_day()
 		_daily_world_update()
@@ -297,13 +305,40 @@ func _announce_race(round_index: int) -> void:
 	msg.priority = InboxMessage.Priority.IMPORTANT
 	msg.icon = "trophy"
 	msg.add_paragraph("The team has arrived for round %d of %d.", [round_index + 1, s.calendar.size()])
-	msg.add_paragraph("Press Continue to run the race.")
+	msg.add_paragraph("Press Continue to open the race weekend and make your decisions.")
+	msg.link_screen = &"weekend"
+	msg.link_args = {}
+	msg.link_label = "Open race weekend"
 	GameState.add_message(msg)
 
 
-func _run_race(round_index: int) -> void:
+## The weekend raced today (created on first access), or null.
+func weekend_of_today() -> RaceWeekend:
+	var today := round_today()
+	if today < 0:
+		return null
+	if not weekend or weekend.round_index != today or weekend.stage == RaceWeekend.Stage.FINISHED:
+		weekend = RaceWeekend.create(_player_series(), today)
+	return weekend
+
+
+## True while today's race weekend has not been raced yet.
+func weekend_pending() -> bool:
+	return round_today() >= 0
+
+
+## Runs the race of today's weekend (with whatever the player decided) and
+## does the bookkeeping. Returns the summary.
+func race_weekend() -> Dictionary:
+	var w := weekend_of_today()
+	var summary := w.run_race()
+	_after_race(w.round_index, summary)
+	weekend = null
+	return summary
+
+
+func _after_race(round_index: int, summary: Dictionary) -> void:
 	var s := _player_series()
-	var summary := RaceWeekend.run_round(s, round_index)
 	GameState.resolved_rounds += 1
 	EventBus.round_completed.emit(round_index)
 	_check_promises()
@@ -317,7 +352,6 @@ func _run_race(round_index: int) -> void:
 	msg.icon = "trophy"
 	var winner: DriverData = GameState.drivers[summary.entries[0].driver_id]
 	msg.add_paragraph("%s won the race.", [winner.full_name()])
-	var first_own: StringName = &""
 	for driver in GameState.drivers_of_team(GameState.player_team_id):
 		var entry := RaceWeekend.entry_of(summary, driver.id)
 		if entry.is_empty():
@@ -326,8 +360,6 @@ func _run_race(round_index: int) -> void:
 			msg.add_paragraph("%s started P%d and finished P%d (%d pts).", [driver.full_name(), entry.grid, entry.finish, entry.points])
 		else:
 			msg.add_paragraph("%s retired on lap %d: %s.", [driver.full_name(), entry.retire_lap, tr(entry.retire_reason)])
-		if first_own == &"":
-			first_own = driver.id
 	var sc: int = summary.phases.filter(func(p): return p.kind == "SC").size()
 	if sc > 0:
 		msg.add_paragraph("Safety car periods: %d.", [sc])
@@ -335,10 +367,180 @@ func _run_race(round_index: int) -> void:
 	for i in standings.size():
 		if standings[i][0] == GameState.player_team_id:
 			msg.add_paragraph("Constructors' championship: P%d with %d points.", [i + 1, standings[i][1]])
-	msg.link_screen = &"driver_profile"
-	msg.link_args = {"driver_id": first_own}
-	msg.link_label = "Open driver profile"
+	msg.link_screen = &"race_result"
+	msg.link_args = {"round": round_index + 1}
+	msg.link_label = "Open race result"
+	# Read on the result screen right away; the message stays as a record.
+	msg.priority = InboxMessage.Priority.INFO
 	GameState.add_message(msg)
+	if GameState.resolved_rounds >= s.calendar.size():
+		_season_finale()
+
+
+# --- End of the season -------------------------------------------------------
+
+## After the final round: prize money for every team and the season review.
+func _season_finale() -> void:
+	var s := _player_series()
+	var team_table := SeasonRecords.team_standings(s)
+	var prize := {}
+	for i in team_table.size():
+		var team: TeamData = GameState.teams[team_table[i][0]]
+		var amount: int = PRIZE_MONEY_M[mini(i, PRIZE_MONEY_M.size() - 1)] * 1_000_000
+		team.budget += amount
+		prize[team.id] = amount
+	var review := _season_review(s, team_table, prize)
+	GameState.season_history.append(review)
+	EventBus.budget_changed.emit(GameState.player_team_id, GameState.player_team().budget)
+
+	var msg := InboxMessage.new()
+	msg.sender = "Sporting director"
+	msg.subject = "Season %d finished: P%d in the constructors' championship"
+	msg.subject_args = [review.year, review.team_position]
+	msg.priority = InboxMessage.Priority.IMPORTANT
+	msg.icon = "trophy"
+	var champion: DriverData = GameState.drivers.get(review.champion_driver)
+	if champion:
+		msg.add_paragraph("%s is the drivers' champion, %s won the constructors' title.",
+			[champion.full_name(), GameState.teams[review.champion_team].name])
+	msg.add_paragraph("We finished P%d with %d points. Prize money received: %s.",
+		[review.team_position, review.team_points, UIStyle.money(review.prize)])
+	msg.add_paragraph("The new season starts on 1 January. Contracts that end this year expire then.")
+	msg.link_screen = &"season_review"
+	msg.link_args = {}
+	msg.link_label = "Open season review"
+	GameState.add_message(msg)
+
+
+## Everything the season review shows, kept after the reset.
+func _season_review(s: SeriesData, team_table: Array, prize: Dictionary) -> Dictionary:
+	var team_id := GameState.player_team_id
+	var position := 0
+	for i in team_table.size():
+		if team_table[i][0] == team_id:
+			position = i + 1
+	var drivers := SeasonRecords.driver_standings()
+	var own := []
+	for i in drivers.size():
+		var d: DriverData = GameState.drivers.get(drivers[i][0])
+		if d and d.team_id == team_id:
+			var st: DriverSeasonStats = GameState.season_stats[d.id]
+			own.append({"driver_id": d.id, "position": i + 1, "points": st.points, "wins": st.wins,
+				"podiums": st.podiums, "poles": st.poles, "retirements": st.retirements,
+				"quali_ahead": st.quali_ahead, "race_ahead": st.race_ahead, "rounds": st.head_to_head_rounds})
+	var stops := []
+	var moments := []
+	for r in GameState.race_results:
+		for e in r.entries:
+			if e.team_id != team_id:
+				continue
+			for stop in e.stops:
+				stops.append(stop.stationary)
+			if e.finish == 1:
+				moments.append([r.round, "Win at %s – %s", [GameState.tracks[r.track_id].name, GameState.drivers[e.driver_id].full_name()]])
+			elif e.finish >= 2 and e.finish <= 3:
+				moments.append([r.round, "Podium at %s – %s P%d", [GameState.tracks[r.track_id].name, GameState.drivers[e.driver_id].full_name(), e.finish]])
+			elif e.grid == 1:
+				moments.append([r.round, "Pole position at %s – %s", [GameState.tracks[r.track_id].name, GameState.drivers[e.driver_id].full_name()]])
+	var avg_stop := 0.0
+	for v in stops:
+		avg_stop += v
+	return {
+		"year": Calendar.year,
+		"team_position": position,
+		"team_points": GameState.team_points.get(team_id, 0),
+		"prize": prize.get(team_id, 0),
+		"prize_next_lower": PRIZE_MONEY_M[mini(position, PRIZE_MONEY_M.size() - 1)] * 1_000_000 if position < team_table.size() else 0,
+		"team_table": team_table.duplicate(true),
+		"champion_driver": drivers[0][0] if not drivers.is_empty() else &"",
+		"champion_team": team_table[0][0] if not team_table.is_empty() else &"",
+		"drivers": own,
+		"average_stop": avg_stop / stops.size() if not stops.is_empty() else 0.0,
+		"moments": moments,
+		"rounds": s.calendar.size(),
+	}
+
+
+## 1 January: contracts end, statistics start from zero, empty race seats
+## are filled from the reserve driver.
+func _start_new_season(year: int) -> void:
+	GameState.season_stats.clear()
+	GameState.team_points.clear()
+	GameState.race_results.clear()
+	GameState.resolved_rounds = 0
+	weekend = null
+	for team in GameState.teams.values():
+		team.car.season = year
+
+	var gone := []
+	for c in GameState.contracts.duplicate():
+		if c.end_year >= year:
+			continue
+		var person := GameState.find_person(c.person_id)
+		if not person:
+			GameState.contracts.erase(c)
+			continue
+		if c.team_id == GameState.player_team_id:
+			gone.append(person.full_name())
+		_expire(person)
+
+	var promoted := _promote_reserves()
+	for team in GameState.teams.values():
+		for driver in GameState.drivers_of_team(team.id):
+			SeasonRecords.stats_of(driver.id)
+
+	var msg := InboxMessage.new()
+	msg.sender = "Sporting director"
+	msg.subject = "Season %d begins"
+	msg.subject_args = [year]
+	msg.priority = InboxMessage.Priority.IMPORTANT
+	msg.icon = "calendar"
+	var s := _player_series()
+	msg.add_paragraph("The first race is on %s. All statistics and standings start from zero.",
+		[Calendar.format_date(s.race_days[0])])
+	if not gone.is_empty():
+		msg.add_paragraph("Contracts ended: %s. They are now free agents.", [", ".join(gone)])
+	for p in promoted:
+		msg.add_paragraph("%s moves up from reserve driver to a race seat.", [p])
+	var seats := GameState.player_team().driver_ids.size()
+	if seats < ContractLogic.RACE_SEATS:
+		msg.add_paragraph("Warning: we only have %d race driver(s). Sign a driver on the transfer market before the first race.", [seats])
+	msg.link_screen = &"calendar"
+	msg.link_args = {}
+	msg.link_label = "Open calendar"
+	GameState.add_message(msg)
+
+
+## A contract ran out: the person becomes a free agent, no severance.
+func _expire(person: PersonData) -> void:
+	var c := GameState.contract_of(person.id)
+	if c:
+		GameState.contracts.erase(c)
+	var team: TeamData = GameState.teams.get(person.team_id)
+	if team:
+		team.driver_ids.erase(person.id)
+		team.reserve_driver_ids.erase(person.id)
+		team.staff_ids.erase(person.id)
+	person.team_id = &""
+	if person is StaffData:
+		(person as StaffData).assigned_driver_id = &""
+	EventBus.contract_released.emit(person.id)
+
+
+## Empty race seats are taken by the team's reserve driver. Returns the
+## names of the player's promoted drivers.
+func _promote_reserves() -> Array:
+	var names := []
+	for team in GameState.teams.values():
+		while team.driver_ids.size() < ContractLogic.RACE_SEATS and not team.reserve_driver_ids.is_empty():
+			var id: StringName = team.reserve_driver_ids.pop_front()
+			team.driver_ids.append(id)
+			var c := GameState.contract_of(id)
+			if c:
+				c.role = ContractData.DriverRole.EQUAL
+			if team.id == GameState.player_team_id:
+				names.append(GameState.drivers[id].full_name())
+	return names
 
 
 func _player_series() -> SeriesData:

@@ -32,6 +32,11 @@ const SCREENS := {
 	&"staff_profile": preload("res://ui/screens/staff_profile_screen.gd"),
 	&"market": preload("res://ui/screens/market_screen.gd"),
 	&"negotiation": preload("res://ui/screens/negotiation_screen.gd"),
+	&"calendar": preload("res://ui/screens/calendar_screen.gd"),
+	&"standings": preload("res://ui/screens/standings_screen.gd"),
+	&"weekend": preload("res://ui/screens/weekend_screen.gd"),
+	&"race_result": preload("res://ui/screens/race_result_screen.gd"),
+	&"season_review": preload("res://ui/screens/season_review_screen.gd"),
 }
 const PlaceholderScreen := preload("res://ui/screens/placeholder_screen.gd")
 const LANGUAGES := [["en", "English"], ["de", "Deutsch"]]
@@ -160,17 +165,23 @@ func refresh_current() -> void:
 # --- Time controls -----------------------------------------------------------
 
 func _on_next_day() -> void:
-	Season.advance_one_day()
+	if not Season.weekend_pending():
+		Season.advance_one_day()
 	_after_time_passed()
 
 
 func _on_continue() -> void:
-	Season.continue_to_next_event()
+	if not Season.weekend_pending():
+		Season.continue_to_next_event()
 	_after_time_passed()
 
 
 func _after_time_passed() -> void:
 	_refresh_top_bar()
+	# Race day: time waits until the weekend has been raced.
+	if Season.weekend_pending():
+		navigate(&"weekend", {}, _current_entry.get("id") != &"weekend")
+		return
 	# Open the newest unread important message, otherwise refresh the screen.
 	for i in range(GameState.inbox.size() - 1, -1, -1):
 		var msg := GameState.inbox[i]
@@ -420,7 +431,10 @@ func _refresh_top_bar() -> void:
 	var budget := GameState.player_team().budget
 	_budget_label.text = UIStyle.money(budget)
 	_budget_label.add_theme_color_override("font_color", UIStyle.money_color(budget))
-	_continue_button.text = tr("Continue").to_upper()
+	var race_day := Season.weekend_pending()
+	_continue_button.text = tr("Race weekend").to_upper() if race_day else tr("Continue").to_upper()
+	_continue_button.tooltip_text = "Open today's race weekend" if race_day else "Advance until the next important event"
+	_day_button.disabled = race_day
 	var mood := TeamMood.value(GameState.player_team_id)
 	var mood_color := UIStyle.mood_color(mood)
 	_mood_label.text = "%s · %d" % [tr(TeamMood.level_name(mood)), mood]

@@ -27,6 +27,12 @@ var briefing: Briefing = Briefing.NORMAL
 ## {"confidence": 6, "mistake": -0.1, "composure": 6, "aggression": 0.15,
 ##  "contact": 0.12, "tyre_wear": 0.05, "focus": 5, "team_orders": true}
 var talk := {}
+## Team orders from the weekend policy: {"yield": true} lets the teammate
+## pass, {"hold_after_stops": true} keeps positions once both have stopped.
+var orders := {}
+## Strategy plan picked by the team principal (StrategyPlanner.plans() entry);
+## empty = the strategy chief plans as usual.
+var chosen_plan := {}
 var start_compound: StringName = &"medium"
 ## Seconds per lap from this weekend's form: driver day form plus how
 ## well the car suits the conditions (rolled once per weekend).

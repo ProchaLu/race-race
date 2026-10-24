@@ -169,6 +169,77 @@ static func _thousands(value: int) -> String:
 	return s + out
 
 
+const SOFT := Color("ef5b5b")
+const MEDIUM := Color("f2d23b")
+const HARD := Color("e6e9ec")
+const INTER := Color("4fc46a")
+const WET := Color("3b8ff2")
+const RAIN := Color("5aa9f2")
+const SAFETY_CAR := Color("f2c53b")
+const FASTEST := Color("b36bff")
+const PODIUM := [Color("f2c53b"), Color("c9d1d9"), Color("d08a4e")]
+
+
+static func compound_color(id: StringName) -> Color:
+	match id:
+		&"soft":
+			return SOFT
+		&"medium":
+			return MEDIUM
+		&"hard":
+			return HARD
+		&"inter":
+			return INTER
+		&"wet":
+			return WET
+	return MUTED
+
+
+## "S", "M", "H", "I", "W"
+static func compound_letter(id: StringName) -> String:
+	return String(id).left(1).to_upper()
+
+
+static func compound_name(id: StringName) -> String:
+	return {&"soft": "Soft", &"medium": "Medium", &"hard": "Hard", &"inter": "Intermediate", &"wet": "Wet"}.get(id, String(id))
+
+
+## "1:32.418"; a dash for INF.
+static func lap_time(seconds: float) -> String:
+	if is_inf(seconds) or seconds <= 0.0:
+		return "–"
+	return "%d:%06.3f" % [floori(seconds / 60.0), fmod(seconds, 60.0)]
+
+
+## "1:34:12.5" for a race time.
+static func race_time(seconds: float) -> String:
+	var h := floori(seconds / 3600.0)
+	var m := floori(fmod(seconds, 3600.0) / 60.0)
+	return "%d:%02d:%04.1f" % [h, m, fmod(seconds, 60.0)]
+
+
+## Colour for a finishing position: gold/silver/bronze, points, no points.
+static func position_color(position: int) -> Color:
+	if position <= 0:
+		return BAD
+	if position <= 3:
+		return PODIUM[position - 1]
+	if position <= 10:
+		return OK
+	return MUTED
+
+
+## Small coloured stripe in a team's colour (tables, lists).
+static func team_stripe(team_id: StringName, height: int = 18) -> ColorRect:
+	var stripe := ColorRect.new()
+	var team: TeamData = GameState.teams.get(team_id)
+	stripe.color = team.primary_color if team else LINE_STRONG
+	stripe.custom_minimum_size = Vector2(4, height)
+	stripe.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	stripe.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return stripe
+
+
 ## Makes a control and all its descendants transparent to the mouse, so the
 ## parent row receives hover and tooltip events.
 static func ignore_mouse(node: Node) -> void:

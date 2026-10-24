@@ -19,6 +19,8 @@ var team_points: Dictionary[StringName, int] = {}
 var race_results: Array[Dictionary] = []
 ## Current season statistics per driver.
 var season_stats: Dictionary[StringName, DriverSeasonStats] = {}
+## One review per finished season (Season._season_review), oldest first.
+var season_history: Array[Dictionary] = []
 ## Relationships between two people. Key: "id_a|id_b" (sorted).
 ## Value: {"value": -100..100, "factors": {reason: delta}}
 var relationships: Dictionary = {}
@@ -59,6 +61,7 @@ func clear() -> void:
 	contracts.clear()
 	promises.clear()
 	season_stats.clear()
+	season_history.clear()
 	team_points.clear()
 	race_results.clear()
 	relationships.clear()

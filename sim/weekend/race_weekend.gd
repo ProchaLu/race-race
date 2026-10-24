@@ -1,71 +1,345 @@
-## Runs a full race weekend of the player's series inside the season:
-## practice, weekend form, qualifying and the race, then stores a detailed
-## summary (GameState.race_results) and updates the standings.
-## The weekend screens (decisions, 1-on-1, key moments) plug in here later;
-## until then every decision is left to the staff.
+## Runs a full race weekend of the player's series inside the season, step
+## by step so the team principal can decide in between (design doc 8.4b):
+## decisions -> practice and qualifying -> strategy and briefing -> race.
+## Every decision starts as the responsible staff member's choice, so
+## run_round() plays a weekend without the player. Stores a detailed summary
+## (GameState.race_results) and updates the standings.
+## Key moments in the race and the 1-on-1 talks plug in here later.
 class_name RaceWeekend
 extends RefCounted
 
-## Practice programmes per driver slot (0 = first driver of the team).
+enum Stage { PLANNING, STRATEGY, FINISHED }
+enum Target { POINTS, PODIUM, BRING_HOME }
+enum Orders { FREE, HOLD_AFTER_STOPS, PRIORITY }
+
+## Practice programmes per driver slot (0 = first driver of the team):
+## 0 = setup work, 1 = long runs, 2 = academy driver in FP1.
 const DEFAULT_PROGRAMMES := [0, 1]
+const PROGRAMMES := ["Setup work", "Long runs & tyres", "Academy driver in FP1"]
+## [name, description, morale if achieved, morale if missed]
+const TARGETS := [
+	["Both cars in the points", "Balanced risk. Morale +3 for both drivers if achieved, −2 if missed.", 3, -2],
+	["Attack the podium", "Drivers take more risks: more overtaking attempts and mistakes. Morale +5 if achieved, −3 if missed.", 5, -3],
+	["Bring both cars home", "Fewer risks and mistakes, fewer overtaking attempts. Morale +2 if both cars finish.", 2, 0],
+]
+## Race effects of the weekend target (same keys as the 1-on-1 talk).
+const TARGET_EFFECTS := [{}, {"aggression": 0.1, "mistake": 0.05}, {"aggression": -0.1, "mistake": -0.08}]
+const ORDERS := [
+	["Free racing", "Drivers may fight each other. No morale effect, risk of losing points."],
+	["Hold positions after the last stop", "Protects the team result once both cars have stopped."],
+	["Priority for one driver", "The teammate lets him pass. The teammate's morale −2 per race."],
+]
+const BRIEFINGS := [
+	[SimCar.Briefing.BRING_HOME, "Bring it home"],
+	[SimCar.Briefing.ATTACK, "Attack!"],
+	[SimCar.Briefing.NO_PRESSURE, "No pressure"],
+	[SimCar.Briefing.TEAM_PLAYER, "Team player"],
+]
+const RAIN_SETUPS := [
+	[SimCar.RainSetup.DRY, "Dry setup", "Fastest if it stays dry. Big loss in the wet."],
+	[SimCar.RainSetup.COMPROMISE, "Compromise", "A little slower in both conditions."],
+	[SimCar.RainSetup.WET, "Wet setup", "Strong if it rains. Slow if it stays dry."],
+]
+
+var series: SeriesData
+var round_index: int
+var track: TrackData
+var model: TrackModel
+var conditions: RaceConditions
+var cars: Array[SimCar] = []
+var rng := RandomNumberGenerator.new()
+var stage: Stage = Stage.PLANNING
+
+# Decisions of the player's team. They start as the staff's choice.
+var target: Target = Target.POINTS
+var orders: Orders = Orders.FREE
+var priority_driver: StringName = &""
+## Driver ID -> practice programme.
+var programmes := {}
+## Driver ID -> index into strategy_options.
+var plan_choice := {}
+var rain_setup: SimCar.RainSetup = SimCar.RainSetup.COMPROMISE
+## Driver ID -> SimCar.Briefing
+var briefings := {}
+
+## The strategy chief's rain forecast for the race (0..1) and its error margin.
+var forecast_rain := 0.0
+var forecast_margin := 0.0
+var practice_wet := 0.0
+var quali: QualifyingSim
+var grid: Array[SimCar] = []
+## Driver ID -> proposals of the strategy chief (StrategyPlanner.plans()).
+var strategy_options := {}
+var summary := {}
 
 
-static func run_round(series: SeriesData, round_index: int, seed_value: int = 0) -> Dictionary:
-	var rng := RandomNumberGenerator.new()
+static func create(p_series: SeriesData, p_round_index: int, seed_value: int = 0) -> RaceWeekend:
+	var w := RaceWeekend.new()
 	if seed_value != 0:
-		rng.seed = seed_value
+		w.rng.seed = seed_value
 	else:
-		rng.randomize()
-	var track: TrackData = GameState.tracks[series.calendar[round_index]]
-	var model := TrackModel.build(track)
-	var conditions := RaceConditions.for_track(model, rng)
-	var cars := WeekendSetup.cars_for_series(series.id)
+		w.rng.randomize()
+	w.series = p_series
+	w.round_index = p_round_index
+	w.track = GameState.tracks[p_series.calendar[p_round_index]]
+	w.model = TrackModel.build(w.track)
+	w.conditions = RaceConditions.for_track(w.model, w.rng)
+	w.cars = WeekendSetup.cars_for_series(p_series.id)
+	w._make_forecast()
+	w.staff_planning()
+	return w
 
-	# Practice: one driver works on the setup, the other does long runs.
-	var practice_wet := 0.0 if rng.randf() > conditions.rain_chance * 0.5 else rng.randf_range(0.3, 0.9)
+
+## Plays a whole weekend with every decision left to the staff.
+static func run_round(p_series: SeriesData, p_round_index: int, seed_value: int = 0) -> Dictionary:
+	var w := create(p_series, p_round_index, seed_value)
+	w.run_practice_and_qualifying()
+	return w.run_race()
+
+
+func player_cars() -> Array[SimCar]:
+	var out: Array[SimCar] = []
+	for car in cars:
+		if car.is_player:
+			out.append(car)
+	return out
+
+
+func car_of(driver_id: StringName) -> SimCar:
+	for car in cars:
+		if car.driver.id == driver_id:
+			return car
+	return null
+
+
+## The player team's staff values (strategy chief, crew, engineers).
+func ops() -> TeamOps:
+	var own := player_cars()
+	return own[0].ops if not own.is_empty() else TeamOps.from_team(GameState.player_team_id)
+
+
+# --- Before practice ---------------------------------------------------------
+
+## The weather forecast of the strategy chief: a good weather reader knows
+## better whether the shower really comes.
+func _make_forecast() -> void:
+	var accuracy := ops().weather_reading / 100.0
+	var actual := 1.0 if conditions.weather.max_rain() > 0.05 else 0.0
+	forecast_margin = lerpf(0.25, 0.05, accuracy)
+	var guess := lerpf(conditions.rain_chance, actual, 0.15 + 0.45 * accuracy)
+	forecast_rain = clampf(guess + rng.randfn(0.0, forecast_margin * 0.5), 0.0, 0.95)
+	if conditions.rain_chance < 0.03 and actual == 0.0:
+		forecast_rain = minf(forecast_rain, 0.03)
+
+
+## What the sporting director and the race engineers would choose.
+func staff_planning() -> void:
+	var rank := TeamMood.car_rank(GameState.player_team_id)
+	target = Target.PODIUM if rank <= 2 else (Target.POINTS if rank <= 7 else Target.BRING_HOME)
+	orders = Orders.FREE
+	priority_driver = &""
+	for car in player_cars():
+		var c := GameState.contract_of(car.driver.id)
+		if c and c.role == ContractData.DriverRole.NUMBER_ONE:
+			orders = Orders.PRIORITY
+			priority_driver = car.driver.id
+	staff_programmes()
+
+
+## The driver with the better technical feedback works on the setup.
+func staff_programmes() -> void:
+	var own := player_cars()
+	own.sort_custom(func(a: SimCar, b: SimCar): return a.driver.technical_feedback > b.driver.technical_feedback)
+	for i in own.size():
+		programmes[own[i].driver.id] = DEFAULT_PROGRAMMES[mini(i, DEFAULT_PROGRAMMES.size() - 1)]
+
+
+func has_academy_driver() -> bool:
+	return not GameState.player_team().academy_driver_ids.is_empty()
+
+
+# --- Practice and qualifying -------------------------------------------------
+
+func run_practice_and_qualifying() -> void:
+	practice_wet = 0.0 if rng.randf() > conditions.rain_chance * 0.5 else rng.randf_range(0.3, 0.9)
 	var slot := {}
 	for car in cars:
-		var index: int = slot.get(car.team.id, 0)
-		slot[car.team.id] = index + 1
-		WeekendSetup.practice(car, DEFAULT_PROGRAMMES[mini(index, DEFAULT_PROGRAMMES.size() - 1)], practice_wet, rng)
+		var programme: int
+		if car.is_player:
+			programme = programmes.get(car.driver.id, 0)
+		else:
+			var index: int = slot.get(car.team.id, 0)
+			slot[car.team.id] = index + 1
+			programme = DEFAULT_PROGRAMMES[mini(index, DEFAULT_PROGRAMMES.size() - 1)]
+		WeekendSetup.practice(car, programme, practice_wet, rng)
+	# Long runs of one driver help the whole team's strategy.
 	for car in cars:
 		for other in cars:
 			if other.team == car.team:
 				car.tyre_data = maxf(car.tyre_data, other.tyre_data)
 	WeekendSetup.roll_weekend(cars, model, rng)
 
-	var quali := QualifyingSim.new(model, conditions, rng)
-	var grid := quali.run(cars)
+	quali = QualifyingSim.new(model, conditions, rng)
+	grid = quali.run(cars)
+	_make_strategy_options()
+	staff_strategy()
+	stage = Stage.STRATEGY
+
+
+## The strategy chief's proposals, estimated with his own (imperfect) tyre model.
+func _make_strategy_options() -> void:
+	var plan_rng := RandomNumberGenerator.new()
+	plan_rng.seed = rng.randi()
+	var planner := StrategyPlanner.new(model, conditions, plan_rng)
+	for car in player_cars():
+		planner.init_estimates(car)
+		strategy_options[car.driver.id] = planner.plans(car, 0, true, 3)
+
+
+## Strategy chief picks his best plan, the engineers the setup direction
+## and the briefing.
+func staff_strategy() -> void:
+	for car in player_cars():
+		plan_choice[car.driver.id] = 0
+		briefings[car.driver.id] = recommended_briefing(car)[0]
+	rain_setup = staff_rain_setup(forecast_rain)
+
+
+static func staff_rain_setup(rain: float) -> SimCar.RainSetup:
+	if rain < 0.2:
+		return SimCar.RainSetup.DRY
+	if rain > 0.6:
+		return SimCar.RainSetup.WET
+	return SimCar.RainSetup.COMPROMISE
+
+
+## The race engineer's advice: [briefing, reason].
+func recommended_briefing(car: SimCar) -> Array:
+	var d := car.driver
+	if orders == Orders.PRIORITY and priority_driver != &"" and d.id != priority_driver:
+		return [SimCar.Briefing.TEAM_PLAYER, "Team orders favour his teammate – he should help, not fight."]
+	if d.morale < 45 or d.traits.has(&"glass_nerves"):
+		return [SimCar.Briefing.NO_PRESSURE, "Low morale or weak nerves: pressure now makes mistakes more likely."]
+	var position := car.grid_position if car.grid_position > 0 else 10
+	if d.temperament < 40 and position <= 10:
+		return [SimCar.Briefing.BRING_HOME, "Hot-headed and in the points: protect the result, avoid contact."]
+	if position > 10:
+		return [SimCar.Briefing.ATTACK, "Starts outside the points – he has to gain places."]
+	if position <= 6:
+		return [SimCar.Briefing.BRING_HOME, "Good starting position: no mistakes, bring the points home."]
+	return [SimCar.Briefing.ATTACK, "Points are close – a little more aggression can pay off."]
+
+
+static func briefing_name(b: SimCar.Briefing) -> String:
+	for entry in BRIEFINGS:
+		if entry[0] == b:
+			return entry[1]
+	return "Normal"
+
+
+static func rain_setup_name(r: SimCar.RainSetup) -> String:
+	return RAIN_SETUPS[r][1]
+
+
+# --- Race --------------------------------------------------------------------
+
+func run_race() -> Dictionary:
+	if stage == Stage.PLANNING:
+		run_practice_and_qualifying()
+	for car in cars:
+		if car.is_player:
+			_apply_player_decisions(car)
+		else:
+			car.rain_setup = staff_rain_setup(conditions.rain_chance)
 	var engine := RaceEngine.new(model, conditions, grid, rng.randi())
 	engine.run()
 
-	var summary := summarize(engine, quali, round_index, track)
+	summary = summarize(engine, quali, round_index, track)
 	_apply(series, round_index, engine)
 	summary.points = {}
 	for entry in summary.entries:
 		summary.points[entry.driver_id] = entry.points
+	summary.target = _judge_target()
+	summary.decisions = _decision_notes()
+	_orders_morale()
 	GameState.race_results.append(summary)
+	stage = Stage.FINISHED
 	return summary
 
 
-static func _apply(series: SeriesData, round_index: int, engine: RaceEngine) -> void:
-	var grid: Array = []
+func _apply_player_decisions(car: SimCar) -> void:
+	var id := car.driver.id
+	car.rain_setup = rain_setup
+	car.briefing = briefings.get(id, SimCar.Briefing.NORMAL)
+	var options: Array = strategy_options.get(id, [])
+	var choice: int = plan_choice.get(id, 0)
+	car.chosen_plan = options[choice] if choice < options.size() else {}
+	for key in TARGET_EFFECTS[target]:
+		car.talk[key] = car.talk.get(key, 0.0) + TARGET_EFFECTS[target][key]
+	car.orders = {}
+	match orders:
+		Orders.HOLD_AFTER_STOPS:
+			car.orders = {"hold_after_stops": true}
+		Orders.PRIORITY:
+			if priority_driver != &"" and id != priority_driver:
+				car.orders = {"yield": true}
+
+
+## Did the team reach the weekend target? Morale moves for both drivers.
+func _judge_target() -> Dictionary:
+	var own: Array = summary.entries.filter(func(e): return e.team_id == GameState.player_team_id)
+	var achieved := false
+	match target:
+		Target.POINTS:
+			achieved = own.all(func(e): return e.points > 0)
+		Target.PODIUM:
+			achieved = own.any(func(e): return e.finish >= 1 and e.finish <= 3)
+		Target.BRING_HOME:
+			achieved = own.all(func(e): return e.finish > 0)
+	var delta: int = TARGETS[target][2] if achieved else TARGETS[target][3]
+	if delta != 0:
+		for e in own:
+			TeamMood.change_morale(GameState.drivers[e.driver_id],
+				"Weekend target achieved" if achieved else "Weekend target missed", delta)
+	return {"kind": target, "name": TARGETS[target][0], "achieved": achieved, "morale": delta}
+
+
+func _orders_morale() -> void:
+	if orders != Orders.PRIORITY or priority_driver == &"":
+		return
+	for car in player_cars():
+		if car.driver.id != priority_driver:
+			TeamMood.change_morale(car.driver, "Team orders against him", -2)
+
+
+func _decision_notes() -> Dictionary:
+	var notes := {"orders": ORDERS[orders][0], "rain_setup": rain_setup_name(rain_setup), "drivers": {}}
+	for car in player_cars():
+		var id := car.driver.id
+		notes.drivers[id] = {"programme": PROGRAMMES[programmes.get(id, 0)],
+			"briefing": briefing_name(briefings.get(id, SimCar.Briefing.NORMAL)),
+			"plan": plan_choice.get(id, 0)}
+	return notes
+
+
+static func _apply(p_series: SeriesData, p_round_index: int, engine: RaceEngine) -> void:
+	var start_order: Array = []
 	var by_grid := engine.cars.duplicate()
 	by_grid.sort_custom(func(a: SimCar, b: SimCar): return a.grid_position < b.grid_position)
 	for car in by_grid:
-		grid.append(car.driver.id)
+		start_order.append(car.driver.id)
 	var classified: Array = []
 	var retired: Array = []
 	for car in engine.classification():
 		(retired if car.retired else classified).append(car.driver.id)
-	SeasonRecords.apply_round(series, round_index, grid, classified, retired)
+	SeasonRecords.apply_round(p_series, p_round_index, start_order, classified, retired)
 
 
 ## Everything the result screens need, as plain data (no runtime objects).
-static func summarize(engine: RaceEngine, quali: QualifyingSim, round_index: int, track: TrackData) -> Dictionary:
+static func summarize(engine: RaceEngine, p_quali: QualifyingSim, p_round_index: int, p_track: TrackData) -> Dictionary:
 	var order := engine.classification()
 	var winner := order[0]
-	var series: SeriesData = GameState.series[GameState.teams[winner.team.id].series_id]
+	var s: SeriesData = GameState.series[GameState.teams[winner.team.id].series_id]
 	var entries := []
 	var fastest := INF
 	var fastest_id: StringName = &""
@@ -77,7 +351,7 @@ static func summarize(engine: RaceEngine, quali: QualifyingSim, round_index: int
 		if car.best_lap < fastest:
 			fastest = car.best_lap
 			fastest_id = car.driver.id
-		var q: Dictionary = quali.results.get(car, {})
+		var q: Dictionary = p_quali.results.get(car, {})
 		entries.append({
 			"driver_id": car.driver.id,
 			"team_id": car.team.id,
@@ -90,7 +364,7 @@ static func summarize(engine: RaceEngine, quali: QualifyingSim, round_index: int
 			"best_lap": car.best_lap,
 			"retire_reason": car.retire_reason,
 			"retire_lap": car.retire_lap,
-			"points": 0 if car.retired else SeasonRecords.points_for(series, finish_position),
+			"points": 0 if car.retired else SeasonRecords.points_for(s, finish_position),
 			"penalty": car.penalty_s,
 			"stops": car.stops.duplicate(true),
 			"lap_times": Array(car.lap_times),
@@ -104,8 +378,8 @@ static func summarize(engine: RaceEngine, quali: QualifyingSim, round_index: int
 			"quali": {"Q1": q.get("Q1", INF), "Q2": q.get("Q2", INF), "Q3": q.get("Q3", INF), "out": q.get("out", "")},
 		})
 	return {
-		"round": round_index + 1,
-		"track_id": track.id,
+		"round": p_round_index + 1,
+		"track_id": p_track.id,
 		"laps": engine.conditions.laps,
 		"track_temp": engine.conditions.track_temp_c,
 		"reference_lap": engine.model.reference_lap_s,
@@ -119,8 +393,8 @@ static func summarize(engine: RaceEngine, quali: QualifyingSim, round_index: int
 
 
 ## The result entry of a driver in a summary, or {}.
-static func entry_of(summary: Dictionary, driver_id: StringName) -> Dictionary:
-	for e in summary.entries:
+static func entry_of(p_summary: Dictionary, driver_id: StringName) -> Dictionary:
+	for e in p_summary.entries:
 		if e.driver_id == driver_id:
 			return e
 	return {}

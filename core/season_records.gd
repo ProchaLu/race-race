@@ -10,7 +10,7 @@ extends RefCounted
 static func apply_round(series: SeriesData, round_index: int, grid: Array, classified: Array, retired: Array) -> void:
 	var all_ids := classified + retired
 	for id in all_ids:
-		_stats_of(id)
+		stats_of(id)
 	var position := 1
 	for id in all_ids:
 		var stats: DriverSeasonStats = GameState.season_stats[id]
@@ -40,7 +40,8 @@ static func points_for(series: SeriesData, position: int) -> int:
 	return series.points_table[position - 1] if position >= 1 and position <= series.points_table.size() else 0
 
 
-static func _stats_of(id: StringName) -> DriverSeasonStats:
+## This season's statistics of a driver, created empty on first access.
+static func stats_of(id: StringName) -> DriverSeasonStats:
 	if not GameState.season_stats.has(id):
 		var fresh := DriverSeasonStats.new()
 		fresh.driver_id = id

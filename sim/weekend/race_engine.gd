@@ -78,7 +78,8 @@ func _setup_start() -> void:
 		car.grid_position = i + 1
 		car.sector_frac = PaceModel.car_sector_fracs(car, model)
 		planner.init_estimates(car)
-		var options := planner.plans(car, 0, true, 1)
+		var options := [car.chosen_plan.duplicate(true)] if not car.chosen_plan.is_empty() \
+			else planner.plans(car, 0, true, 1)
 		var first: StringName = options[0].first if not options.is_empty() else &"medium"
 		var ideal := PaceModel.ideal_compound_for(wet, first)
 		car.start_compound = ideal
@@ -332,10 +333,16 @@ func _second_record(si: int, car: SimCar, other: SimCar) -> Array:
 	return []
 
 
-## Team orders: a team player (briefing or talk) does not attack his teammate.
+## Team orders: a team player (briefing or talk) does not attack his teammate,
+## and neither does a driver told to yield or to hold after the last stop.
 func _holds_position(car: SimCar, other: SimCar) -> bool:
 	if car.team != other.team:
 		return false
+	if car.orders.get("yield", false):
+		return true
+	if car.orders.get("hold_after_stops", false) and car.plan.is_empty() and other.plan.is_empty() \
+			and not car.stops.is_empty() and not other.stops.is_empty():
+		return true
 	return car.talk.get("team_orders", false) or car.briefing == SimCar.Briefing.TEAM_PLAYER
 
 

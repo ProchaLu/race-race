@@ -352,7 +352,7 @@ func _season_card() -> UICard:
 	var stats: DriverSeasonStats = GameState.season_stats.get(driver.id)
 	var s: SeriesData = GameState.series.get(driver.series_id)
 	var card := UICard.new(tr("Season %d") % Calendar.year, tr("after round %d") % GameState.rounds_completed())
-	if not stats or not s:
+	if not stats or not s or stats.races() == 0:
 		var none := Label.new()
 		none.text = "No Formula Apex races this season."
 		none.theme_type_variation = &"MutedLabel"
