@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Placeholder symbol: engine_cover. Replace with the final artwork (64x64). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+<polygon points="24.5,6.0 39.5,6.0 38.4,46.4 34.9,58.0 29.1,58.0 25.6,46.4" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HQ style options</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui;background:#0e1216;color:#dfe5ea}body{max-width:1680px;margin:auto;padding:28px}p{color:#a7b4bf;line-height:1.5}nav{position:sticky;top:0;background:#0e1216;padding:12px 0;display:flex;gap:8px;flex-wrap:wrap}button{font:inherit;border:1px solid #34404b;background:#141a20;color:inherit;padding:10px;cursor:pointer}button[aria-pressed=true]{color:#f2a93b;border-color:#f2a93b}article{margin:24px 0 40px}article[hidden]{display:none}img{width:100%;height:auto;image-rendering:pixelated}a{color:inherit}
+</style>
+<h1>HQ — three visual directions</h1>
+<p>Compare architecture, campus atmosphere and interface. Static concept images; all values are illustrative.</p>
+<nav aria-label="Style filter"><button data-style="all" aria-pressed="true">Compare all</button><button data-style="a" aria-pressed="false">A · Heritage Works</button><button data-style="b" aria-pressed="false">B · Engineering Park</button><button data-style="c" aria-pressed="false">C · Club Racer</button></nav>
+<article data-option="a"><h2>A · Heritage Works</h2><p>Brick workshops, pitched factory roofs, working courts and modern extensions.</p><a href="r4_hq_style_a_heritage.png"><img src="r4_hq_style_a_heritage.png" alt="Heritage Works racing HQ screen"></a></article>
+<article data-option="b"><h2>B · Engineering Park</h2><p>Contemporary research wings, coordinated blue glass and a cooler technical interface.</p><a href="r4_hq_style_b_modern.png"><img src="r4_hq_style_b_modern.png" alt="Engineering Park racing HQ screen"></a></article>
+<article data-option="c"><h2>C · Club Racer</h2><p>Bolder outlines, racing colours and larger crew activity sprites.</p><a href="r4_hq_style_c_retro.png"><img src="r4_hq_style_c_retro.png" alt="Club Racer pixel HQ screen"></a></article>
+<p>All three still lean toward regular rows. Final review must verify 15 facility anchors, natural circulation, equal land area across teams and five structural variants per building. Generated images are not production sprite sheets.</p>
+<script>
+document.querySelectorAll('button[data-style]').forEach(button=>button.addEventListener('click',()=>{
+document.querySelectorAll('button[data-style]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+document.querySelectorAll('article[data-option]').forEach(article=>article.hidden=button.dataset.style!=='all'&&article.dataset.option!==button.dataset.style);
+}));
+</script>
+</html>

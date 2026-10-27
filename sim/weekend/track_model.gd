@@ -206,7 +206,7 @@ func _compute_rating_share() -> void:
 			rating_share.power += w[0] * share
 			rating_share.drag += w[1] * share
 			rating_share.downforce += w[2] * share
-			rating_share.mech += w[3] * share
+			rating_share.mech += (w[3] + w[4] + w[5]) * share
 
 
 ## Fraction of lap time spent on straights (for wing level effects).

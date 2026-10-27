@@ -21,6 +21,17 @@ var race_results: Array[Dictionary] = []
 var season_stats: Dictionary[StringName, DriverSeasonStats] = {}
 ## One review per finished season (Season._season_review), oldest first.
 var season_history: Array[Dictionary] = []
+## Car development projects of all teams (CarDevelopment), oldest first.
+var car_projects: Array[DevProject] = []
+var next_project_id: int = 1
+## True: the technical director plans the player's car development.
+var delegate_car_development: bool = true
+## Money spent on car development this season per team.
+var car_spending: Dictionary = {}
+## Correlated parts per "team|aero" / "team|rig" – the team learns its tools.
+var correlation_experience: Dictionary = {}
+## Year whose end-of-season overlay is still to be shown (-1 = none).
+var pending_summary: int = -1
 ## Relationships between two people. Key: "id_a|id_b" (sorted).
 ## Value: {"value": -100..100, "factors": {reason: delta}}
 var relationships: Dictionary = {}
@@ -64,6 +75,12 @@ func clear() -> void:
 	promises.clear()
 	season_stats.clear()
 	season_history.clear()
+	pending_summary = -1
+	car_projects.clear()
+	next_project_id = 1
+	delegate_car_development = true
+	car_spending.clear()
+	correlation_experience.clear()
 	team_points.clear()
 	race_results.clear()
 	relationships.clear()
@@ -131,7 +148,7 @@ func staff_of_team(team_id: StringName) -> Array[StaffData]:
 func free_drivers() -> Array[DriverData]:
 	var result: Array[DriverData] = []
 	for d in drivers.values():
-		if d.team_id == &"":
+		if d.team_id == &"" and not d.retired:
 			result.append(d)
 	return result
 
@@ -139,7 +156,7 @@ func free_drivers() -> Array[DriverData]:
 func free_staff() -> Array[StaffData]:
 	var result: Array[StaffData] = []
 	for s in staff.values():
-		if s.team_id == &"":
+		if s.team_id == &"" and not s.retired:
 			result.append(s)
 	return result
 

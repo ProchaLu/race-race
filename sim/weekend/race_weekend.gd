@@ -16,7 +16,10 @@ enum Orders { FREE, HOLD_AFTER_STOPS, PRIORITY }
 ## Practice programmes per driver slot (0 = first driver of the team):
 ## 0 = setup work, 1 = long runs, 2 = academy driver in FP1.
 const DEFAULT_PROGRAMMES := [0, 1]
-const PROGRAMMES := ["Setup work", "Long runs & tyres", "Academy driver in FP1"]
+const PROGRAMMES := ["Setup work", "Long runs & tyres", "Academy driver in FP1", "Test new parts"]
+const TEST_PARTS := 3
+## Untested new parts cost setup in the first weekend.
+const UNTESTED_SETUP := 3.0
 ## [name, description, morale if achieved, morale if missed]
 const TARGETS := [
 	["Both cars in the points", "Balanced risk. Morale +3 for both drivers if achieved, −2 if missed.", 3, -2],
@@ -62,6 +65,10 @@ var plan_choice := {}
 var rain_setup: SimCar.RainSetup = SimCar.RainSetup.COMPROMISE
 ## Driver ID -> SimCar.Briefing
 var briefings := {}
+## Part ID -> driver ID who gets the only new unit (player's choice).
+var parts_choice := {}
+## Correlation was done after practice (programme "Test new parts").
+var parts_tested := false
 
 ## The strategy chief's rain forecast for the race (0..1) and its error margin.
 var forecast_rain := 0.0
@@ -88,6 +95,17 @@ static func create(p_series: SeriesData, p_round_index: int, seed_value: int = 0
 	w.track = GameState.tracks[p_series.calendar[p_round_index]]
 	w.model = TrackModel.build(w.track)
 	w.conditions = RaceConditions.for_track(w.model, w.rng)
+	for team_id in p_series.team_ids:
+		var team: TeamData = GameState.teams[team_id]
+		if team.car.has_parts():
+			var cost := CarBuild.ensure_raceable(team)
+			if cost > 0 and team_id == GameState.player_team_id:
+				var msg := InboxMessage.new()
+				msg.sender = "Factory manager"
+				msg.subject = "Emergency build for the race weekend"
+				msg.icon = "factory"
+				msg.add_paragraph("Not every car had all its parts. The factory built the missing ones overnight for %s.", [UIStyle.money(cost)])
+				GameState.add_message(msg)
 	w.cars = WeekendSetup.cars_for_series(p_series.id)
 	w._make_forecast()
 	w.staff_planning()
@@ -158,6 +176,36 @@ func staff_programmes() -> void:
 		programmes[own[i].driver.id] = DEFAULT_PROGRAMMES[mini(i, DEFAULT_PROGRAMMES.size() - 1)]
 
 
+## Parts whose newest version does not have a unit for every car yet:
+## [[part ID, version, units], ...]
+func scarce_parts() -> Array:
+	var team := GameState.player_team()
+	var cars := player_cars().size()
+	var out := []
+	for id in CarParts.ORDER:
+		var v: PartVersion = team.car.parts[id]
+		if v.version > 1 and v.units < cars:
+			out.append([id, v.version, v.units])
+	return out
+
+
+## The driver the technical director would give a scarce part to.
+func recommended_driver(part_id: StringName) -> StringName:
+	var order := CarBuild.priority_order(GameState.player_team())
+	return order[0].id if not order.is_empty() else &""
+
+
+## True if a car has a new part whose real effect is not known yet.
+func has_untested_parts(team: TeamData = null) -> bool:
+	if not team:
+		team = GameState.player_team()
+	for id in team.car.part_history:
+		for v in team.car.part_history[id]:
+			if not v.correlated:
+				return true
+	return false
+
+
 func has_academy_driver() -> bool:
 	return not GameState.player_team().academy_driver_ids.is_empty()
 
@@ -165,8 +213,10 @@ func has_academy_driver() -> bool:
 # --- Practice and qualifying -------------------------------------------------
 
 func run_practice_and_qualifying() -> void:
+	_apply_parts_choice()
 	practice_wet = 0.0 if rng.randf() > conditions.rain_chance * 0.5 else rng.randf_range(0.3, 0.9)
 	var slot := {}
+	var tested := {}
 	for car in cars:
 		var programme: int
 		if car.is_player:
@@ -175,7 +225,18 @@ func run_practice_and_qualifying() -> void:
 			var index: int = slot.get(car.team.id, 0)
 			slot[car.team.id] = index + 1
 			programme = DEFAULT_PROGRAMMES[mini(index, DEFAULT_PROGRAMMES.size() - 1)]
+			# The second driver tests new parts when there are any.
+			if index == 1 and has_untested_parts(car.team):
+				programme = TEST_PARTS
 		WeekendSetup.practice(car, programme, practice_wet, rng)
+		if programme == TEST_PARTS:
+			tested[car.team.id] = true
+	for car in cars:
+		if not tested.has(car.team.id) and _untested_on(car):
+			car.setup_pct = maxf(0.0, car.setup_pct - UNTESTED_SETUP)
+	for team_id in tested:
+		CarDevelopment.correlate(GameState.teams[team_id])
+	parts_tested = tested.has(GameState.player_team_id)
 	# Long runs of one driver help the whole team's strategy.
 	for car in cars:
 		for other in cars:
@@ -191,6 +252,41 @@ func run_practice_and_qualifying() -> void:
 		var request := DriverTalk.request(car, self)
 		talks[car.driver.id] = request if request else DriverTalk.weekly(car, self)
 	stage = Stage.STRATEGY
+
+
+func _untested_on(car: SimCar) -> bool:
+	for id in car.car_data.parts:
+		if not car.car_data.parts[id].correlated:
+			return true
+	return false
+
+
+## The player's choice who gets scarce new parts, with the morale effects
+## (docs/car_model.md 8). Rebuilds the player's cars.
+func _apply_parts_choice() -> void:
+	var team := GameState.player_team()
+	if not team.car.has_parts():
+		return
+	for entry in scarce_parts():
+		var id: StringName = entry[0]
+		var chosen: StringName = parts_choice.get(id, recommended_driver(id))
+		CarBuild.assign(team, id, chosen)
+		for car in player_cars():
+			if car.driver.id == chosen:
+				continue
+			var d := car.driver
+			var promise_broken := false
+			for p in GameState.promises_to(d.id):
+				if p.status == PromiseData.Status.OPEN and p.description == "Equal treatment with the teammate":
+					p.status = PromiseData.Status.BROKEN
+					TeamMood.change_morale(d, "Promise broken", p.morale_penalty)
+					promise_broken = true
+			if not promise_broken:
+				var c := GameState.contract_of(d.id)
+				var no1 := c and c.role == ContractData.DriverRole.NUMBER_ONE
+				TeamMood.change_morale(d, "Teammate got the new part first", -4 if no1 else -2)
+	for car in player_cars():
+		car.car_data = CarBuild.car_for(team, car.driver.id)
 
 
 ## The strategy chief's proposals, estimated with his own (imperfect) tyre model.
@@ -298,6 +394,7 @@ func run_race() -> Dictionary:
 
 func _finish_race() -> void:
 	summary = summarize(engine, quali, round_index, track)
+	_wear_and_damage()
 	_apply(series, round_index, engine)
 	summary.points = {}
 	for entry in summary.entries:
@@ -356,6 +453,40 @@ func _apply_player_decisions(car: SimCar) -> void:
 		Orders.PRIORITY:
 			if priority_driver != &"" and id != priority_driver:
 				car.orders = {"yield": true}
+
+
+## Crashes and contacts destroy parts, every car uses a set of brakes; the
+## teams learn what their new parts bring and reorder spares (docs/car_model.md 7).
+func _wear_and_damage() -> void:
+	var lost := []
+	for car in engine.cars:
+		var team := car.team
+		if not team.car.has_parts():
+			continue
+		var gone := []
+		if car.retired and car.retire_reason == "Crash":
+			gone.append(&"front_wing")
+			for entry in [[&"suspension_front", 0.5], [&"floor", 0.3], [&"rear_wing", 0.25], [&"diffuser", 0.25], [&"monocoque", 0.15]]:
+				if rng.randf() < entry[1]:
+					gone.append(entry[0])
+		else:
+			if car.damage.has("front_wing"):
+				gone.append(&"front_wing")
+			if car.damage.has("floor") and rng.randf() < 0.5:
+				gone.append(&"floor")
+			if car.damage.has("rear_wing"):
+				gone.append(&"rear_wing")
+		for id in gone:
+			CarBuild.consume(team, car.driver.id, id)
+		CarBuild.consume(team, car.driver.id, &"brakes")
+		if team.id == GameState.player_team_id and not gone.is_empty():
+			lost.append("%s: %s" % [car.driver.last_name, ", ".join(gone.map(func(i): return TranslationServer.translate(CarParts.name_of(i))))])
+	for team_id in series.team_ids:
+		var team: TeamData = GameState.teams[team_id]
+		if team.car.has_parts():
+			CarDevelopment.correlate(team)
+			CarDevelopment.reorder_spares(team)
+	summary["parts_lost"] = lost
 
 
 ## Did the team reach the weekend target? Morale moves for both drivers.
@@ -448,6 +579,7 @@ static func summarize(engine: RaceEngine, p_quali: QualifyingSim, p_round_index:
 			"overtakes": car.overtakes_made,
 			"mistakes": car.mistakes,
 			"setup": car.setup_pct,
+			"cooling": car.cooling_opening,
 			"quali": {"Q1": q.get("Q1", INF), "Q2": q.get("Q2", INF), "Q3": q.get("Q3", INF), "out": q.get("out", "")},
 		})
 	return {

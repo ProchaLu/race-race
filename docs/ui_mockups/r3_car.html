@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Car Development Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Chrome (screen tabs) on top, then the dark Pit Wall stage with one screen. */
+:root {
+  --chrome-bg: #f3f4f6; --chrome-fg: #1b2230; --chrome-muted: #5d6676; --chrome-line: #d6dae1;
+  --chrome-btn: #ffffff; --chrome-active: #1b2230; --chrome-active-fg: #ffffff;
+  --bg: #0e1216; --panel: #141a20; --panel-2: #10151a; --text: #dfe5ea; --muted: #7f8b96; --faint: #56616c;
+  --line: #232c35; --line-strong: #34404b; --zebra: #171e25; --hover: #1d2731; --amber: #f2a93b; --team: #e8471c;
+  --lv1: #ef5b5b; --lv2: #e0a13a; --lv3: #8fc46a; --lv4: #4fd1a5; --blue: #5aa9e6; --purple: #b36bff;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36; --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36; --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--chrome-bg); color: var(--chrome-fg); font-family: var(--f-body); font-size: 14px; padding: 20px 16px 40px; }
+.lab { max-width: 1560px; margin: 0 auto; display: grid; gap: 12px; }
+.lab-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.lab-head h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.lab-head p { margin: 4px 0 0; color: var(--chrome-muted); font-size: .875rem; max-width: 90ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.controls button { font: inherit; font-size: .85rem; padding: 8px 12px; border-radius: 4px; cursor: pointer; border: 1px solid var(--chrome-line); background: var(--chrome-btn); color: var(--chrome-fg); }
+.controls button[aria-pressed="true"] { background: var(--chrome-active); color: var(--chrome-active-fg); border-color: var(--chrome-active); }
+.note { margin: 0; font-size: .875rem; color: var(--chrome-muted); max-width: 130ch; }
+.note b { color: var(--chrome-fg); }
+
+.stage { background: var(--bg); color: var(--text); padding: 16px; border-radius: 2px; display: grid; gap: 14px; overflow-x: auto; position: relative; }
+.row { display: grid; gap: 14px; min-width: 0; align-items: start; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding-bottom: 10px; min-width: 0; }
+.card > h3 { margin: 0 0 4px; padding: 8px 16px 7px; border-bottom: 1px solid var(--line); font-family: var(--f-display); font-weight: 700; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.card > h3 small { font-family: var(--f-body); font-weight: 400; font-size: .75rem; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.pad { padding: 6px 16px; }
+.muted { color: var(--muted); } .faint { color: var(--faint); }
+.good { color: var(--lv4); } .ok { color: var(--lv3); } .warn { color: var(--lv2); } .bad { color: var(--lv1); } .amber { color: var(--amber); } .blue { color: var(--blue); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.fact { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 5px 16px; align-items: baseline; }
+.fact:nth-child(even of .fact) { background: var(--zebra); }
+.fact .k { color: var(--muted); } .fact .v { font-weight: 600; text-align: right; }
+.sub { font-family: var(--f-display); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: .75rem; color: var(--muted); padding: 10px 16px 2px; }
+.btn { font: inherit; padding: 7px 14px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--text); border-radius: 2px; cursor: pointer; }
+.btn.primary { background: var(--amber); color: var(--bg); border: none; font-family: var(--f-display); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 1rem; padding: 8px 20px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.small { padding: 4px 10px; font-size: .8rem; }
+.actions { display: flex; gap: 10px; justify-content: flex-end; padding: 10px 16px 0; flex-wrap: wrap; align-items: center; }
+.chip { display: inline-block; padding: 1px 7px; border: 1px solid var(--line-strong); font-size: .72rem; border-radius: 2px; margin: 0 4px 4px 0; }
+.chip.good { border-color: color-mix(in srgb, var(--lv4) 50%, transparent); background: color-mix(in srgb, var(--lv4) 12%, transparent); }
+.chip.bad { border-color: color-mix(in srgb, var(--lv1) 50%, transparent); background: color-mix(in srgb, var(--lv1) 12%, transparent); }
+.chip.warn { border-color: color-mix(in srgb, var(--lv2) 50%, transparent); background: color-mix(in srgb, var(--lv2) 12%, transparent); }
+.meter { height: 6px; background: var(--line); position: relative; }
+.meter i { position: absolute; inset: 0 auto 0 0; }
+.meter .tick { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--text); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .84rem; }
+th { text-align: left; font-family: var(--f-display); font-weight: 600; letter-spacing: .06em; color: var(--muted); padding: 7px 8px; background: var(--panel-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tr:nth-child(even) td { background: var(--zebra); }
+tr.sel td { background: color-mix(in srgb, var(--amber) 12%, transparent); }
+th.num, td.num { text-align: right; }
+
+/* Car diagram */
+.car-wrap { display: grid; grid-template-columns: 300px 1fr; gap: 0; }
+.car svg { width: 100%; height: auto; display: block; }
+.zone { cursor: pointer; stroke: var(--bg); stroke-width: 1.5; transition: opacity .15s; }
+.zone:hover { opacity: .8; }
+.zone.sel { stroke: var(--amber); stroke-width: 3; }
+.wheel { fill: #232a31; stroke: #34404b; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 16px 0; font-size: .76rem; color: var(--muted); align-items: center; }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+.part-icon { width: 34px; height: 34px; background: var(--panel-2); border: 1px solid var(--line-strong); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; color: var(--amber); font-size: .8rem; flex: none; }
+.part-head { display: flex; gap: 12px; align-items: center; padding: 10px 16px 6px; }
+.part-head b { font-family: var(--f-display); font-size: 1.4rem; letter-spacing: .04em; text-transform: uppercase; }
+.rating-row { display: grid; grid-template-columns: 150px 1fr 48px 56px 54px; gap: 10px; padding: 5px 16px; align-items: center; }
+.rating-row:nth-child(even of .rating-row) { background: var(--zebra); }
+.cap-row { display: grid; grid-template-columns: 110px 1fr 120px; gap: 10px; padding: 5px 16px; align-items: center; font-size: .84rem; }
+
+/* Workshop board */
+.board { display: grid; grid-template-columns: repeat(6, minmax(190px, 1fr)); gap: 10px; padding: 8px 12px; }
+.col { background: var(--panel-2); border: 1px solid var(--line); min-height: 320px; }
+.col h4 { margin: 0; padding: 8px 10px; font-family: var(--f-display); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: .85rem; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
+.pcard { margin: 8px; background: var(--panel); border: 1px solid var(--line-strong); padding: 8px 10px; display: grid; gap: 5px; font-size: .8rem; cursor: pointer; }
+.pcard:hover { background: var(--hover); }
+.pcard .top { display: flex; gap: 8px; align-items: center; }
+.pcard .top b { font-size: .86rem; }
+.prio { font-family: var(--f-display); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; padding: 0 5px; border: 1px solid currentColor; }
+
+/* New project dialog */
+.overlay { position: relative; background: color-mix(in srgb, var(--bg) 70%, transparent); display: grid; place-items: start center; padding: 10px 0; }
+.dialog { width: min(1380px, 100%); background: var(--bg); border: 1px solid var(--amber); }
+.dialog-head { background: var(--panel); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.dialog-head b { font-family: var(--f-display); font-size: 1.6rem; text-transform: uppercase; letter-spacing: .04em; }
+.dialog-body { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; padding: 14px; }
+.part-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 6px 16px; }
+.pbtn { background: var(--panel-2); border: 1px solid var(--line-strong); color: var(--text); padding: 8px 6px; font: inherit; font-size: .78rem; cursor: pointer; text-align: left; display: grid; gap: 2px; }
+.pbtn[aria-pressed="true"] { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
+.pbtn small { color: var(--muted); }
+.choices { display: grid; gap: 6px; padding: 6px 16px; }
+.choices.c3 { grid-template-columns: repeat(3, 1fr); }
+.choice { text-align: left; font: inherit; background: var(--panel-2); border: 1px solid var(--line-strong); color: var(--text); padding: 8px 10px; cursor: pointer; display: grid; gap: 2px; }
+.choice small { color: var(--muted); font-size: .76rem; }
+.choice[aria-pressed="true"] { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
+.seg { display: flex; gap: 4px; padding: 6px 16px; }
+.seg button { flex: 1; font: inherit; padding: 6px; background: var(--panel); border: 1px solid var(--line-strong); color: var(--text); cursor: pointer; }
+.seg button[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+.timeline { display: flex; height: 26px; margin: 6px 16px; border: 1px solid var(--line-strong); }
+.timeline span { display: grid; place-items: center; font-size: .7rem; color: var(--bg); font-weight: 600; overflow: hidden; white-space: nowrap; }
+.gainbar { position: relative; height: 22px; margin: 6px 16px 2px; background: var(--line); }
+.gainbar .range { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--lv4) 40%, transparent); }
+.gainbar .exp { position: absolute; top: -3px; bottom: -3px; width: 3px; background: var(--lv4); }
+.gainbar .zero { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--text); }
+.quote { margin: 8px 16px; padding: 8px 12px; background: var(--panel-2); border: 1px solid var(--line-strong); font-size: .85rem; }
+.quote small { display: block; color: var(--muted); font-size: .74rem; margin-bottom: 2px; }
+.warnbox { margin: 6px 16px; padding: 8px 12px; border: 1px solid color-mix(in srgb, var(--lv2) 55%, transparent); background: color-mix(in srgb, var(--lv2) 10%, transparent); font-size: .82rem; }
+.slider { margin: 8px 16px; position: relative; height: 34px; }
+.slider .track { position: absolute; top: 14px; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, var(--team) 0 40%, var(--blue) 40% 100%); }
+.slider .knob { position: absolute; top: 6px; left: calc(40% - 9px); width: 18px; height: 22px; background: var(--text); border: 2px solid var(--bg); }
+.big { font-family: var(--f-display); font-size: 2rem; font-weight: 700; line-height: 1; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); }
+.tiles > div { padding: 10px 16px; border-right: 1px solid var(--line); }
+.tiles > div:last-child { border-right: none; }
+.tiles small { display: block; font-family: var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-size: .72rem; }
+.tiles b { font-family: var(--f-display); font-size: 1.5rem; }
+.tiles span { display: block; font-size: .76rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="lab">
+<div class="lab-head">
+<div>
+<h1>R3 mockups: car development</h1>
+<p>Sample data (fictional), Vortex Racing after round 9. Click the zones on the car, the parts in the dialog and the project cards. Placeholder graphics: the car and all 13 part symbols are simple shapes with fixed names – the graphic person replaces them later.</p>
+</div>
+<div class="controls" role="group" aria-label="Screen">
+<button data-s="overview" aria-pressed="true">1 · Overview</button>
+<button data-s="project" aria-pressed="false">2 · New project</button>
+<button data-s="board" aria-pressed="false">3 · Workshop</button>
+<button data-s="parts" aria-pressed="false">4 · Parts &amp; production</button>
+<button data-s="next" aria-pressed="false">5 · Next year</button>
+<button data-s="weekend" aria-pressed="false">6 · Race weekend</button>
+</div>
+</div>
+<p class="note" id="note"></p>
+<section class="stage" id="stage"></section>
+</div>
+<script>
+// ---------- Car geometry (viewBox 300 x 720, nose up). Same coordinates as ui/car_layout.gd ----------
+const ZONES = {
+  floor: [[[68,282],[232,282],[238,520],[214,562],[86,562],[62,520]]],
+  sidepods: [[[90,322],[124,322],[124,505],[106,528],[92,470]], [[210,322],[176,322],[176,505],[194,528],[208,470]]],
+  cooling: [[[90,298],[124,298],[124,320],[90,320]], [[176,298],[210,298],[210,320],[176,320]]],
+  engine_cover: [[[124,380],[176,380],[172,520],[160,560],[140,560],[128,520]]],
+  monocoque: [[[138,60],[162,60],[172,150],[178,300],[176,380],[124,380],[122,300],[128,150]]],
+  suspension_front: [[[76,120],[128,110],[128,148],[76,142]], [[224,120],[172,110],[172,148],[224,142]]],
+  suspension_rear: [[[80,548],[134,540],[134,575],[80,585]], [[220,548],[166,540],[166,575],[220,585]]],
+  gearbox: [[[138,560],[162,560],[160,630],[140,630]]],
+  exhaust: [[[143,630],[157,630],[157,648],[143,648]]],
+  diffuser: [[[96,615],[138,605],[138,652],[100,656]], [[204,615],[162,605],[162,652],[200,656]]],
+  front_wing: [[[30,18],[270,18],[270,52],[200,60],[100,60],[30,52]]],
+  rear_wing: [[[55,662],[245,662],[245,702],[55,702]]],
+  brakes: [[[46,124],[58,124],[58,146],[46,146]], [[242,124],[254,124],[254,146],[242,146]], [[38,558],[50,558],[50,582],[38,582]], [[250,558],[262,558],[262,582],[250,582]]],
+};
+const WHEELS = [[28,95,48,80],[224,95,48,80],[20,525,60,90],[220,525,60,90]];
+// ---------- Sample team data ----------
+// [id, name, short, area, main stat, value, field rank, version, units (fitted/spare), mass kg, reliability]
+const PARTS = [
+  ["front_wing", "Front wing", "FW", "Aero", "Downforce", 64, 5, "v4", "2 + 2", 8.2, 92],
+  ["rear_wing", "Rear wing", "RW", "Aero", "Drag", 58, 7, "v2", "2 + 1", 7.0, 94],
+  ["floor", "Floor", "FL", "Aero", "Downforce", 55, 8, "v2", "2 + 0", 25.6, 90],
+  ["diffuser", "Diffuser", "DF", "Aero", "Downforce", 61, 6, "v3", "2 + 1", 8.0, 93],
+  ["sidepods", "Sidepods", "SP", "Aero", "Drag", 66, 3, "v2", "2 + 1", 12.4, 95],
+  ["engine_cover", "Engine cover", "EC", "Aero", "Drag", 60, 5, "v1", "2 + 2", 4.1, 97],
+  ["monocoque", "Monocoque", "MC", "Chassis", "Mech. grip", 62, 4, "2026", "2 + 1", 45.8, 91],
+  ["suspension_front", "Front suspension", "SF", "Chassis", "Mech. grip", 63, 5, "v2", "2 + 1", 18.3, 88],
+  ["suspension_rear", "Rear suspension", "SR", "Chassis", "Traction", 59, 6, "v1", "2 + 1", 18.6, 89],
+  ["brakes", "Brakes", "BR", "Chassis", "Braking", 67, 3, "v2", "2 + 6", 14.0, 93],
+  ["gearbox", "Gearbox", "GB", "Drivetrain", "Reliability", 57, 8, "v1", "2 + 1", 40.9, 84],
+  ["cooling", "Cooling", "CO", "Drivetrain", "Cooling", 61, 5, "v2", "2 + 1", 15.2, 90],
+  ["exhaust", "Exhaust", "EX", "Drivetrain", "Power", 58, 6, "v1", "2 + 2", 8.0, 92],
+];
+const byId = id => PARTS.find(p => p[0] === id);
+const rankColor = r => r <= 3 ? "var(--lv4)" : r <= 5 ? "var(--lv3)" : r <= 7 ? "var(--lv2)" : "var(--lv1)";
+let selected = "floor";
+const card = (title, body, small = "") => `<div class="card"><h3>${title}${small ? `<small>${small}</small>` : ""}</h3>${body}</div>`;
+const fact = (k, v, cls = "") => `<div class="fact"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
+const meter = (v, c, tick) => `<div class="meter"><i style="width:${v}%;background:${c}"></i>${tick !== undefined ? `<span class="tick" style="left:${tick}%"></span>` : ""}</div>`;
+const icon = p => `<div class="part-icon" title="assets/parts/${p[0]}.svg">${p[2]}</div>`;
+
+function carSvg(colorBy = "rank") {
+  const poly = pts => pts.map(p => p.join(",")).join(" ");
+  let out = WHEELS.map(([x, y, w, h]) => `<rect class="wheel" x="${x}" y="${y}" width="${w}" height="${h}" rx="6"/>`).join("");
+  for (const [id, polys] of Object.entries(ZONES)) {
+    const p = byId(id);
+    for (const pts of polys) out += `<polygon class="zone ${id === selected ? "sel" : ""}" data-part="${id}" points="${poly(pts)}" fill="${rankColor(p[6])}"><title>${p[1]} · P${p[6]} in the field</title></polygon>`;
+  }
+  return `<svg viewBox="0 0 300 720" role="img" aria-label="Car from above, parts coloured by field rank">${out}</svg>`;
+}
+
+// ---------- 1. Overview ----------
+function overview() {
+  const p = byId(selected);
+  const ratings = [["Downforce", 60, 6, +3, 56], ["Drag efficiency", 62, 4, +2, 54], ["Mechanical grip", 63, 4, +1, 55], ["Braking", 66, 3, +2, 55], ["Traction", 59, 6, 0, 54],
+    ["Tyre preservation", 61, 5, +1, 52], ["Cooling", 61, 5, 0, 53], ["Reliability", 90, 5, +1, 89], ["Engine power (fixed until R5)", 70, 3, 0, 58]];
+  return `<div class="row" style="grid-template-columns:1.25fr 1fr">
+  ${card("Your car · season 2026", `<div class="car-wrap"><div class="car pad">${carSvg()}</div>
+   <div>
+    <div class="part-head">${icon(p)}<div><b>${p[1]}</b><div class="muted">${p[3]} · version ${p[7]} · main value: ${p[4]}</div></div></div>
+    ${fact("Value", `${p[5]} <span class="muted">/ 100</span>`)}${fact("Rank in the field", `P${p[6]} of 11`, p[6] <= 3 ? "good" : p[6] >= 8 ? "bad" : "")}
+    ${fact("Units", `${p[8]} <span class="muted">(fitted + spare)</span>`)}${fact("Mass", `${p[9]} kg`)}${fact("Reliability", p[10], p[10] < 88 ? "warn" : "")}
+    ${fact("Last update", p[0] === "floor" ? "v2 · R5 · forecast +0.12 s, real +0.07 s" : "R7 · forecast matched")}
+    <div class="sub">In development</div>
+    ${p[0] === "floor" ? `<div class="pad">Floor v3 · <span class="amber">Design 64 %</span> · ready around R12</div>` : `<div class="pad muted">No project for this part.</div>`}
+    <div class="actions"><button class="btn small">Part history</button><button class="btn primary">New project ▷</button></div>
+    <div class="legend"><span><i style="background:var(--lv4)"></i>top 3</span><span><i style="background:var(--lv3)"></i>P4–5</span><span><i style="background:var(--lv2)"></i>P6–7</span><span><i style="background:var(--lv1)"></i>P8+</span><span>click a part</span></div>
+   </div></div>`, "parts coloured by rank in the field")}
+  <div class="row">
+  ${card("Car values", `<div class="rating-row muted" style="font-size:.74rem"><span></span><span>value · line = field average</span><span class="num">value</span><span class="num">rank</span><span class="num">season</span></div>` +
+    ratings.map(([k, v, r, d, avg]) => `<div class="rating-row"><span class="muted">${k}</span>${meter(v, rankColor(r), avg)}<span class="mono" style="text-align:right">${v}</span><span class="mono" style="text-align:right;color:${rankColor(r)}">P${r}</span><span class="mono ${d > 0 ? "good" : d < 0 ? "bad" : "muted"}" style="text-align:right">${d > 0 ? "+" + d : d || "–"}</span></div>`).join("") +
+    fact("Weight", `<span class="warn">803 kg</span> <span class="muted">· 5 kg over the limit (+0.15 s/lap)</span>`) +
+    fact("Lap time vs. field average", `<span class="good">−0.21 s</span> <span class="muted">· P4</span>`), "season = change since round 1")}
+  ${card("Development", `${fact("Active projects", "3 of 4 possible")}
+    <div class="cap-row"><span class="muted">Design</span>${meter(92, "var(--lv2)")}<span class="mono">2 projects · 1.05</span></div>
+    <div class="cap-row"><span class="muted">Aero testing</span>${meter(55, "var(--lv3)")}<span class="mono">1 project · 0.95</span></div>
+    <div class="cap-row"><span class="muted">Test rigs</span>${meter(0, "var(--lv3)")}<span class="mono">idle · 1.00</span></div>
+    <div class="cap-row"><span class="muted">Factory</span>${meter(40, "var(--lv3)")}<span class="mono">2 units queued · 1.10</span></div>
+    ${fact("Spent on the car this season", "$31.4M")}${fact("Budget", `<span class="good">$148.6M</span>`)}
+    <div class="actions"><button class="btn small">Delegate to technical director</button><button class="btn small">Workshop ▸</button></div>`, "capacity per department")}
+  </div></div>`;
+}
+
+// ---------- 2. New project ----------
+let newPart = "floor", goal = 1, ambition = 1;
+const GOALS = {
+  floor: [["More downforce", "+Downforce, a little more drag"], ["Efficiency", "+Downforce at the same drag (60 % of the gain)"], ["Less drag", "+Drag efficiency, a little less downforce"], ["Save weight", "−kg, slightly less reliable"]],
+};
+function project() {
+  const p = byId(newPart);
+  const goals = GOALS[newPart] || [["Main value", "Improves " + p[4]], ["Save weight", "−kg, slightly less reliable"], ["Reliability", "+Reliability"]];
+  const amb = [["Conservative", "Gain ×0.6 · risk 3 % · faster"], ["Normal", "Gain ×1.0 · risk 10 %"], ["Aggressive", "Gain ×1.6 · risk 20 % · slower, +30 % cost"]];
+  const gain = [0.08, 0.13, 0.21][ambition] * (goal === 1 ? 0.75 : 1), lo = gain * (ambition === 2 ? -0.3 : 0.4), hi = gain * (ambition === 2 ? 1.7 : 1.5);
+  const cost = [1.2, 1.5, 1.95][ambition];
+  const x = v => ((v + 0.1) / 0.5 * 100).toFixed(1);
+  return `<div class="overlay"><div class="dialog">
+  <div class="dialog-head"><div><div class="muted" style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase">New development project</div><b>${p[1]} v3</b></div><button class="btn small">✕</button></div>
+  <div class="dialog-body">
+   <div>
+    ${card("1 · Part", `<div class="part-grid">${PARTS.map(q => `<button class="pbtn" data-np="${q[0]}" aria-pressed="${q[0] === newPart}"><span style="display:flex;gap:6px;align-items:center">${icon(q).replace("part-icon", "part-icon\" style=\"width:24px;height:24px;font-size:.66rem")}<b>${q[1]}</b></span><small>P${q[6]} · ${q[4]}</small></button>`).join("")}</div>`, "rank in the field")}
+    ${card("2 · Goal", `<div class="choices">${goals.map((g, i) => `<button class="choice" data-goal="${i}" aria-pressed="${i === goal}"><b>${g[0]}</b><small>${g[1]}</small></button>`).join("")}</div>`)}
+    ${card("3 · Approach", `<div class="choices c3">${amb.map((a, i) => `<button class="choice" data-amb="${i}" aria-pressed="${i === ambition}"><b>${a[0]}</b><small>${a[1]}</small></button>`).join("")}</div>
+     <div class="sub">Priority</div><div class="seg"><button>Low</button><button aria-pressed="true">Normal</button><button>High</button></div>
+     <div class="sub">Units to build</div><div class="seg"><button>1</button><button>2</button><button aria-pressed="true">3 (1 spare)</button><button>4</button></div>
+     <div class="sub">For</div><div class="seg"><button aria-pressed="true">This season</button><button>Next season's car</button></div>
+     <div class="sub">Overtime</div><div class="seg"><button aria-pressed="true">No</button><button>Yes · ×1.4 speed, ×1.5 cost, team mood −</button></div>`)}
+   </div>
+   <div>
+    ${card("Forecast", `<div class="tiles"><div><small>Expected gain</small><b class="good">${(-gain).toFixed(2)} s</b><span>per lap · floor +${Math.round(gain * 60)} pts</span></div><div><small>Ready</small><b>R13</b><span>in ~8 weeks · 18 Aug</span></div><div><small>Cost</small><b>$${(cost + 0.75).toFixed(2)}M</b><span>design $${cost.toFixed(2)}M + 3 × $0.25M</span></div><div><small>Failure risk</small><b class="${ambition === 2 ? "bad" : ambition === 0 ? "good" : "warn"}">${[3, 10, 20][ambition]} %</b><span>part worse than v2</span></div></div>
+     <div class="sub">Expected gain per lap · range from the wind tunnel</div>
+     <div class="gainbar"><span class="range" style="left:${x(lo)}%;right:${100 - x(hi)}%"></span><span class="zero" style="left:${x(0)}%"></span><span class="exp" style="left:${x(gain)}%"></span></div>
+     <div class="legend" style="padding-top:2px"><span>0 s</span><span>range ${lo.toFixed(2)} … ${hi.toFixed(2)} s</span><span>correlation: <b class="warn">medium</b> (head of aero 62, wind tunnel level 3)</span></div>
+     <div class="sub">Timeline</div>
+     <div class="timeline"><span style="flex:5;background:var(--muted)">Concept</span><span style="flex:30;background:var(--amber)">Design 30 d</span><span style="flex:16;background:var(--blue)">Wind tunnel 16 d</span><span style="flex:18;background:var(--lv3)">Production 3 × 6 d</span><span style="flex:4;background:var(--purple)">QA</span></div>
+     <div class="legend" style="padding-top:0"><span>today</span><span style="margin-left:auto">R13 Monteverde</span></div>
+     ${fact("Staff", "Chief designer Simone Galli · head of aero Laura Brenner")}
+     ${fact("Design department", `<span class="warn">2 other projects → this one runs at 38 %</span>`)}
+     <div class="warnbox">⚠ The design department is busy. With the front wing at high priority this floor arrives 2 races later. Lower the front wing's priority or use overtime.</div>
+     <div class="quote"><small>Liam Doyle · technical director</small>“The floor is our biggest weakness – P8 in the field. There is more time here than anywhere else, but our correlation is only average. I would go normal, not aggressive.”</div>
+     <div class="actions"><span class="muted" style="margin-right:auto">Budget after start: $147.1M</span><button class="btn">Let technical director decide</button><button class="btn primary">Start project ▷</button></div>`)}
+   </div>
+  </div></div></div>`;
+}
+
+// ---------- 3. Workshop board ----------
+const PROJECTS = [
+  ["concept", "rear_wing", "Rear wing v3", "Less drag", "Normal", 40, "R14", "2026"],
+  ["design", "floor", "Floor v3", "Efficiency", "Normal", 64, "R12", "2026"],
+  ["design", "monocoque", "Monocoque 2027", "Stiffness", "Low", 22, "Dec", "2027"],
+  ["test", "front_wing", "Front wing v5", "More downforce", "High", 70, "R10", "2026"],
+  ["production", "brakes", "Brakes v2 · 4 sets", "Production", "Normal", 50, "R10", "2026"],
+  ["quality", "gearbox", "Gearbox v2", "Reliability", "Normal", 30, "R10", "2026"],
+  ["ready", "sidepods", "Sidepods v3", "Less drag", "—", 100, "next race", "2026"],
+];
+function board() {
+  const cols = [["concept", "Concept"], ["design", "Design"], ["test", "Wind tunnel / rig"], ["production", "Production"], ["quality", "Quality check"], ["ready", "Ready"]];
+  const pc = pr => pr === "High" ? "bad" : pr === "Low" ? "muted" : "amber";
+  return `${card("Capacity", `<div class="row" style="grid-template-columns:repeat(4,1fr);gap:0">
+    ${[["Design", 92, "2 projects + 1 next year", "lv2"], ["Aero testing", 55, "1 project", "lv3"], ["Test rigs", 30, "gearbox", "lv3"], ["Factory", 60, "brakes · 2 of 4 sets", "lv3"]].map(([n, v, t, c]) => `<div class="cap-row" style="grid-template-columns:90px 1fr;padding:6px 16px"><b>${n}</b>${meter(v, `var(--${c})`)}<span></span><span class="muted" style="font-size:.76rem">${t}</span></div>`).join("")}
+    </div><div class="actions" style="justify-content:space-between"><span class="muted">3 of 4 parallel projects (design office level 2) · next year share: 15 %</span><span><button class="btn small">Delegate to technical director</button> <button class="btn primary">New project ▷</button></span></div>`, "load per department")}
+  <div class="card" style="padding:0"><div class="board">${cols.map(([k, n]) => {
+    const list = PROJECTS.filter(p => p[0] === k);
+    return `<div class="col"><h4><span>${n}</span><span class="muted">${list.length}</span></h4>${list.map(p => `<div class="pcard"><div class="top">${icon(byId(p[1])).replace("part-icon", "part-icon\" style=\"width:26px;height:26px;font-size:.66rem")}<b>${p[2]}</b></div>
+      <div class="muted">${p[3]}${p[7] === "2027" ? ' · <span class="blue">next year</span>' : ""}</div>${meter(p[5], k === "ready" ? "var(--lv4)" : "var(--amber)")}
+      <div style="display:flex;justify-content:space-between"><span class="prio ${pc(p[4])}">${p[4]}</span><span class="muted">${k === "ready" ? "fitted at" : "ready"} <b class="mono" style="color:var(--text)">${p[6]}</b></span></div>
+      ${k === "test" ? `<div class="good">Wind tunnel: +0.09 … +0.16 s</div>` : ""}${k === "ready" ? `<div><span class="chip good">forecast −0.06 s</span><span class="chip">2 units</span></div>` : ""}</div>`).join("")}</div>`;
+  }).join("")}</div></div>`;
+}
+
+// ---------- 4. Parts & production ----------
+function parts() {
+  return `<div class="row" style="grid-template-columns:2.2fr 1fr">
+  ${card("Parts", `<div style="overflow-x:auto"><table><thead><tr><th></th><th>Part</th><th>Version</th><th class="num">Value</th><th class="num">Rank</th><th class="num">Mass</th><th class="num">Reliab.</th><th>#7 Hale</th><th>#27 Brandt</th><th class="num">Spare</th><th>Condition</th><th>Status</th></tr></thead><tbody>
+  ${PARTS.map(p => `<tr class="${p[0] === selected ? "sel" : ""}"><td>${icon(p).replace("part-icon", "part-icon\" style=\"width:24px;height:24px;font-size:.66rem")}</td><td><b>${p[1]}</b> <span class="muted">${p[3]}</span></td><td class="mono">${p[7]}</td><td class="num mono">${p[5]}</td><td class="num mono" style="color:${rankColor(p[6])}">P${p[6]}</td><td class="num mono">${p[9]} kg</td><td class="num mono ${p[10] < 88 ? "warn" : ""}">${p[10]}</td>
+   <td class="mono">${p[0] === "front_wing" ? '<span class="good">v4</span>' : p[7]}</td><td class="mono">${p[0] === "front_wing" ? '<span class="warn">v3</span>' : p[7]}</td><td class="num mono ${p[8].endsWith("+ 0") ? "bad" : ""}">${p[8].split("+ ")[1]}</td>
+   <td>${p[0] === "gearbox" ? '<span class="warn">5 of 6 races</span>' : p[0] === "brakes" ? "1 set per race" : '<span class="muted">ok</span>'}</td><td>${p[0] === "floor" ? '<span class="bad">no spare!</span>' : p[0] === "front_wing" ? '<span class="warn">Brandt still on v3</span>' : ""}</td></tr>`).join("")}
+  </tbody></table></div><div class="legend">Click a row for the part history · a crash destroys parts – without a spare the car has to run an older version</div>`, "both cars · fitted versions and spares")}
+  <div class="row">
+  ${card("Production queue", `${[["Brakes v2", "2 of 4 sets", 50, "R10"], ["Floor v2 (spare)", "queued", 0, "R11"], ["Front wing v4", "1 more for Brandt", 0, "R11"]].map(([n, s, v, d]) => `<div class="pad" style="display:grid;gap:4px"><div style="display:flex;justify-content:space-between"><b>${n}</b><span class="muted">${s} · ready ${d}</span></div>${meter(v, "var(--amber)")}</div>`).join("")}
+   <div class="actions"><button class="btn small">Order spare parts</button></div>`, "factory · 1.10 capacity")}
+  ${card("Crash damage this season", `${fact("Front wings destroyed", "5")}${fact("Floors damaged", "2")}${fact("Suspension", "1")}${fact("Repair costs", "$1.9M", "warn")}`)}
+  </div></div>`;
+}
+
+// ---------- 5. Next year ----------
+function next() {
+  return `<div class="row" style="grid-template-columns:1.2fr 1fr">
+  ${card("Resources for the 2027 car", `<div class="pad muted">Share of all departments that works on next year's car. The rest develops this year's car.</div>
+   <div class="slider"><div class="track"></div><div class="knob"></div></div>
+   <div class="legend" style="padding-top:0"><span style="color:var(--team)">■ 2026 car · 60 %</span><span style="color:var(--blue)">■ 2027 car · 40 %</span><span style="margin-left:auto">technical director recommends 30 % now, 60 % after the summer break</span></div>
+   ${fact("Constructors' position", "P4 · 38 pts to P3, 61 pts ahead of P5")}
+   <div class="quote"><small>Liam Doyle · technical director</small>“P3 is still possible. I'd keep most people on this car until the summer break, then switch hard.”</div>`, "decided by you or the technical director")}
+  ${card("2027 car · forecast", `${fact("Development carried over", "75 % of this year's gains")}${fact("2027 projects", "Monocoque (design 22 %), floor concept")}
+   ${fact("Expected start into 2027", `<span class="good">P3 – P5</span>`)}${fact("Rule changes", '<span class="muted">none (comes with R9)</span>')}
+   <div class="pad muted" style="font-size:.8rem">New part value = 50 + 0.75 × (old value − 50) + next-year development. Every car gets closer to the average; early work on the new car is the lead.</div>`)}
+  </div>`;
+}
+
+// ---------- 6. Race weekend ----------
+function weekend() {
+  return `<div class="row" style="grid-template-columns:1.3fr 1fr">
+  ${card("Parts for this weekend", `<table><thead><tr><th>Part</th><th>#7 Hale</th><th>#27 Brandt</th><th>Note</th></tr></thead><tbody>
+   <tr><td>Sidepods</td><td><span class="good">v3 NEW</span></td><td><span class="good">v3 NEW</span></td><td class="muted">2 units ready</td></tr>
+   <tr><td>Front wing</td><td><span class="good">v4</span></td><td><span class="warn">v3</span></td><td class="warn">only 1 unit of v4 left for racing</td></tr>
+   <tr><td>Floor</td><td>v2</td><td>v2</td><td class="bad">no spare</td></tr>
+   <tr><td>Brakes</td><td>new set</td><td>new set</td><td class="muted">2 × $60k</td></tr></tbody></table>
+   <div class="sub">Who gets the only new front wing?</div>
+   <div class="choices c3" style="grid-template-columns:1fr 1fr"><button class="choice" aria-pressed="true"><b>Hale (No.1)</b><small>As in his contract. Brandt: morale −2.</small></button><button class="choice" aria-pressed="false"><b>Brandt</b><small class="warn">Hale: morale −4 · you promised Brandt equal parts → kept</small></button></div>
+   <div class="quote"><small>Liam Doyle · technical director</small>“Hale is 12 points from P3 in the drivers' table. The wing goes to him.”</div>
+   <div class="actions"><button class="btn">Let technical director decide</button></div>`, "fitted versions per car")}
+  <div class="row">
+  ${card("Practice programme", `<div class="choices"><button class="choice" aria-pressed="false"><b>Setup work</b><small>Better setup</small></button><button class="choice" aria-pressed="false"><b>Long runs & tyres</b><small>Tyre data for the strategy</small></button><button class="choice" aria-pressed="true"><b>Test new parts <span class="chip good">new</span></b><small>Correlation known after practice, no setup loss with new parts</small></button></div>`, "Hale")}
+  ${card("After practice · correlation", `${fact("Sidepods v3 · forecast", "−0.06 s")}${fact("Sidepods v3 · on track", `<span class="good">−0.08 s</span>`)}<div class="pad good" style="font-size:.85rem">Better than the wind tunnel said. Keep it.</div>
+   <div class="pad muted" style="font-size:.8rem">A part that is slower than expected can be swapped back to the old version before qualifying.</div>`)}
+  </div></div>`;
+}
+
+const NOTES = {
+  overview: "<b>Overview.</b> The car from above with all 13 parts, coloured by rank in the field. Click a part: version, value, units, last update and the button for a new project. Right: every car value with the field average and the change during the season, weight vs. the limit, the lap time effect, and the load of the four departments.",
+  project: "<b>New project.</b> Pick part, goal and approach on the left; the forecast on the right updates live: expected gain with the wind tunnel range, ready date, cost, failure risk, a timeline of all phases and a warning if a department is busy. No budget = start button locked.",
+  board: "<b>Workshop.</b> All projects as cards in their current phase – concept, design, wind tunnel/rig, production, quality check, ready. Several projects share a department, so each runs slower; priority decides who gets more.",
+  parts: "<b>Parts & production.</b> Every part with version, value, rank, mass and reliability, what each car has fitted, spares and condition (gearbox mileage, brake sets). The factory queue and crash damage on the right.",
+  next: "<b>Next year.</b> The slider moves people from this year's car to next year's. The technical director recommends a share; the forecast shows where the new car should start.",
+  weekend: "<b>Race weekend.</b> New block in the weekend hub: which car gets which version (with morale and promises), the new practice programme 'test new parts', and the correlation result after practice.",
+};
+const RENDER = { overview, project, board, parts, next, weekend };
+let current = "overview";
+function show(s) {
+  current = s;
+  document.getElementById("stage").innerHTML = RENDER[s]();
+  document.getElementById("note").innerHTML = NOTES[s];
+  document.querySelectorAll("[data-s]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === s)));
+  document.querySelectorAll("#stage [data-part]").forEach(z => z.addEventListener("click", () => { selected = z.dataset.part; show(current); }));
+  document.querySelectorAll("#stage [data-np]").forEach(b => b.addEventListener("click", () => { newPart = b.dataset.np; goal = 0; show(current); }));
+  document.querySelectorAll("#stage [data-goal]").forEach(b => b.addEventListener("click", () => { goal = +b.dataset.goal; show(current); }));
+  document.querySelectorAll("#stage [data-amb]").forEach(b => b.addEventListener("click", () => { ambition = +b.dataset.amb; show(current); }));
+  document.querySelectorAll("#stage .seg").forEach(seg => seg.querySelectorAll("button").forEach(b => b.addEventListener("click", () => seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))))));
+}
+document.querySelectorAll("[data-s]").forEach(b => b.addEventListener("click", () => show(b.dataset.s)));
+show("overview");
+</script>
+</body>
+</html>

@@ -22,6 +22,17 @@ extends Resource
 @export_range(1, 5) var youth_academy_level: int = 1
 @export_range(1, 5) var scouting_level: int = 1
 
+@export_group("Car development (R3)")
+## Headcount per department: design, aero, rig, factory (docs/car_model.md 4).
+## Set from the budget each season until hiring comes with R4/R6.
+@export var departments: Dictionary = {}
+## Share of every department working on next season's car (0..1).
+@export var next_year_share: float = 0.0
+## Part ID -> {value: change} developed for next season's car.
+@export var next_year_parts: Dictionary = {}
+## Driver ID -> {part ID: version number} fitted to that driver's car.
+@export var car_fit: Dictionary = {}
+
 @export_group("Links")
 ## The two race drivers.
 @export var driver_ids: Array[StringName] = []

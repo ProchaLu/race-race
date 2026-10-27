@@ -17,8 +17,9 @@ static func car_sector_fracs(car: SimCar, model: TrackModel) -> PackedFloat32Arr
 		var frac := 0.0
 		for kind in s.type_share:
 			var w: Array = SimTuning.CAR_WEIGHTS[kind]
-			var rating: float = w[0] * c.engine_power + w[1] * c.drag_efficiency \
-				+ w[2] * c.downforce + w[3] * c.mechanical_grip
+			var drag := c.drag_efficiency - car.cooling_opening * SimTuning.COOLING_OPENING_DRAG
+			var rating: float = w[0] * c.engine_power + w[1] * drag + w[2] * c.downforce \
+				+ w[3] * c.mechanical_grip + w[4] * c.braking_value() + w[5] * c.traction_value()
 			frac += s.type_share[kind] * -(rating - 50.0) * SimTuning.CAR_FRAC_PER_POINT
 		var straight := model.straight_share(s)
 		frac += car.wing * (straight * SimTuning.WING_STRAIGHT_FRAC + (1.0 - straight) * SimTuning.WING_CORNER_FRAC)
@@ -198,6 +199,44 @@ static func tyre_temp_target(car: SimCar, id: StringName, track_temp_c: float, d
 
 
 # --- Fuel ----------------------------------------------------------------------
+
+## Weight above the minimum costs time like fuel (docs/car_model.md 2.2).
+static func weight_s(car: SimCar, model: TrackModel) -> float:
+	var mass := car.car_data.mass_kg
+	if mass <= 0.0:
+		return 0.0
+	return maxf(0.0, mass - CarBuild.MIN_MASS) * SimTuning.FUEL_S_PER_KG * model.scale
+
+
+## Heat the car has to get rid of minus its cooling capacity (> 0 = overheating).
+static func heat_deficit(car: SimCar, track_temp_c: float, in_traffic: bool) -> float:
+	var c := car.car_data
+	if c.cooling < 0:
+		return 0.0
+	var demand := SimTuning.COOLING_BASE + (track_temp_c - 30.0) * SimTuning.COOLING_PER_DEGREE \
+		+ (c.engine_power - 60.0) * SimTuning.COOLING_PER_POWER \
+		+ (SimTuning.COOLING_TRAFFIC if in_traffic else 0.0) - car.cooling_opening * SimTuning.COOLING_OPENING
+	return demand - c.cooling
+
+
+## Overheating: the engine is turned down.
+static func cooling_s(deficit: float, model: TrackModel) -> float:
+	return maxf(0.0, deficit) * SimTuning.COOLING_S_PER_POINT * model.scale
+
+
+## The race engineer picks the cooling openings for the hottest part of the
+## race. A good data analyst rarely gets it wrong.
+static func choose_cooling(car: SimCar, track_temp_c: float, engineer_skill: float) -> int:
+	if car.car_data.cooling < 0:
+		return 0
+	var reserve := -heat_deficit(car, track_temp_c + 4.0, false)
+	reserve += car.rng.randfn(0.0, (1.0 - engineer_skill) * 5.0)
+	if reserve > 9.0:
+		return -1
+	if reserve < 1.0:
+		return 1
+	return 0
+
 
 static func fuel_s(car: SimCar, model: TrackModel) -> float:
 	return car.fuel_kg * SimTuning.FUEL_S_PER_KG * model.scale

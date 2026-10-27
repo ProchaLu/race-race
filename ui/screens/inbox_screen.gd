@@ -88,7 +88,7 @@ func _message_row(msg: InboxMessage) -> HoverRow:
 		subject.add_theme_color_override("font_color", UIStyle.ACCENT)
 	text.add_child(subject)
 	var meta := Label.new()
-	meta.text = "%s · %s" % [tr(msg.sender), Calendar.format_date(msg.day)]
+	meta.text = "%s · %s" % [tr(msg.sender), Calendar.format_date(msg.day, msg.year)]
 	meta.theme_type_variation = &"SmallLabel"
 	text.add_child(meta)
 	line.add_child(text)
@@ -120,7 +120,7 @@ func _show_message(msg: InboxMessage) -> void:
 	var subject := _label(msg.subject_text(), &"HeadingLabel")
 	subject.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(subject)
-	column.add_child(_label("%s %s · %s" % [tr("From"), tr(msg.sender), Calendar.format_date(msg.day)], &"MutedLabel"))
+	column.add_child(_label("%s %s · %s" % [tr("From"), tr(msg.sender), Calendar.format_date(msg.day, msg.year)], &"MutedLabel"))
 	column.add_child(HSeparator.new())
 	var body := _label(msg.body_text(), &"Label")
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

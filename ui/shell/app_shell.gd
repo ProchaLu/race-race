@@ -38,6 +38,7 @@ const SCREENS := {
 	&"race_result": preload("res://ui/screens/race_result_screen.gd"),
 	&"season_review": preload("res://ui/screens/season_review_screen.gd"),
 	&"driver_talk": preload("res://ui/screens/driver_talk_screen.gd"),
+	&"car": preload("res://ui/screens/car_screen.gd"),
 }
 const PlaceholderScreen := preload("res://ui/screens/placeholder_screen.gd")
 const LANGUAGES := [["en", "English"], ["de", "Deutsch"]]
@@ -138,6 +139,14 @@ func navigate(id: StringName, args: Dictionary = {}, add_history: bool = true) -
 		_nav_buttons[key].set_pressed_no_signal(key == section)
 
 
+## End-of-season overlay for a finished season.
+func show_season_summary(year: int) -> void:
+	for review in GameState.season_history:
+		if review.year == year:
+			add_child(SeasonSummary.new(review, self))
+			return
+
+
 func go_back() -> void:
 	if _history.is_empty():
 		return
@@ -179,6 +188,11 @@ func _on_continue() -> void:
 
 func _after_time_passed() -> void:
 	_refresh_top_bar()
+	# New season: the review of the old one comes up once.
+	if GameState.pending_summary >= 0:
+		var year := GameState.pending_summary
+		GameState.pending_summary = -1
+		show_season_summary(year)
 	# Race day: time waits until the weekend has been raced.
 	if Season.weekend_pending():
 		navigate(&"weekend", {}, _current_entry.get("id") != &"weekend")

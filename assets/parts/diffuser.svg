@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Placeholder symbol: diffuser. Replace with the final artwork (64x64). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+<polygon points="6.0,24.5 26.2,19.7 26.2,42.4 7.9,44.3" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="58.0,24.5 37.8,19.7 37.8,42.4 56.1,44.3" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+</svg>

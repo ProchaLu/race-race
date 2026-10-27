@@ -12,6 +12,7 @@ static func cars_for_series(series_id: StringName) -> Array[SimCar]:
 		var ops := TeamOps.from_team(team_id)
 		for driver in GameState.drivers_of_team(team_id):
 			var car := SimCar.new(driver, team, ops)
+			car.car_data = CarBuild.car_for(team, driver.id)
 			car.is_player = team_id == GameState.player_team_id
 			out.append(car)
 	return out
@@ -31,15 +32,16 @@ static func roll_weekend(cars: Array[SimCar], model: TrackModel, rng: RandomNumb
 
 
 ## Setup quality and tyre data from practice (docs/simulation_model.md, 10.3).
-## programme: 0 = setup work, 1 = long runs, 2 = academy driver in FP1.
+## programme: 0 = setup work, 1 = long runs, 2 = academy driver in FP1,
+## 3 = test new parts (correlation known after practice, no setup loss).
 static func practice(car: SimCar, programme: int, practice_wetness: float, rng: RandomNumberGenerator) -> void:
 	var eng := car.ops.engineer(car.driver.id)
 	var setup: float = 38.0 + eng.setup_work * 0.25 + car.driver.technical_feedback * 0.15 + eng.chemistry * 0.08
-	setup += [16.0, 8.0, 4.0][programme]
+	setup += [16.0, 8.0, 4.0, 8.0][programme]
 	# Rookies give less useful feedback on a new track.
 	if car.driver.races < SimTuning.ROOKIE_RACES:
 		setup -= 6.0 * (1.0 - car.driver.adaptability / 100.0)
 	setup *= 1.0 - 0.3 * practice_wetness
 	car.setup_pct = clampf(setup + rng.randfn(0.0, 4.0), 0.0, 100.0)
-	car.tyre_data = clampf([0.3, 0.85, 0.2][programme] * (0.6 + 0.4 * eng.tyre_knowledge / 100.0) \
+	car.tyre_data = clampf([0.3, 0.85, 0.2, 0.45][programme] * (0.6 + 0.4 * eng.tyre_knowledge / 100.0) \
 		* (1.0 - 0.6 * practice_wetness), 0.0, 1.0)

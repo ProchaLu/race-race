@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Placeholder symbol: brakes. Replace with the final artwork (64x64). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+<polygon points="20.2,6.0 21.6,6.0 21.6,8.5 20.2,8.5" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="42.4,6.0 43.8,6.0 43.8,8.5 42.4,8.5" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="19.3,55.3 20.6,55.3 20.6,58.0 19.3,58.0" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="43.4,55.3 44.7,55.3 44.7,58.0 43.4,58.0" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+</svg>

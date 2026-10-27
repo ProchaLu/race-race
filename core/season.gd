@@ -14,11 +14,13 @@ const NEW_MARKET_STAFF_PER_MONTH := 4
 const PRIZE_MONEY_M := [140, 125, 112, 100, 90, 81, 73, 66, 60, 57, 55]
 
 var _important_posted := false
+var _rng := RandomNumberGenerator.new()
 ## The race weekend of today, while the player makes the decisions.
 var weekend: RaceWeekend
 
 
 func _ready() -> void:
+	_rng.randomize()
 	EventBus.inbox_message_added.connect(func(msg: InboxMessage):
 		if msg.priority == InboxMessage.Priority.IMPORTANT:
 			_important_posted = true)
@@ -62,11 +64,14 @@ func _daily_world_update() -> void:
 	_process_signings()
 	_check_shortlist()
 	TeamMood.daily_update()
+	CarDevelopment.daily_update(_rng)
 	if Calendar.date_of().day == 1:
 		_pay_salaries()
 		_refresh_market()
 	if Calendar.day % 7 == 0:
 		_ai_fill_vacancies()
+	if Calendar.date_of().month == 9 and Calendar.date_of().day == 1:
+		_own_contract_reminder()
 
 
 ## Agreed deals become official after a few days – unless a rival steps in.
@@ -150,6 +155,33 @@ func _check_promises() -> void:
 			msg.add_paragraph("You did not keep your promise to %s (%s). Morale and trust have dropped.", [person.full_name(), Loc.t(p.description)])
 		msg.subject_args = [person.full_name()]
 		GameState.add_message(msg)
+
+
+## 1 September: whose contract in our team ends after this season.
+func _own_contract_reminder() -> void:
+	var names := []
+	var any_driver := false
+	for c in GameState.contracts:
+		if c.team_id != GameState.player_team_id or c.end_year != Calendar.year:
+			continue
+		var person := GameState.find_person(c.person_id)
+		if person:
+			names.append(person.full_name())
+			any_driver = any_driver or person is DriverData
+	if names.is_empty():
+		return
+	var msg := InboxMessage.new()
+	msg.sender = "Sporting director"
+	msg.subject = "Contracts ending this season: %d"
+	msg.subject_args = [names.size()]
+	msg.priority = InboxMessage.Priority.IMPORTANT
+	msg.icon = "handshake"
+	msg.add_paragraph("These contracts end on 31 December: %s.", [", ".join(names)])
+	msg.add_paragraph("Extend them in the profile (Contract talks) or find replacements on the transfer market. Anyone without a new contract leaves on 1 January.")
+	msg.link_screen = &"drivers" if any_driver else &"staff"
+	msg.link_args = {}
+	msg.link_label = "Open drivers" if any_driver else "Open staff"
+	GameState.add_message(msg)
 
 
 # --- Shortlist notices -------------------------------------------------------
@@ -244,7 +276,7 @@ func _refresh_market() -> void:
 		GameState.knowledge[s.id] = r.randi_range(20, 60)
 	for d in GameState.free_drivers():
 		if d.age(Calendar.year) > 37 and r.randf() < 0.3 and not GameState.shortlist.has(d.id):
-			GameState.drivers.erase(d.id)
+			d.retired = true
 
 
 ## AI teams fill empty race seats and staff positions with the best free agent.
@@ -258,16 +290,36 @@ func _ai_fill_vacancies() -> void:
 				break
 			ContractLogic.sign(best, team, {"salary": ContractLogic.market_value(best), "years": 2,
 				"role": ContractData.DriverRole.EQUAL})
-		var counts := {}
-		for s in GameState.staff_of_team(team.id):
-			counts[s.role] = counts.get(s.role, 0) + 1
-		for role in StaffRoles.TEAM_POSITIONS:
-			if counts.get(role, 0) > 0:
-				counts[role] -= 1
-				continue
-			var hire := _best_free_staff(role)
-			if hire:
-				ContractLogic.sign(hire, team, {"salary": ContractLogic.market_value(hire), "years": 2})
+		_fill_staff_vacancies(team, 2)
+
+
+## Hires the best free person for every empty staff position.
+## Returns "Name (role)" texts.
+func _fill_staff_vacancies(team: TeamData, years: int) -> Array:
+	var hired := []
+	var counts := {}
+	for s in GameState.staff_of_team(team.id):
+		counts[s.role] = counts.get(s.role, 0) + 1
+	for role in StaffRoles.TEAM_POSITIONS:
+		if counts.get(role, 0) > 0:
+			counts[role] -= 1
+			continue
+		var hire := _best_free_staff(role)
+		if hire:
+			ContractLogic.sign(hire, team, {"salary": ContractLogic.market_value(hire), "years": years})
+			hired.append("%s (%s)" % [hire.full_name(), tr(StaffRoles.name_of(role))])
+	return hired
+
+
+## Race engineers without a driver take the drivers without an engineer.
+func _assign_race_engineers(team: TeamData) -> void:
+	var free_engineers := GameState.staff_of_team(team.id).filter(func(s: StaffData):
+		return s.role == StaffData.Role.RACE_ENGINEER and not team.driver_ids.has(s.assigned_driver_id))
+	for driver in GameState.drivers_of_team(team.id):
+		if free_engineers.is_empty():
+			return
+		if not GameState.race_engineer_of(driver.id):
+			free_engineers.pop_front().assigned_driver_id = driver.id
 
 
 func _best_free_driver() -> DriverData:
@@ -318,8 +370,40 @@ func weekend_of_today() -> RaceWeekend:
 	if today < 0:
 		return null
 	if not weekend or weekend.round_index != today:
+		_emergency_signings()
 		weekend = RaceWeekend.create(_player_series(), today)
 	return weekend
+
+
+## Race day without two race drivers: the reserve driver moves up, or the
+## sporting director signs the best free driver for one year.
+func _emergency_signings() -> void:
+	_ai_fill_vacancies()
+	var team := GameState.player_team()
+	for promoted in _promote_reserves():
+		_seat_message("%s moves up from reserve driver to a race seat for this race weekend.", [promoted])
+	while team.driver_ids.size() < ContractLogic.RACE_SEATS:
+		var best := _best_free_driver()
+		if not best:
+			return
+		var salary := ContractLogic.market_value(best)
+		ContractLogic.sign(best, team, {"salary": salary, "years": 1, "role": ContractData.DriverRole.EQUAL})
+		_seat_message("We had only %d race driver(s). The sporting director signed %s for one year (%s per year).",
+			[team.driver_ids.size() - 1, best.full_name(), UIStyle.money(salary)])
+	var hired := _fill_staff_vacancies(team, 1)
+	if not hired.is_empty():
+		_seat_message("Empty positions in the team were filled by the sporting director for one year: %s.", [", ".join(hired)])
+	_assign_race_engineers(team)
+
+
+func _seat_message(text: String, args: Array) -> void:
+	var msg := InboxMessage.new()
+	msg.sender = "Sporting director"
+	msg.subject = "Race seat filled"
+	msg.priority = InboxMessage.Priority.IMPORTANT
+	msg.icon = "user"
+	msg.add_paragraph(text, args)
+	GameState.add_message(msg)
 
 
 ## True while today's race weekend has not been raced yet.
@@ -421,14 +505,22 @@ func _season_review(s: SeriesData, team_table: Array, prize: Dictionary) -> Dict
 		if team_table[i][0] == team_id:
 			position = i + 1
 	var drivers := SeasonRecords.driver_standings()
+	var car_rank := TeamMood.car_rank(team_id)
 	var own := []
 	for i in drivers.size():
 		var d: DriverData = GameState.drivers.get(drivers[i][0])
 		if d and d.team_id == team_id:
 			var st: DriverSeasonStats = GameState.season_stats[d.id]
+			var best := 0
+			for res in st.results:
+				if res.finish > 0 and (best == 0 or res.finish < best):
+					best = res.finish
 			own.append({"driver_id": d.id, "position": i + 1, "points": st.points, "wins": st.wins,
 				"podiums": st.podiums, "poles": st.poles, "retirements": st.retirements,
-				"quali_ahead": st.quali_ahead, "race_ahead": st.race_ahead, "rounds": st.head_to_head_rounds})
+				"quali_ahead": st.quali_ahead, "race_ahead": st.race_ahead, "rounds": st.head_to_head_rounds,
+				"races": st.races(), "avg_finish": st.average_finish(), "best": best,
+				"expected": car_rank * 2 - (1 if own.is_empty() else 0), "overall": d.overall(),
+				"morale": d.morale, "age": d.age(Calendar.year)})
 	var stops := []
 	var moments := []
 	for r in GameState.race_results:
@@ -447,6 +539,12 @@ func _season_review(s: SeriesData, team_table: Array, prize: Dictionary) -> Dict
 	for v in stops:
 		avg_stop += v
 	return {
+		"car_rank": car_rank,
+		"last_position": GameState.season_history.back().team_position if not GameState.season_history.is_empty() else 0,
+		"progress": _team_progress(s, team_id),
+		"team_stats": _team_stats(team_id),
+		"car_spent": GameState.car_spending.get(team_id, 0),
+		"new_parts": _new_parts(team_id),
 		"year": Calendar.year,
 		"team_position": position,
 		"team_points": GameState.team_points.get(team_id, 0),
@@ -462,16 +560,79 @@ func _season_review(s: SeriesData, team_table: Array, prize: Dictionary) -> Dict
 	}
 
 
-## 1 January: contracts end, statistics start from zero, empty race seats
-## are filled from the reserve driver.
+## The team's points and constructors' position after every round:
+## [[points, position], ...]. Uses the drivers' current teams.
+func _team_progress(s: SeriesData, team_id: StringName) -> Array:
+	var points := {}
+	for id in s.team_ids:
+		points[id] = 0
+	var out := []
+	for round_number in range(1, s.calendar.size() + 1):
+		for id in GameState.season_stats:
+			var d: DriverData = GameState.drivers.get(id)
+			if not d or not points.has(d.team_id):
+				continue
+			for res in GameState.season_stats[id].results:
+				if res.round == round_number and res.finish > 0:
+					points[d.team_id] += SeasonRecords.points_for(s, res.finish)
+		var mine: int = points[team_id]
+		var position := 1
+		for id in points:
+			if points[id] > mine:
+				position += 1
+		out.append([mine, position])
+	return out
+
+
+## Part versions developed this season (start versions do not count).
+func _new_parts(team_id: StringName) -> int:
+	var n := 0
+	var car: CarData = GameState.teams[team_id].car
+	for id in car.part_history:
+		n += car.part_history[id].size() - 1
+	return n
+
+
+## Pit stops, retirements and decisions over the full race weekends.
+func _team_stats(team_id: StringName) -> Dictionary:
+	var stats := {"stops": 0, "best_stop": INF, "pit_issues": 0, "technical_dnf": 0, "crash_dnf": 0,
+		"moments": 0, "weekends": 0, "overtakes": 0, "mistakes": 0}
+	for r in GameState.race_results:
+		stats.weekends += 1
+		stats.moments += r.get("moments", 0)
+		for e in r.entries:
+			if e.team_id != team_id:
+				continue
+			stats.overtakes += e.overtakes
+			stats.mistakes += e.mistakes
+			for stop in e.stops:
+				stats.stops += 1
+				stats.best_stop = minf(stats.best_stop, stop.stationary)
+				if stop.issue != "" and stop.issue != "None":
+					stats.pit_issues += 1
+			if e.finish == 0:
+				if e.retire_reason in ["Crash", "Collision damage", "Suspension damage"]:
+					stats.crash_dnf += 1
+				else:
+					stats.technical_dnf += 1
+	return stats
+
+
+## 1 January: everybody develops over the winter, contracts end, old
+## people retire, statistics start from zero, empty race seats are filled
+## from the reserve driver and the AI teams fill their vacancies.
 func _start_new_season(year: int) -> void:
+	var r := RandomNumberGenerator.new()
+	r.randomize()
+	var winter := Development.winter(year, r)
 	GameState.season_stats.clear()
 	GameState.team_points.clear()
 	GameState.race_results.clear()
+	GameState.car_spending.clear()
+	# Development projects of the old car end with the season (R3d: next year's car).
+	GameState.car_projects.clear()
 	GameState.resolved_rounds = 0
 	weekend = null
-	for team in GameState.teams.values():
-		team.car.season = year
 
 	var gone := []
 	for c in GameState.contracts.duplicate():
@@ -485,7 +646,9 @@ func _start_new_season(year: int) -> void:
 			gone.append(person.full_name())
 		_expire(person)
 
+	var retired := Development.retirements(year, r)
 	var promoted := _promote_reserves()
+	_ai_fill_vacancies()
 	for team in GameState.teams.values():
 		for driver in GameState.drivers_of_team(team.id):
 			SeasonRecords.stats_of(driver.id)
@@ -505,11 +668,31 @@ func _start_new_season(year: int) -> void:
 		msg.add_paragraph("%s moves up from reserve driver to a race seat.", [p])
 	var seats := GameState.player_team().driver_ids.size()
 	if seats < ContractLogic.RACE_SEATS:
-		msg.add_paragraph("Warning: we only have %d race driver(s). Sign a driver on the transfer market before the first race.", [seats])
+		msg.add_paragraph("Warning: we only have %d race driver(s). Sign a driver on the transfer market before the first race – otherwise the sporting director signs the best free driver on race day.", [seats])
+	var changes := []
+	for c in winter.drivers + winter.staff:
+		if c.after != c.before:
+			changes.append("%s %d → %d" % [c.name, c.before, c.after])
+	if not changes.is_empty():
+		msg.add_paragraph("Over the winter (overall rating): %s.", [", ".join(changes)])
+	var car: Array = winter.cars.get(GameState.player_team_id, [])
+	if not car.is_empty():
+		msg.add_paragraph("Our new car: average rating %d → %d.", [roundi(car[0]), roundi(car[1])])
+	if not retired.is_empty():
+		msg.add_paragraph("Retired: %s.", [", ".join(retired)])
 	msg.link_screen = &"calendar"
 	msg.link_args = {}
 	msg.link_label = "Open calendar"
 	GameState.add_message(msg)
+	# Everything the end-of-season overlay shows about the winter.
+	if not GameState.season_history.is_empty():
+		var review: Dictionary = GameState.season_history.back()
+		winter["retired"] = retired
+		winter["ended"] = gone
+		winter["promoted"] = promoted
+		winter["year"] = year
+		review["winter"] = winter
+		GameState.pending_summary = review.year
 
 
 ## A contract ran out: the person becomes a free agent, no severance.

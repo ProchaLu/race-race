@@ -118,6 +118,8 @@ func _build_planning() -> void:
 	var bottom := _row()
 	bottom.add_child(_programme_card())
 	bottom.add_child(_orders_card())
+	if not w.scarce_parts().is_empty():
+		_page.add_child(_parts_card())
 	_page.add_child(_actions("Start practice & qualifying", func():
 		w.run_practice_and_qualifying()
 		_rebuild(), func():
@@ -197,7 +199,11 @@ func _programme_card() -> UICard:
 	var w := _weekend
 	var card := UICard.new("Practice programme", "per driver")
 	var disabled := [] if w.has_academy_driver() else [2]
-	var tips := ["", "", "" if w.has_academy_driver() else tr("You have no academy driver yet.")]
+	if not w.has_untested_parts():
+		disabled.append(RaceWeekend.TEST_PARTS)
+	var tips := ["", "", "" if w.has_academy_driver() else tr("You have no academy driver yet."),
+		tr("Shows the real effect of new parts after practice; untested new parts cost 3 % setup.") if w.has_untested_parts()
+		else tr("No new parts to test this weekend.")]
 	for car in w.player_cars():
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
@@ -241,6 +247,42 @@ func _orders_card() -> UICard:
 	card.add_padded(_delegate("sporting director", func():
 		w.staff_planning()
 		_rebuild()), 8, 0)
+	return card
+
+
+## Who gets a new part when there are not enough units for both cars
+## (mockup r3_car.html, screen 6).
+func _parts_card() -> UICard:
+	var w := _weekend
+	var card := UICard.new("Parts for this weekend", "not enough units for both cars")
+	var own := w.player_cars()
+	for entry in w.scarce_parts():
+		var id: StringName = entry[0]
+		card.add_section(tr("%s v%d · %d unit(s)") % [tr(CarParts.name_of(id)), entry[1], entry[2]])
+		var rec := w.recommended_driver(id)
+		var options := []
+		for car in own:
+			var d := car.driver
+			var mate := own.filter(func(c): return c != car)
+			var c := GameState.contract_of(d.id)
+			var desc := ""
+			if not mate.is_empty():
+				var m: DriverData = mate[0].driver
+				var mc := GameState.contract_of(m.id)
+				var m_no1 := mc and mc.role == ContractData.DriverRole.NUMBER_ONE
+				desc = tr("%s's morale −%d.") % [m.last_name, 4 if m_no1 else 2]
+				for promise in GameState.promises_to(m.id):
+					if promise.status == PromiseData.Status.OPEN and promise.description == "Equal treatment with the teammate":
+						desc = tr("You promised %s equal treatment – the promise would be broken.") % m.last_name
+			var no1 := c and c.role == ContractData.DriverRole.NUMBER_ONE
+			options.append([d.full_name() + (tr(" (No.1)") if no1 else ""), desc, tr("Recommended") if d.id == rec else ""])
+		var current: StringName = w.parts_choice.get(id, rec)
+		var selected := 0
+		for i in own.size():
+			if own[i].driver.id == current:
+				selected = i
+		ChoiceRow.make_group(card.body, options, selected, func(i): w.parts_choice[id] = own[i].driver.id)
+	card.add_padded(_note("The other car runs the previous version until the factory has built more units."), 6, 2)
 	return card
 
 

@@ -25,6 +25,14 @@ func setup(args: Dictionary) -> void:
 		card.add_padded(_note("The season review is available after the final round."), 8, 4)
 		_page.add_child(card)
 		return
+	var top := HBoxContainer.new()
+	top.alignment = BoxContainer.ALIGNMENT_END
+	var summary := Button.new()
+	summary.text = "Full season summary"
+	summary.icon = UIStyle.icon("trophy")
+	summary.pressed.connect(func(): shell.show_season_summary(_review.year))
+	top.add_child(summary)
+	_page.add_child(top)
 	_page.add_child(_hero())
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", UIStyle.GAP)

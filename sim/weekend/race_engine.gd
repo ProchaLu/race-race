@@ -97,6 +97,9 @@ func _setup_start() -> void:
 			car.used_dry_compounds[ideal] = true
 		car.tyre_temp = SimTuning.NEW_TYRE_TEMP
 		car.fuel_kg = planner.start_fuel(car)
+		car.cooling_opening = PaceModel.choose_cooling(car, conditions.track_temp_c,
+			car.ops.engineer(car.driver.id).get("data_analysis", 50) / 100.0)
+		car.sector_frac = PaceModel.car_sector_fracs(car, model)
 		var reaction := 0.15 + 0.2 * (1.0 - (car.driver.reactions + car.driver.starts) / 200.0) \
 			+ absf(car.rng.randfn(0.0, 0.05))
 		car.t_next = i * SimTuning.GRID_SLOT_S + reaction
@@ -512,6 +515,9 @@ func _prepare_lap(car: SimCar, t: float) -> void:
 	b["setup"] = PaceModel.setup_s(car, model)
 	b["tyres"] = PaceModel.tyre_s(car, model, conditions, wet)
 	b["fuel"] = PaceModel.fuel_s(car, model)
+	b["weight"] = PaceModel.weight_s(car, model)
+	car.heat_deficit = PaceModel.heat_deficit(car, conditions.weather.track_temp_at(t), car.lap_dirty_air > 2)
+	b["cooling"] = PaceModel.cooling_s(car.heat_deficit, model)
 	b["weather"] = PaceModel.weather_s(car, model, wet)
 	var damage := 0.0
 	for v in car.damage.values():
@@ -537,17 +543,20 @@ func _prepare_lap(car: SimCar, t: float) -> void:
 func _roll_lap_events(car: SimCar, t: float, wet: float, progress: float, in_duel: bool) -> void:
 	var n := model.sectors.size()
 	# Failures.
-	var reliability := car.car_data.reliability
-	var failure := SimTuning.FAILURE_PER_RACE * (1.5 - reliability / 100.0) \
-		* (1.3 - car.ops.reliability_staff / 100.0 * 0.6) / conditions.laps
-	if car.rng.randf() < failure:
-		if car.rng.randf() < SimTuning.FAILURE_FATAL_SHARE:
-			car.lap_incident.append([car.rng.randi() % n, 0.0, "failure", FAILURES[car.rng.randi() % FAILURES.size()]])
-		else:
-			var p: Array = PARTIAL_FAILURES[car.rng.randi() % PARTIAL_FAILURES.size()]
-			if not car.damage.has(p[0]):
-				car.damage[p[0]] = car.rng.randf_range(p[2], p[3]) * model.scale
-				_log(car, "failure", "%s: %s" % [car.label(), p[1]])
+	if car.car_data.has_parts():
+		_part_failures(car, n)
+	else:
+		var reliability := car.car_data.reliability
+		var failure := SimTuning.FAILURE_PER_RACE * (1.5 - reliability / 100.0) \
+			* (1.3 - car.ops.reliability_staff / 100.0 * 0.6) / conditions.laps
+		if car.rng.randf() < failure:
+			if car.rng.randf() < SimTuning.FAILURE_FATAL_SHARE:
+				car.lap_incident.append([car.rng.randi() % n, 0.0, "failure", FAILURES[car.rng.randi() % FAILURES.size()]])
+			else:
+				var p: Array = PARTIAL_FAILURES[car.rng.randi() % PARTIAL_FAILURES.size()]
+				if not car.damage.has(p[0]):
+					car.damage[p[0]] = car.rng.randf_range(p[2], p[3]) * model.scale
+					_log(car, "failure", "%s: %s" % [car.label(), p[1]])
 	# Tyres far past their cliff can fail.
 	var over_cliff := car.tyre_wear_laps - PaceModel.tyre_life(car.compound, conditions) - SimTuning.PUNCTURE_AFTER_CLIFF_LAPS
 	if over_cliff > 0.0 and not car.puncture and car.rng.randf() < SimTuning.PUNCTURE_PER_LAP * over_cliff:
@@ -584,6 +593,36 @@ func _roll_lap_events(car: SimCar, t: float, wet: float, progress: float, in_due
 
 
 # --- Strategy and pit stops --------------------------------------------------
+
+## Every part has its own failure risk (docs/car_model.md 2.4); overheating
+## raises it for cooling, gearbox and engine.
+func _part_failures(car: SimCar, n: int) -> void:
+	var c := car.car_data
+	var staff := 1.3 - car.ops.reliability_staff / 100.0 * 0.6
+	var heat := 1.0 + maxf(0.0, car.heat_deficit) * SimTuning.COOLING_FAILURE_PER_POINT
+	for id in CarParts.FAILURES:
+		var f: Array = CarParts.FAILURES[id]
+		var chance: float = f[0] * (1.5 - c.parts[id].value(&"reliability") / 100.0) * staff / conditions.laps
+		if id == &"cooling" or id == &"gearbox":
+			chance *= heat
+		if car.rng.randf() < chance:
+			_failure(car, f[1], f[2], n)
+			return
+	if car.rng.randf() < CarParts.ENGINE_FAILURE * (1.5 - c.reliability / 100.0) * staff * heat / conditions.laps:
+		_failure(car, "Engine failure", "Power loss", n)
+
+
+## A fatal failure retires the car; a partial one costs time per lap.
+func _failure(car: SimCar, fatal: String, partial: String, n: int) -> void:
+	if partial == "" or (fatal != "" and car.rng.randf() < SimTuning.FAILURE_FATAL_SHARE):
+		car.lap_incident.append([car.rng.randi() % n, 0.0, "failure", fatal])
+		return
+	var key: String = {"Gearbox problem": "gearbox", "Brake problem": "brakes"}.get(partial, "power")
+	for p in PARTIAL_FAILURES:
+		if p[0] == key and not car.damage.has(key):
+			car.damage[key] = car.rng.randf_range(p[2], p[3]) * model.scale
+			_log(car, "failure", "%s: %s" % [car.label(), partial])
+
 
 ## Decided when the car starts its last sector (pit entry comes before the line).
 func _strategy_decisions(car: SimCar) -> void:

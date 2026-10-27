@@ -425,6 +425,8 @@ Jedes Teil hat Werte, die zum Gesamtauto beitragen:
 - **Ressourcenverteilung**: Wie viel Personal arbeitet am aktuellen Auto und wie viel am Auto für die nächste Saison?
 - ✅ **Jedes Auto hat seinen eigenen Teile-Stand.** Ist erst ein neuer Frontflügel fertig, muss man entscheiden, wer ihn bekommt. Das wirkt auf die Moral (Nr.-1-/Nr.-2-Status, Versprechen, Teamkollegen-Duell).
 
+- ➡️ **Umsetzung und Ausbau:** Entwicklungslabor (Ideen → CFD → Windkanal → Freigabe → Strecke) in `docs/car_model.md` 3a; geplanter Ausbau (Track-Test, Entwicklungsrennen, Korrelationsprobleme, Streckencharakter, Pakete, Kopieren, Fahrzeugkonzept, Budget Cap/ATR, Regeländerungen) in `docs/car_model.md` 17.
+
 ### 8.3 Saisonwechsel
 - Ein Teil der Entwicklung wird ins nächste Auto übernommen.
 - Bei großen Regeländerungen werden betroffene Teile zurückgesetzt – wer früh am neuen Auto arbeitet, ist im Vorteil.

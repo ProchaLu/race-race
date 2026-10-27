@@ -20,6 +20,10 @@ var setup_pct: float = 75.0
 ## -1 = low wing (fast on straights), 0 = balanced, 1 = high wing.
 var wing: int = 0
 var rain_setup: RainSetup = RainSetup.COMPROMISE
+## Cooling openings chosen by the race engineer: -1 tight, 0 normal, 1 open.
+var cooling_opening: int = 0
+## Heat the car could not get rid of this lap (> 0 = overheating).
+var heat_deficit: float = 0.0
 ## 0..1: how much tyre data the team collected in practice (long runs).
 var tyre_data: float = 0.4
 var briefing: Briefing = Briefing.NORMAL

@@ -82,6 +82,7 @@ func _lap(car: SimCar, minute: float, last_run: bool, session_index: int) -> flo
 	t += PaceModel.setup_s(car, model)
 	t += PaceModel.tyre_s(car, model, conditions, wet)
 	t += PaceModel.fuel_s(car, model)
+	t += PaceModel.weight_s(car, model)
 	t += PaceModel.weather_s(car, model, wet)
 	# The track gets faster through the session.
 	t -= SimTuning.QUALI_EVOLUTION_S * model.scale * (minute / 60.0)

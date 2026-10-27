@@ -139,6 +139,8 @@ func _filter_bar() -> Control:
 
 
 func _matches(p: PersonData) -> bool:
+	if p.retired:
+		return false
 	if p.team_id == GameState.player_team_id and p.team_id != &"":
 		return false
 	var is_driver := p is DriverData

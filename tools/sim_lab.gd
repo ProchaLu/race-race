@@ -130,9 +130,13 @@ static func set_driver(d: DriverData, level: int) -> void:
 	d.traits.clear()
 
 
+## Even car without parts: no weight, cooling or part failures in the lab.
 static func set_car(team: TeamData, level: int) -> void:
-	for p in ["downforce", "drag_efficiency", "engine_power", "mechanical_grip"]:
+	for p in ["downforce", "drag_efficiency", "engine_power", "mechanical_grip", "braking", "traction"]:
 		team.car.set(p, level)
+	team.car.parts = {}
+	team.car.mass_kg = 0.0
+	team.car.cooling = -1
 
 
 func team_cars(cars: Array[SimCar], team_id: StringName) -> Array[SimCar]:

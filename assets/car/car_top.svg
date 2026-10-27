@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Placeholder: car from above. Zones match ui/car_layout.gd; replace with the final artwork, keep the size 300x720. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="720" viewBox="0 0 300 720">
+<rect x="28" y="95" width="48" height="80" rx="6" fill="#232a31" stroke="#34404b"/>
+<rect x="224" y="95" width="48" height="80" rx="6" fill="#232a31" stroke="#34404b"/>
+<rect x="20" y="525" width="60" height="90" rx="6" fill="#232a31" stroke="#34404b"/>
+<rect x="220" y="525" width="60" height="90" rx="6" fill="#232a31" stroke="#34404b"/>
+<polygon id="floor" points="68,282 232,282 238,520 214,562 86,562 62,520" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="sidepods" points="90,322 124,322 124,505 106,528 92,470" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="sidepods" points="210,322 176,322 176,505 194,528 208,470" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="cooling" points="90,298 124,298 124,320 90,320" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="cooling" points="176,298 210,298 210,320 176,320" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="engine_cover" points="124,380 176,380 172,520 160,560 140,560 128,520" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="monocoque" points="138,60 162,60 172,150 178,300 176,380 124,380 122,300 128,150" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="suspension_front" points="76,120 128,110 128,148 76,142" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="suspension_front" points="224,120 172,110 172,148 224,142" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="suspension_rear" points="80,548 134,540 134,575 80,585" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="suspension_rear" points="220,548 166,540 166,575 220,585" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="gearbox" points="138,560 162,560 160,630 140,630" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="exhaust" points="143,630 157,630 157,648 143,648" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="diffuser" points="96,615 138,605 138,652 100,656" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="diffuser" points="204,615 162,605 162,652 200,656" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="front_wing" points="30,18 270,18 270,52 200,60 100,60 30,52" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="rear_wing" points="55,662 245,662 245,702 55,702" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="brakes" points="46,124 58,124 58,146 46,146" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="brakes" points="242,124 254,124 254,146 242,146" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="brakes" points="38,558 50,558 50,582 38,582" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+<polygon id="brakes" points="250,558 262,558 262,582 250,582" fill="#7f8b96" stroke="#0e1216" stroke-width="1.5"/>
+</svg>

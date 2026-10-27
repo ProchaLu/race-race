@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Placeholder symbol: suspension_rear. Replace with the final artwork (64x64). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+<polygon points="6.0,26.6 26.1,23.6 26.1,36.6 6.0,40.4" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="58.0,26.6 37.9,23.6 37.9,36.6 58.0,40.4" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+</svg>

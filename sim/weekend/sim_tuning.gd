@@ -9,13 +9,16 @@ const REFERENCE_LAP_S := 90.0
 # --- Car (1.1) -----------------------------------------------------------
 ## Lap time fraction per rating point (0.05 s on a 90 s lap).
 const CAR_FRAC_PER_POINT := 0.00055
-## How each corner type uses the car ratings: [power, drag, downforce, mech grip].
+## How each corner type uses the car ratings:
+## [power, drag, downforce, mech grip, braking, traction]. Braking and
+## traction come from the parts (R3); together with mech grip they keep the
+## old mechanical share.
 const CAR_WEIGHTS := {
 	# Exit speed out of the corner before carries along the straight.
-	TrackSegment.Type.STRAIGHT: [0.45, 0.3, 0.15, 0.1],
-	TrackSegment.Type.FAST_CORNER: [0.1, 0.0, 0.75, 0.15],
-	TrackSegment.Type.MEDIUM_CORNER: [0.05, 0.0, 0.5, 0.45],
-	TrackSegment.Type.SLOW_CORNER: [0.05, 0.0, 0.25, 0.7],
+	TrackSegment.Type.STRAIGHT: [0.45, 0.3, 0.15, 0.04, 0.0, 0.06],
+	TrackSegment.Type.FAST_CORNER: [0.1, 0.0, 0.75, 0.15, 0.0, 0.0],
+	TrackSegment.Type.MEDIUM_CORNER: [0.05, 0.0, 0.5, 0.33, 0.07, 0.05],
+	TrackSegment.Type.SLOW_CORNER: [0.05, 0.0, 0.25, 0.4, 0.18, 0.12],
 }
 ## Wing level: [straight fraction, corner fraction] per step (high = +1).
 const WING_STRAIGHT_FRAC := 0.004
@@ -147,6 +150,17 @@ const MISTAKE_SMALL := [0.5, 1.5]
 const MISTAKE_OFF := [3.0, 8.0]
 const MISTAKE_SEVERITY := [0.78, 0.17, 0.05]   # small, off track, crash
 const FAILURE_PER_RACE := 0.05
+
+# --- Cooling (docs/car_model.md 2.3) --------------------------------------
+const COOLING_BASE := 45.0
+const COOLING_PER_DEGREE := 0.8
+const COOLING_PER_POWER := 0.3
+const COOLING_TRAFFIC := 3.0
+## Cooling openings: one step changes the heat to get rid of by 5 and drag by 0.8 points.
+const COOLING_OPENING := 5.0
+const COOLING_OPENING_DRAG := 0.8
+const COOLING_S_PER_POINT := 0.015
+const COOLING_FAILURE_PER_POINT := 0.1
 const FAILURE_FATAL_SHARE := 0.5
 
 # --- Safety car (8.3) ----------------------------------------------------

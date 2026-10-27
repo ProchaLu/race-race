@@ -200,6 +200,14 @@ static func _make_team(id: StringName, team_name: String, short: String, color: 
 	car.tyre_preservation = _spread(car_level, 10)
 	car.reliability = _spread(car_level + 10, 10)
 	team.car = car
+	# Facilities until the HQ round (R4): stronger teams have better ones.
+	var level := clampi(roundi((car_level - 45) / 7.0), 1, 5)
+	team.design_center_level = level
+	team.wind_tunnel_level = clampi(level + randi_range(-1, 1), 1, 5)
+	team.factory_level = clampi(level + randi_range(-1, 1), 1, 5)
+	var r := RandomNumberGenerator.new()
+	r.randomize()
+	CarBuild.init_from_ratings(car, clampf((72 - car_level) * 0.5 + r.randf_range(-1.5, 1.5), 0.0, 14.0), Calendar.year, r)
 
 	series.team_ids.append(id)
 	GameState.add_team(team)

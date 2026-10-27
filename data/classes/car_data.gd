@@ -18,5 +18,35 @@ extends Resource
 @export_range(0, 100) var tyre_preservation: int = 50
 
 @export_group("Reliability")
-## Lower = higher chance of technical failures.
+## Lower = higher chance of technical failures. With parts: the engine's
+## reliability (fixed until R5); every part has its own.
 @export_range(0, 100) var reliability: int = 70
+
+@export_group("Parts (R3)")
+## Values calculated from the parts (docs/car_model.md 2). -1 / 0 = this car
+## has no parts (sim lab): braking and traction then follow the mechanical
+## grip, and weight and cooling are not simulated.
+@export var braking: int = -1
+@export var traction: int = -1
+@export var cooling: int = -1
+@export var mass_kg: float = 0.0
+## Engine power without the exhaust (fixed team value until R5).
+@export var engine_base: int = -1
+## Part ID -> fitted PartVersion.
+@export var parts: Dictionary = {}
+## Part ID -> every version of the season, oldest first.
+@export var part_history: Dictionary = {}
+## Car values at the start of the season (for "change this season").
+@export var season_start: Dictionary = {}
+
+
+func has_parts() -> bool:
+	return not parts.is_empty()
+
+
+func braking_value() -> int:
+	return braking if braking >= 0 else mechanical_grip
+
+
+func traction_value() -> int:
+	return traction if traction >= 0 else mechanical_grip
