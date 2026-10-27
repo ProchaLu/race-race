@@ -31,9 +31,13 @@ func run(cars: Array[SimCar]) -> Array[SimCar]:
 	var alive: Array[SimCar] = cars.duplicate()
 	var quali_seed := rng.randi()
 	var eliminated: Array[SimCar] = []
+	var race_modes := {}
 	for car in cars:
 		results[car] = {"out": ""}
 		car.seed_random(quali_seed)
+		# Qualifying mode for the flying laps (R5).
+		race_modes[car] = car.engine_mode
+		car.engine_mode = PowerUnit.Mode.QUALIFYING
 		car.sector_frac = PaceModel.car_sector_fracs(car, model)
 
 	for si in SESSIONS.size():
@@ -56,6 +60,8 @@ func run(cars: Array[SimCar]) -> Array[SimCar]:
 		eliminated = dropped + eliminated
 		alive = alive.slice(0, alive.size() - drop)
 
+	for car in cars:
+		car.engine_mode = race_modes[car]
 	var grid: Array[SimCar] = alive + eliminated
 	for i in grid.size():
 		grid[i].grid_position = i + 1

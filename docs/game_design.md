@@ -483,6 +483,8 @@ Das Rennen läuft größtenteils **passiv**. Kurzfristige taktische Entscheidung
 Verbrennungsmotor, Turbolader, Energierückgewinnung (Bremse/Abgas), Batterie, Steuerelektronik.
 Werte: Leistung, Effizienz (Verbrauch), Zuverlässigkeit, Gewicht, Fahrbarkeit.
 
+➡️ **Ausgearbeitet für R5:** `docs/engine_model.md` (4 Hersteller, 5 Komponenten → 5 Motorwerte, Verträge, Einheiten mit Laufleistung, Motor-Modi, Schlüsselmomente, Motoren-Labor mit Dyno und Dauerlauf). Mockup: `docs/ui_mockups/r5_engine.html`.
+
 ### 9.3 Später (Regulierungs-Runde)
 Motorkontingente pro Saison mit Startplatzstrafen, Entwicklungseinfrierung.
 
@@ -677,7 +679,7 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 | **R2 – Saison** | Kalender, Rennwochenende (Quali + Rennen), WM-Tabellen, Preisgeld, Saisonwechsel |
 | **R3 – Auto** | Teile, Entwicklungsprojekte, Produktion, Korrelation |
 | **R4 – HQ** ✅ | Gelände, Gebäude, Bau, Effekte |
-| **R5 – Motor** | Kunde / Lizenz / Werk |
+| **R5 – Motor** ✅ | Kunde / Lizenz / Werk |
 | **R6 – Geld & Macht** | Finanzen komplett, Sponsoren, Besitzer, Investoren, Ruf |
 | **R7 – Nachwuchs** | F2/F3-Simulation, Akademie, Scouting mit Wissensmodell, Newgens |
 | **R8 – Eigenes Team** | Team gründen, Feld auf 24 Autos |

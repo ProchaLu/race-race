@@ -10,6 +10,7 @@ extends RefCounted
 ## Lap time fraction per sector from the car ratings and the wing level.
 static func car_sector_fracs(car: SimCar, model: TrackModel) -> PackedFloat32Array:
 	var c := car.car_data
+	var power := c.engine_power + mode_power(car)
 	var out := PackedFloat32Array()
 	out.resize(model.sectors.size())
 	for i in model.sectors.size():
@@ -18,7 +19,7 @@ static func car_sector_fracs(car: SimCar, model: TrackModel) -> PackedFloat32Arr
 		for kind in s.type_share:
 			var w: Array = SimTuning.CAR_WEIGHTS[kind]
 			var drag := c.drag_efficiency - car.cooling_opening * SimTuning.COOLING_OPENING_DRAG
-			var rating: float = w[0] * c.engine_power + w[1] * drag + w[2] * c.downforce \
+			var rating: float = w[0] * power + w[1] * drag + w[2] * c.downforce \
 				+ w[3] * c.mechanical_grip + w[4] * c.braking_value() + w[5] * c.traction_value()
 			frac += s.type_share[kind] * -(rating - 50.0) * SimTuning.CAR_FRAC_PER_POINT
 		var straight := model.straight_share(s)
@@ -162,6 +163,7 @@ static func wear_rate(car: SimCar, dirty_share: float, wetness: float) -> float:
 	rate *= 1.0 + SimTuning.WING_TYRE_WEAR * car.wing
 	rate *= 1.0 + car.talk_value("tyre_wear") + _briefing_value(car, "tyre_wear")
 	rate *= 1.0 + SimTuning.DIRTY_AIR_WEAR * dirty_share
+	rate *= PowerUnit.tyre_wear_factor(car.car_data.engine_drivability)
 	if d.traits.has(&"tyre_whisperer"):
 		rate *= 0.9
 	if d.traits.has(&"tyre_killer"):
@@ -213,9 +215,10 @@ static func heat_deficit(car: SimCar, track_temp_c: float, in_traffic: bool) -> 
 	var c := car.car_data
 	if c.cooling < 0:
 		return 0.0
-	var demand := SimTuning.COOLING_BASE + (track_temp_c - 30.0) * SimTuning.COOLING_PER_DEGREE \
+	var demand: float = SimTuning.COOLING_BASE + (track_temp_c - 30.0) * SimTuning.COOLING_PER_DEGREE \
 		+ (c.engine_power - 60.0) * SimTuning.COOLING_PER_POWER \
-		+ (SimTuning.COOLING_TRAFFIC if in_traffic else 0.0) - car.cooling_opening * SimTuning.COOLING_OPENING
+		+ (SimTuning.COOLING_TRAFFIC if in_traffic else 0.0) - car.cooling_opening * SimTuning.COOLING_OPENING \
+		+ PowerUnit.MODES[car.engine_mode][3]
 	return demand - c.cooling
 
 
@@ -244,6 +247,17 @@ static func fuel_s(car: SimCar, model: TrackModel) -> float:
 
 static func fuel_per_lap(model: TrackModel) -> float:
 	return model.lap_length_m / 1000.0 * SimTuning.FUEL_KG_PER_KM
+
+
+## Fuel of this car per lap: engine efficiency and engine mode (R5).
+static func car_fuel_per_lap(car: SimCar, model: TrackModel) -> float:
+	var factor := PowerUnit.fuel_factor(car.car_data.engine_efficiency) if car.car_data.has_parts() else 1.0
+	return fuel_per_lap(model) * factor * PowerUnit.MODES[car.engine_mode][4]
+
+
+## Extra engine power of the engine mode (R5).
+static func mode_power(car: SimCar) -> float:
+	return PowerUnit.MODES[car.engine_mode][1] if car.car_data.has_parts() else 0.0
 
 
 ## Seconds lost per kg saved by lift and coast.
@@ -286,6 +300,7 @@ static func mistake_chance(car: SimCar, context: Dictionary) -> float:
 	p *= 1.0 + pressure * (1.0 - composure / 100.0)
 	var w: float = context.get("wetness", 0.0)
 	p *= 1.0 + 3.0 * w * (1.2 - d.wet_skill / 100.0)
+	p *= PowerUnit.wet_mistake_factor(car.car_data.engine_drivability, w)
 	if context.get("spray", false):
 		p *= SimTuning.SPRAY_MISTAKE
 	var life_used: float = context.get("tyre_over_cliff", 0.0)

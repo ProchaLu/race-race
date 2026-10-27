@@ -488,8 +488,9 @@ func _end_of_lap_wear(car: SimCar, t: float) -> void:
 	car.tyre_wear_laps += rate * (0.3 if under_sc else 1.0)
 	car.tyre_laps += 1
 	PaceModel.update_tyre_temp(car, conditions.weather.track_temp_at(t), dirty_share, under_sc)
-	var use := PaceModel.fuel_per_lap(model) * (SimTuning.SC_FUEL_FACTOR if under_sc else 1.0)
+	var use := PaceModel.car_fuel_per_lap(car, model) * (SimTuning.SC_FUEL_FACTOR if under_sc else 1.0)
 	car.fuel_kg -= maxf(0.0, use - car.fuel_saving_kg_per_lap)
+	car.engine_km += model.lap_length_m / 1000.0 * PowerUnit.MODES[car.engine_mode][2] * (0.6 if under_sc else 1.0)
 	if car.fuel_kg <= 0.0:
 		_retire(car, "Out of fuel", true)
 		return
@@ -518,6 +519,7 @@ func _prepare_lap(car: SimCar, t: float) -> void:
 	b["weight"] = PaceModel.weight_s(car, model)
 	car.heat_deficit = PaceModel.heat_deficit(car, conditions.weather.track_temp_at(t), car.lap_dirty_air > 2)
 	b["cooling"] = PaceModel.cooling_s(car.heat_deficit, model)
+	_engine_temperature_moment(car)
 	b["weather"] = PaceModel.weather_s(car, model, wet)
 	var damage := 0.0
 	for v in car.damage.values():
@@ -526,8 +528,11 @@ func _prepare_lap(car: SimCar, t: float) -> void:
 	b["form"] = car.rng.randfn(0.0, PaceModel.form_sigma_s(car, model))
 	# Fuel saving if the fuel will not last.
 	var laps_left := conditions.laps - car.laps_done
-	var projected := car.fuel_kg - PaceModel.fuel_per_lap(model) * laps_left
-	car.fuel_saving_kg_per_lap = clampf((0.3 - projected) / maxf(laps_left, 1), 0.0, SimTuning.FUEL_SAVE_MAX_PER_LAP)
+	var projected := car.fuel_kg - PaceModel.car_fuel_per_lap(car, model) * laps_left
+	var save_max := SimTuning.FUEL_SAVE_MAX_PER_LAP * (2.0 if car.has_meta("lift_coast") else 1.0)
+	if (0.3 - projected) / maxf(laps_left, 1) > SimTuning.FUEL_SAVE_MAX_PER_LAP:
+		_fuel_moment(car, laps_left, projected)
+	car.fuel_saving_kg_per_lap = clampf((0.3 - projected) / maxf(laps_left, 1), 0.0, save_max)
 	b["fuel_saving"] = car.fuel_saving_kg_per_lap * PaceModel.fuel_save_cost(car) * model.scale
 	car.lap_breakdown = b
 	var total := 0.0
@@ -608,7 +613,12 @@ func _part_failures(car: SimCar, n: int) -> void:
 		if car.rng.randf() < chance:
 			_failure(car, f[1], f[2], n)
 			return
-	if car.rng.randf() < CarParts.ENGINE_FAILURE * (1.5 - c.reliability / 100.0) * staff * heat / conditions.laps:
+	# The power unit: reliability, wear of the unit, engine mode and risks taken (R5).
+	var engine_risk: float = PowerUnit.failure_factor(c.reliability) * c.engine_wear_risk * PowerUnit.MODES[car.engine_mode][2]
+	if car.laps_done < int(car.get_meta("engine_risk_until", -1)):
+		engine_risk *= 3.0
+	engine_risk *= float(car.get_meta("engine_warning_risk", 1.0))
+	if car.rng.randf() < CarParts.ENGINE_FAILURE * engine_risk * staff * heat / conditions.laps:
 		_failure(car, "Engine failure", "Power loss", n)
 
 
@@ -622,6 +632,8 @@ func _failure(car: SimCar, fatal: String, partial: String, n: int) -> void:
 		if p[0] == key and not car.damage.has(key):
 			car.damage[key] = car.rng.randf_range(p[2], p[3]) * model.scale
 			_log(car, "failure", "%s: %s" % [car.label(), partial])
+			if key == "power":
+				_ers_moment(car)
 
 
 ## Decided when the car starts its last sector (pit entry comes before the line).
@@ -723,6 +735,11 @@ func _pit_stop(car: SimCar) -> void:
 	if PaceModel.is_wet_compound(car.next_compound) or PaceModel.is_wet_compound(car.compound):
 		pressure *= SimTuning.PRESSURE_WET
 	var extra := SimTuning.NOSE_CHANGE_S if car.needs_nose else 0.0
+	if car.has_meta("ers_repair"):
+		# Changing the ERS control unit in the pits.
+		extra += ERS_REPAIR_S
+		car.damage.erase("power")
+		car.remove_meta("ers_repair")
 	var result := PitCrew.stop(car.ops, extra + wait, pressure, car.rng)
 	var lane := model.pit_lane_loss_s
 	if flag == Flag.SAFETY_CAR:
@@ -755,7 +772,9 @@ func _pit_stop(car: SimCar) -> void:
 
 # --- Key moments ---------------------------------------------------------------
 
-const MAX_MOMENTS := 4
+const MAX_MOMENTS := 5
+## Extra time in the pit box to change the ERS control unit.
+const ERS_REPAIR_S := 8.0
 
 
 func _can_ask() -> bool:
@@ -977,6 +996,102 @@ func _team_orders_moment(car: SimCar) -> void:
 	_open_moment({"kind": "orders", "title": _tx("Team orders – %s is faster than %s", [fast, slow]), "text": _tx(""),
 		"facts": facts, "options": options, "recommended": 0 if gain > 3.0 * model.scale else 1,
 		"cars": [mate, car], "actions": actions})
+
+
+## Engine mode change: the sector times follow the new power.
+func set_engine_mode(car: SimCar, mode: PowerUnit.Mode) -> void:
+	car.engine_mode = mode
+	car.sector_frac = PaceModel.car_sector_fracs(car, model)
+
+
+## The engine runs too hot: turn it down or keep pushing? (R5)
+func _engine_temperature_moment(car: SimCar) -> void:
+	if not car.is_player or not _can_ask() or flag != Flag.GREEN or car.engine_mode == PowerUnit.Mode.SAVE:
+		return
+	var laps_left := conditions.laps - car.laps_done
+	if car.heat_deficit < 1.5 or laps_left < 5 or car.get_meta("temp_asked_lap", -99) > car.laps_done - 15:
+		return
+	car.set_meta("temp_asked_lap", car.laps_done)
+	var over := car.heat_deficit * 1.5
+	var name := car.driver.last_name
+	var options := [
+		[_tx("Turn down to Save"), _tx("−1.5 engine power, less heat and wear. Safe.")],
+		[_tx("Keep pushing"), _tx("Keep the pace. Engine failure risk ×3 for the next five laps.")],
+	]
+	var facts := [
+		[_tx("%s · P%d", [name, car.position]), _tx("%s mode", [PowerUnit.MODES[car.engine_mode][0]])],
+		[_tx("Water temperature"), _tx("%.0f °C over the limit", [over])],
+		[_tx("Engine wear"), _tx("risk ×%.1f", [car.car_data.engine_wear_risk])],
+		[_tx("Laps left"), _tx("%d", [laps_left])],
+	]
+	var actions := [
+		func(): set_engine_mode(car, PowerUnit.Mode.SAVE),
+		func(): car.set_meta("engine_risk_until", car.laps_done + 5),
+	]
+	_open_moment({"kind": "engine_temp", "title": _tx("Engine temperature rising – %s", [name]), "text": _tx(""),
+		"facts": facts, "options": options, "recommended": 0 if over > 4.0 or car.car_data.engine_wear_risk > 1.5 else 1,
+		"cars": [car], "actions": actions})
+
+
+## ERS failure: reset on the steering wheel, repair in the pits or carry on? (R5)
+func _ers_moment(car: SimCar) -> void:
+	if not car.is_player or not _can_ask():
+		return
+	var name := car.driver.last_name
+	var eng: Dictionary = car.ops.engineer(car.driver.id)
+	var chance := clampf(0.3 + (car.driver.technical_feedback + eng.get("communication", 50)) / 400.0, 0.2, 0.8)
+	var loss: float = car.damage.get("power", 0.0)
+	var options := [
+		[_tx("Reset on the steering wheel"), _tx("The engineer talks %s through a reset. Works in about %d %% of cases.", [name, roundi(chance * 100)])],
+		[_tx("Box to change the control unit"), _tx("Pit next lap: +%d s in the pit box, then full power again.", [roundi(ERS_REPAIR_S)])],
+		[_tx("Carry on"), _tx("Lose about %.1f s per lap until the flag.", [loss])],
+	]
+	var laps_left := conditions.laps - car.laps_done
+	var facts := [
+		[_tx("%s · P%d", [name, car.position]), _tx("ERS failure – power loss")],
+		[_tx("Time lost"), _tx("%.1f s per lap", [loss])],
+		[_tx("Laps left"), _tx("%d", [laps_left])],
+	]
+	var actions := [
+		func():
+			if car.rng.randf() < chance:
+				car.damage.erase("power")
+				_log(car, "failure", "%s: ERS reset worked" % car.label())
+			else:
+				_log(car, "failure", "%s: ERS reset failed" % car.label()),
+		func():
+			car.set_meta("ers_repair", true)
+			_request_pit(car, car.compound if PaceModel.is_wet_compound(car.compound) else planner.compound_for_stop_now(car)),
+		func(): pass,
+	]
+	var recommended := 0 if chance >= 0.5 else (1 if loss * laps_left > ERS_REPAIR_S + 4.0 else 2)
+	_open_moment({"kind": "ers", "title": _tx("ERS failure – %s", [name]), "text": _tx(""),
+		"facts": facts, "options": options, "recommended": recommended, "cars": [car], "actions": actions})
+
+
+## The fuel will not last: lift and coast hard or risk it? (R5)
+func _fuel_moment(car: SimCar, laps_left: int, projected: float) -> void:
+	if not car.is_player or not _can_ask() or car.has_meta("fuel_asked") or laps_left < 3:
+		return
+	car.set_meta("fuel_asked", true)
+	var name := car.driver.last_name
+	var options := [
+		[_tx("Lift and coast"), _tx("Save mode and hard fuel saving: slower every lap, but %s makes it to the flag.", [name])],
+		[_tx("Keep the pace"), _tx("Normal fuel saving only. %s may stop on track before the finish.", [name])],
+	]
+	var facts := [
+		[_tx("%s · P%d", [name, car.position]), _tx("%.1f kg of fuel left", [car.fuel_kg])],
+		[_tx("Missing at this pace"), _tx("%.1f kg", [maxf(0.0, -projected)])],
+		[_tx("Laps left"), _tx("%d", [laps_left])],
+	]
+	var actions := [
+		func():
+			car.set_meta("lift_coast", true)
+			set_engine_mode(car, PowerUnit.Mode.SAVE),
+		func(): pass,
+	]
+	_open_moment({"kind": "fuel", "title": _tx("Fuel running low – %s", [name]), "text": _tx(""),
+		"facts": facts, "options": options, "recommended": 0, "cars": [car], "actions": actions})
 
 
 ## Average of the last three green laps (s).

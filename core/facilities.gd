@@ -14,7 +14,7 @@ const CATALOG := {
 	&"cfd": ["CFD centre", "Computing infrastructure for aerodynamic simulation.", 5_000_000, 30, ""],
 	&"factory": ["Factory", "Manufactures car parts and replacement components.", 10_000_000, 50, ""],
 	&"composites": ["Composites", "Specialist production space for lightweight composite structures.", 7_000_000, 40, ""],
-	&"engine": ["Engine works", "Assembly and testing facilities for a future in-house engine programme.", 20_000_000, 80, "R5"],
+	&"engine": ["Engine works", "Engine design office, dynos and engine assembly. Level 1: licence engine · level 3: own power unit.", 20_000_000, 80, ""],
 	&"lab": ["Test laboratory", "Dedicated test cells for mechanical systems and component validation.", 6_000_000, 35, ""],
 	&"simulator": ["Simulator", "A dedicated environment for driver preparation and virtual testing.", 5_000_000, 30, ""],
 	&"performance": ["Driver performance centre", "Fitness, recovery and mental preparation for the drivers.", 3_000_000, 25, ""],
@@ -43,11 +43,11 @@ const ROOM := [0.45, 0.6, 0.8, 1.0, 1.25, 1.55]
 ## A second construction crew once the campus has this many levels in total.
 const SECOND_CREW_LEVELS := 45
 ## Department -> building that houses it.
-const HOUSES := {&"design": &"design", &"aero": &"cfd", &"rig": &"lab", &"factory": &"factory"}
+const HOUSES := {&"design": &"design", &"aero": &"cfd", &"rig": &"lab", &"factory": &"factory", &"engine": &"engine"}
 ## AI: months of salaries and upkeep a team keeps in the bank.
 const RESERVE_MONTHS := 6
 ## AI preference per building (development first).
-const AI_WEIGHT := {&"design": 1.0, &"wind": 1.1, &"cfd": 0.9, &"factory": 0.9, &"composites": 0.7, &"lab": 0.8,
+const AI_WEIGHT := {&"engine": 0.7, &"design": 1.0, &"wind": 1.1, &"cfd": 0.9, &"factory": 0.9, &"composites": 0.7, &"lab": 0.8,
 	&"simulator": 0.6, &"performance": 0.4, &"pit": 0.6, &"mission": 0.5, &"staff": 0.4}
 
 
@@ -182,6 +182,11 @@ static func effect_lines(team: TeamData, id: StringName, at_level: int) -> Array
 			return [["Strategy: race, weather and tyre reading", ops_bonus(probe, &"mission"), "+%d"]]
 		&"staff":
 			return [["Team mood", mood_bonus(probe), "%+d"]]
+		&"engine":
+			return [["Dyno capacity", 0.6 + 0.2 * at_level, "×%.2f"],
+				["Room for engine engineers", room_for(probe, &"engine"), "%d"],
+				["Licence engine possible (1 = yes)", 1 if at_level >= 1 else 0, "%d"],
+				["Own power unit possible (1 = yes)", 1 if at_level >= 3 else 0, "%d"]]
 	return []
 
 
@@ -309,6 +314,9 @@ static func _ai_plan(team: TeamData, r: RandomNumberGenerator) -> void:
 	var best_score := 0.0
 	for id in AI_WEIGHT:
 		if unavailable_reason(team, id) != "":
+			continue
+		# Only teams that develop an engine need engine works.
+		if id == &"engine" and not Engines.develops(team):
 			continue
 		var offer := quote(team, id)
 		if team.budget - int(offer.cost) < reserve:

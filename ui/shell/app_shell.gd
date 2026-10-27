@@ -40,6 +40,7 @@ const SCREENS := {
 	&"season_review": preload("res://ui/screens/season_review_screen.gd"),
 	&"driver_talk": preload("res://ui/screens/driver_talk_screen.gd"),
 	&"car": preload("res://ui/screens/car_screen.gd"),
+	&"engine": preload("res://ui/screens/engine_screen.gd"),
 }
 const PlaceholderScreen := preload("res://ui/screens/placeholder_screen.gd")
 const LANGUAGES := [["en", "English"], ["de", "Deutsch"]]

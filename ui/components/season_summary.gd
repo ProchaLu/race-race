@@ -270,6 +270,11 @@ func _team_card() -> UICard:
 		card.add_row(FactRow.new("HQ: building levels completed", str(_review.hq_completed), "", true))
 		card.add_row(FactRow.new("HQ: invested", UIStyle.money(_review.hq_spent), "", true))
 		card.add_row(FactRow.new("Campus rank", "P%d" % _review.campus_rank, "", true))
+	if _review.get("engine_name", "") != "":
+		card.add_row(FactRow.new("Engine", "%s · power P%d" % [_review.engine_name, _review.engine_power_rank], "", true))
+		card.add_row(FactRow.new("Engine units used", str(_review.engine_units), "", true))
+		if _review.get("engine_spent", 0) > 0:
+			card.add_row(FactRow.new("Engine development and extra units", UIStyle.money(_review.engine_spent), "", true))
 	return card
 
 

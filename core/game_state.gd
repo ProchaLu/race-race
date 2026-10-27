@@ -28,6 +28,18 @@ var next_project_id: int = 1
 var delegate_car_development: bool = true
 ## Money spent on car development this season per team.
 var car_spending: Dictionary = {}
+## Engine manufacturers (R5): ID -> ManufacturerData.
+var manufacturers: Dictionary = {}
+## True: the engine chief runs the player's engine development (licence / works).
+var delegate_engine_development: bool = true
+## Engine lab projects of every manufacturer (EngineProject).
+var engine_projects: Array = []
+var next_engine_project_id: int = 1
+## Requests for engine offers and the offers: {"team", "manufacturer", "type",
+## "price", "years", "answer_day", "expires_day", "state": "pending"|"offer"|"refused"}
+var engine_offers: Array = []
+## Money spent on engine development this season per team.
+var engine_spending: Dictionary = {}
 ## Money spent on HQ construction this season per team.
 var hq_spending: Dictionary = {}
 ## Building levels completed this season per team.
@@ -85,6 +97,12 @@ func clear() -> void:
 	delegate_car_development = true
 	car_spending.clear()
 	hq_spending.clear()
+	manufacturers.clear()
+	engine_projects.clear()
+	next_engine_project_id = 1
+	delegate_engine_development = true
+	engine_offers.clear()
+	engine_spending.clear()
 	hq_completed.clear()
 	correlation_experience.clear()
 	team_points.clear()

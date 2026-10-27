@@ -18,7 +18,7 @@ const FRICTION := 0.08
 ## never runs faster than its normal pace (1 day per day).
 const DEPARTMENT_SIZE := {&"design": 2.5, &"aero": 2.0, &"tunnel": 1.6, &"rig": 2.0, &"factory": 3.0}
 ## Headcount of an average team; more people = more capacity (not linear).
-const REFERENCE_HEADCOUNT := {&"design": 60, &"aero": 80, &"rig": 30, &"factory": 120}
+const REFERENCE_HEADCOUNT := {&"design": 60, &"aero": 80, &"rig": 30, &"factory": 120, &"engine": 50}
 const HEADCOUNT_EXPONENT := 0.75
 const PROJECT_MAX_RATE := 1.0
 const OVERTIME_SPEED := 1.4

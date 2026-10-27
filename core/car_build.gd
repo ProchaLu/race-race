@@ -7,8 +7,9 @@ extends RefCounted
 
 const MIN_MASS := 798.0
 const DRIVER_MASS := 80.0
-## Engine, electronics, tank, wheels … – everything but the 13 parts and the driver.
-const FIXED_MASS := MIN_MASS - DRIVER_MASS - 222.0
+## Electronics, tank, wheels … – everything but the 13 parts, the power unit
+## (CarData.pu_mass_kg, R5) and the driver.
+const FIXED_MASS := MIN_MASS - DRIVER_MASS - 222.0 - PowerUnit.MASS_AT_50
 ## Ballast below the minimum weight can be placed freely: small grip bonus.
 const BALLAST_GRIP_PER_KG := 0.2
 const BALLAST_GRIP_MAX := 1.0
@@ -73,9 +74,9 @@ static func recalculate(car: CarData) -> void:
 	car.drag_efficiency = roundi(_weighted(car, &"drag_efficiency"))
 	car.tyre_preservation = roundi(_weighted(car, &"tyre_preservation"))
 	car.braking = roundi(_weighted(car, &"braking"))
-	car.traction = roundi(_weighted(car, &"traction"))
-	car.cooling = roundi(_weighted(car, &"cooling"))
-	var mass := FIXED_MASS + DRIVER_MASS
+	car.cooling = roundi(_weighted(car, &"cooling")) + car.engine_cooling_fit
+	car.traction = roundi(_weighted(car, &"traction") + PowerUnit.traction_bonus(car.engine_drivability))
+	var mass := FIXED_MASS + DRIVER_MASS + car.pu_mass_kg + car.engine_mass_fit
 	for p in car.parts.values():
 		mass += p.mass_kg
 	car.mass_kg = mass
@@ -247,6 +248,7 @@ static func car_for(team: TeamData, driver_id: StringName) -> CarData:
 	c.parts = {}
 	for id in CarParts.ORDER:
 		c.parts[id] = fitted_version(team, driver_id, id)
+	Engines.apply(c, team, driver_id)
 	recalculate(c)
 	return c
 

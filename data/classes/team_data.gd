@@ -33,6 +33,17 @@ extends Resource
 ## Driver ID -> {part ID: version number} fitted to that driver's car.
 @export var car_fit: Dictionary = {}
 
+@export_group("Engine (R5)")
+## Manufacturer ID (GameState.manufacturers) of the engine this season.
+@export var engine_manufacturer: StringName
+## {"type": "customer" | "licence" | "works", "price": per year, "until": last year,
+##  "since": first year with this manufacturer}
+@export var engine_deal: Dictionary = {}
+## Deal signed for next season (same keys plus "manufacturer"); {} = none yet.
+@export var engine_next: Dictionary = {}
+## Engine units of this season (EngineUnit), every driver's pool.
+@export var engine_units: Array = []
+
 @export_group("Links")
 ## The two race drivers.
 @export var driver_ids: Array[StringName] = []

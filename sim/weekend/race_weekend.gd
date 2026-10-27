@@ -69,6 +69,14 @@ var briefings := {}
 var parts_choice := {}
 ## Correlation was done after practice (programme "Test new parts").
 var parts_tested := false
+## Engine (R5): driver ID -> fit a new unit before practice.
+var engine_new_unit := {}
+## Driver ID -> PowerUnit.Mode for the race.
+var engine_modes := {}
+## Driver ID -> true when the engine sounded wrong in practice.
+var engine_warning := {}
+## Driver ID -> true = change the unit, false = risk it.
+var engine_warning_change := {}
 
 ## The strategy chief's rain forecast for the race (0..1) and its error margin.
 var forecast_rain := 0.0
@@ -97,6 +105,14 @@ static func create(p_series: SeriesData, p_round_index: int, seed_value: int = 0
 	w.conditions = RaceConditions.for_track(w.model, w.rng)
 	for team_id in p_series.team_ids:
 		var team: TeamData = GameState.teams[team_id]
+		# Engine units: the AI follows its engine chief, the player decides in the planning.
+		if team_id == GameState.player_team_id:
+			var keep := {}
+			for d in GameState.drivers_of_team(team_id):
+				keep[d.id] = false
+			Engines.prepare_weekend(team, keep)
+		else:
+			Engines.prepare_weekend(team)
 		if team.car.has_parts():
 			var cost := CarBuild.ensure_raceable(team)
 			if cost > 0 and team_id == GameState.player_team_id:
@@ -166,6 +182,8 @@ func staff_planning() -> void:
 			orders = Orders.PRIORITY
 			priority_driver = car.driver.id
 	staff_programmes()
+	for car in player_cars():
+		engine_new_unit[car.driver.id] = Engines.recommend_new_unit(car.team, car.driver.id)[0]
 
 
 ## The driver with the better technical feedback works on the setup.
@@ -213,6 +231,7 @@ func has_academy_driver() -> bool:
 # --- Practice and qualifying -------------------------------------------------
 
 func run_practice_and_qualifying() -> void:
+	_apply_engine_choice()
 	_apply_parts_choice()
 	practice_wet = 0.0 if rng.randf() > conditions.rain_chance * 0.5 else rng.randf_range(0.3, 0.9)
 	var slot := {}
@@ -243,6 +262,7 @@ func run_practice_and_qualifying() -> void:
 			if other.team == car.team:
 				car.tyre_data = maxf(car.tyre_data, other.tyre_data)
 	WeekendSetup.roll_weekend(cars, model, rng)
+	_engine_warnings()
 
 	quali = QualifyingSim.new(model, conditions, rng)
 	grid = quali.run(cars)
@@ -259,6 +279,42 @@ func _untested_on(car: SimCar) -> bool:
 		if not car.car_data.parts[id].correlated:
 			return true
 	return false
+
+
+## The player's engine units for the weekend (planning block "Engine").
+func _apply_engine_choice() -> void:
+	var team := GameState.player_team()
+	if team.engine_manufacturer == &"":
+		return
+	for car in player_cars():
+		if engine_new_unit.get(car.driver.id, false):
+			Engines.new_unit(team, car.driver.id)
+		car.car_data = CarBuild.car_for(team, car.driver.id)
+
+
+## "The engine doesn't sound right" in practice: more likely on worn units
+## and weak engines. The player decides in the strategy step.
+func _engine_warnings() -> void:
+	for car in player_cars():
+		if not car.car_data.has_parts():
+			continue
+		var chance := 0.05 * PowerUnit.failure_factor(car.car_data.reliability) * car.car_data.engine_wear_risk
+		if rng.randf() < chance:
+			engine_warning[car.driver.id] = true
+
+
+## What the race engineer would choose: [mode, reason].
+func recommended_mode(car: SimCar) -> Array:
+	var u := Engines.fitted_unit(car.team, car.driver.id)
+	if u == null:
+		return [PowerUnit.Mode.NORMAL, "Standard engine settings."]
+	if u.used() > 0.75 or u.damage > 0.2:
+		return [PowerUnit.Mode.SAVE, "The unit is worn – we need it to last."]
+	if conditions.track_temp_c > 42.0 and car.car_data.cooling < 50:
+		return [PowerUnit.Mode.NORMAL, "Hot race and little cooling reserve."]
+	if u.used() < 0.35:
+		return [PowerUnit.Mode.PUSH, "Fresh unit – we can push."]
+	return [PowerUnit.Mode.NORMAL, "Standard engine settings."]
 
 
 ## The player's choice who gets scarce new parts, with the morale effects
@@ -305,6 +361,9 @@ func staff_strategy() -> void:
 	for car in player_cars():
 		plan_choice[car.driver.id] = 0
 		briefings[car.driver.id] = recommended_briefing(car)[0]
+		engine_modes[car.driver.id] = recommended_mode(car)[0]
+		if engine_warning.has(car.driver.id):
+			engine_warning_change[car.driver.id] = Engines.pool_left(car.team, car.driver.id) > 0
 	rain_setup = staff_rain_setup(forecast_rain)
 
 
@@ -355,6 +414,7 @@ func start_race(ask_player: bool) -> void:
 			_apply_player_decisions(car)
 		else:
 			car.rain_setup = staff_rain_setup(conditions.rain_chance)
+			car.engine_mode = recommended_mode(car)[0]
 	engine = RaceEngine.new(model, conditions, grid, rng.randi())
 	engine.ask_player = ask_player
 	stage = Stage.RACE
@@ -441,6 +501,13 @@ func _apply_player_decisions(car: SimCar) -> void:
 					car.talk[key] = car.talk.get(key, 0.0) + talk.race_fx[key]
 	car.rain_setup = rain_setup
 	car.briefing = briefings.get(id, SimCar.Briefing.NORMAL)
+	car.engine_mode = engine_modes.get(id, recommended_mode(car)[0])
+	if engine_warning.has(id):
+		if engine_warning_change.get(id, true):
+			Engines.new_unit(car.team, id)
+			car.car_data = CarBuild.car_for(car.team, id)
+		else:
+			car.set_meta("engine_warning_risk", 2.5)
 	var options: Array = strategy_options.get(id, [])
 	var choice: int = plan_choice.get(id, 0)
 	car.chosen_plan = options[choice] if choice < options.size() else {}
@@ -487,6 +554,7 @@ func _wear_and_damage() -> void:
 			CarDevelopment.correlate(team)
 			CarDevelopment.reorder_spares(team)
 	summary["parts_lost"] = lost
+	Engines.after_weekend(engine.cars, model.lap_length_m / 1000.0, conditions.laps)
 
 
 ## Did the team reach the weekend target? Morale moves for both drivers.

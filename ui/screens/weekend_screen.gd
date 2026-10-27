@@ -120,6 +120,8 @@ func _build_planning() -> void:
 	bottom.add_child(_orders_card())
 	if not w.scarce_parts().is_empty():
 		_page.add_child(_parts_card())
+	if GameState.player_team().engine_manufacturer != &"":
+		_page.add_child(_engine_card())
 	_page.add_child(_actions("Start practice & qualifying", func():
 		w.run_practice_and_qualifying()
 		_rebuild(), func():
@@ -286,6 +288,40 @@ func _parts_card() -> UICard:
 	return card
 
 
+## Engine units for the weekend (R5): fresh unit or keep the fitted one.
+func _engine_card() -> UICard:
+	var w := _weekend
+	var team := GameState.player_team()
+	var card := UICard.new("Engine", "units for this weekend")
+	for car in w.player_cars():
+		var id := car.driver.id
+		var u := Engines.fitted_unit(team, id)
+		var rec := Engines.recommend_new_unit(team, id)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.add_child(_driver_label(car.driver, 150))
+		var state := tr("no unit") if u == null else tr("#%d · %s · %d km (%d %%)") % [u.number, u.spec_label(), roundi(u.km), roundi(u.used() * 100)]
+		if u and u.damage > 0.0:
+			state += tr(" · damaged %d %%") % roundi(u.damage * 100)
+		var l := _note(state)
+		l.add_theme_color_override("font_color", UIStyle.WARN if u and (u.used() > 0.7 or u.damage > 0.0) else UIStyle.TEXT)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l)
+		var fresh := CheckButton.new()
+		fresh.text = tr("Fit a new unit (%d of %d left)") % [Engines.pool_left(team, id), PowerUnit.UNITS_PER_SEASON]
+		if Engines.pool_left(team, id) <= 0:
+			fresh.text = tr("Fit a new unit (extra: %s)") % UIStyle.money(PowerUnit.EXTRA_UNIT_COST)
+		fresh.button_pressed = w.engine_new_unit.get(id, rec[0])
+		fresh.toggled.connect(func(on): w.engine_new_unit[id] = on)
+		row.add_child(fresh)
+		card.add_padded(row, 6, 2)
+		var advice := _note(tr("★ Engine chief: %s %s") % [tr("new unit –") if rec[0] else tr("keep it –"), tr(rec[1])])
+		advice.add_theme_color_override("font_color", UIStyle.GOOD if w.engine_new_unit.get(id, rec[0]) == rec[0] else UIStyle.WARN)
+		card.add_padded(advice, 0, 4)
+	card.add_padded(_note("A new spec only reaches the car with a new unit. Grid penalties for extra units come with the rules (R9)."), 4, 2)
+	return card
+
+
 # --- Step 2: after qualifying ------------------------------------------------
 
 func _build_strategy() -> void:
@@ -304,6 +340,8 @@ func _build_strategy() -> void:
 	var brief := _briefing_card()
 	brief.size_flags_stretch_ratio = 1.4
 	bottom.add_child(brief)
+	if GameState.player_team().engine_manufacturer != &"":
+		_page.add_child(_engine_mode_card())
 	_page.add_child(_talks_card())
 	_page.add_child(_quali_card())
 	_page.add_child(_actions("Start race", _start_race, func():
@@ -486,6 +524,38 @@ func _briefing_card() -> UICard:
 		for car in w.player_cars():
 			w.briefings[car.driver.id] = w.recommended_briefing(car)[0]
 		_rebuild()), 8, 0)
+	return card
+
+
+## Engine mode for the race and the practice warning (R5).
+func _engine_mode_card() -> UICard:
+	var w := _weekend
+	var card := UICard.new("Engine mode", "race · qualifying ran in qualifying mode")
+	for car in w.player_cars():
+		var id := car.driver.id
+		var rec: Array = w.recommended_mode(car)
+		var modes := [PowerUnit.Mode.PUSH, PowerUnit.Mode.NORMAL, PowerUnit.Mode.SAVE]
+		var current: int = w.engine_modes.get(id, rec[0])
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		row.add_child(_driver_label(car.driver, 150))
+		var labels := modes.map(func(m): return tr(PowerUnit.MODES[m][0]) + (" ★" if m == rec[0] else ""))
+		var seg := Segmented.new(labels, maxi(0, modes.find(current)), [], modes.map(func(m): return tr(PowerUnit.MODES[m][5])))
+		seg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		seg.changed.connect(func(i): w.engine_modes[id] = modes[i])
+		row.add_child(seg)
+		card.add_padded(row, 6, 2)
+		card.add_padded(_note(tr("★ Race engineer: %s") % tr(rec[1])), 0, 4)
+		if w.engine_warning.has(id):
+			card.add_section(tr("%s: the engine does not sound right") % car.driver.last_name)
+			var left := Engines.pool_left(car.team, id)
+			var options := [
+				[tr("Change the unit"), tr("Fresh unit before the race (%d of %d left).") % [left, PowerUnit.UNITS_PER_SEASON] if left > 0
+					else tr("Fresh unit – extra unit for %s.") % UIStyle.money(PowerUnit.EXTRA_UNIT_COST), tr("Recommended") if left > 0 else ""],
+				[tr("Risk it"), tr("Keep the unit: engine failure risk ×2.5 in this race."), tr("Recommended") if left <= 0 else ""],
+			]
+			ChoiceRow.make_group(card.body, options, 0 if w.engine_warning_change.get(id, true) else 1,
+				func(i): w.engine_warning_change[id] = i == 0)
 	return card
 
 

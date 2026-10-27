@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engine Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Chrome (screen tabs) on top, then the dark Pit Wall stage with one screen. */
+:root {
+  --chrome-bg: #f3f4f6; --chrome-fg: #1b2230; --chrome-muted: #5d6676; --chrome-line: #d6dae1;
+  --chrome-btn: #ffffff; --chrome-active: #1b2230; --chrome-active-fg: #ffffff;
+  --bg: #0e1216; --panel: #141a20; --panel-2: #10151a; --text: #dfe5ea; --muted: #7f8b96; --faint: #56616c;
+  --line: #232c35; --line-strong: #34404b; --zebra: #171e25; --hover: #1d2731; --amber: #f2a93b; --team: #e8471c;
+  --lv1: #ef5b5b; --lv2: #e0a13a; --lv3: #8fc46a; --lv4: #4fd1a5; --blue: #5aa9e6; --purple: #b36bff;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36; --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --chrome-bg: #0a0c0f; --chrome-fg: #e6e9ee; --chrome-muted: #8f98a8; --chrome-line: #262c36; --chrome-btn: #151920; --chrome-active: #f2a93b; --chrome-active-fg: #101318; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--chrome-bg); color: var(--chrome-fg); font-family: var(--f-body); font-size: 14px; padding: 20px 16px 40px; }
+.lab { max-width: 1560px; margin: 0 auto; display: grid; gap: 12px; }
+.lab-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.lab-head h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+.lab-head p { margin: 4px 0 0; color: var(--chrome-muted); font-size: .875rem; max-width: 90ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.controls button { font: inherit; font-size: .85rem; padding: 8px 12px; border-radius: 4px; cursor: pointer; border: 1px solid var(--chrome-line); background: var(--chrome-btn); color: var(--chrome-fg); }
+.controls button[aria-pressed="true"] { background: var(--chrome-active); color: var(--chrome-active-fg); border-color: var(--chrome-active); }
+.note { margin: 0; font-size: .875rem; color: var(--chrome-muted); max-width: 130ch; }
+.note b { color: var(--chrome-fg); }
+
+.stage { background: var(--bg); color: var(--text); padding: 16px; border-radius: 2px; display: grid; gap: 14px; overflow-x: auto; position: relative; }
+.row { display: grid; gap: 14px; min-width: 0; align-items: start; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 2px; padding-bottom: 10px; min-width: 0; }
+.card > h3 { margin: 0 0 4px; padding: 8px 16px 7px; border-bottom: 1px solid var(--line); font-family: var(--f-display); font-weight: 700; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.card > h3 small { font-family: var(--f-body); font-weight: 400; font-size: .75rem; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.pad { padding: 6px 16px; }
+.muted { color: var(--muted); } .faint { color: var(--faint); }
+.good { color: var(--lv4); } .ok { color: var(--lv3); } .warn { color: var(--lv2); } .bad { color: var(--lv1); } .amber { color: var(--amber); } .blue { color: var(--blue); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.fact { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 5px 16px; align-items: baseline; }
+.fact:nth-child(even of .fact) { background: var(--zebra); }
+.fact .k { color: var(--muted); } .fact .v { font-weight: 600; text-align: right; }
+.sub { font-family: var(--f-display); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: .75rem; color: var(--muted); padding: 10px 16px 2px; }
+.btn { font: inherit; padding: 7px 14px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--text); border-radius: 2px; cursor: pointer; }
+.btn.primary { background: var(--amber); color: var(--bg); border: none; font-family: var(--f-display); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 1rem; padding: 8px 20px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.small { padding: 4px 10px; font-size: .8rem; }
+.actions { display: flex; gap: 10px; justify-content: flex-end; padding: 10px 16px 0; flex-wrap: wrap; align-items: center; }
+.chip { display: inline-block; padding: 1px 7px; border: 1px solid var(--line-strong); font-size: .72rem; border-radius: 2px; margin: 0 4px 4px 0; }
+.chip.good { border-color: color-mix(in srgb, var(--lv4) 50%, transparent); background: color-mix(in srgb, var(--lv4) 12%, transparent); }
+.chip.bad { border-color: color-mix(in srgb, var(--lv1) 50%, transparent); background: color-mix(in srgb, var(--lv1) 12%, transparent); }
+.chip.warn { border-color: color-mix(in srgb, var(--lv2) 50%, transparent); background: color-mix(in srgb, var(--lv2) 12%, transparent); }
+.meter { height: 6px; background: var(--line); position: relative; }
+.meter i { position: absolute; inset: 0 auto 0 0; }
+.meter .tick { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--text); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .84rem; }
+th { text-align: left; font-family: var(--f-display); font-weight: 600; letter-spacing: .06em; color: var(--muted); padding: 7px 8px; background: var(--panel-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tr:nth-child(even) td { background: var(--zebra); }
+tr.sel td { background: color-mix(in srgb, var(--amber) 12%, transparent); }
+th.num, td.num { text-align: right; }
+
+/* Car diagram */
+.car-wrap { display: grid; grid-template-columns: 300px 1fr; gap: 0; }
+.car svg { width: 100%; height: auto; display: block; }
+.zone { cursor: pointer; stroke: var(--bg); stroke-width: 1.5; transition: opacity .15s; }
+.zone:hover { opacity: .8; }
+.zone.sel { stroke: var(--amber); stroke-width: 3; }
+.wheel { fill: #232a31; stroke: #34404b; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 16px 0; font-size: .76rem; color: var(--muted); align-items: center; }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+.part-icon { width: 34px; height: 34px; background: var(--panel-2); border: 1px solid var(--line-strong); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; color: var(--amber); font-size: .8rem; flex: none; }
+.part-head { display: flex; gap: 12px; align-items: center; padding: 10px 16px 6px; }
+.part-head b { font-family: var(--f-display); font-size: 1.4rem; letter-spacing: .04em; text-transform: uppercase; }
+.rating-row { display: grid; grid-template-columns: 150px 1fr 48px 56px 54px; gap: 10px; padding: 5px 16px; align-items: center; }
+.rating-row:nth-child(even of .rating-row) { background: var(--zebra); }
+.cap-row { display: grid; grid-template-columns: 110px 1fr 120px; gap: 10px; padding: 5px 16px; align-items: center; font-size: .84rem; }
+
+/* Workshop board */
+.board { display: grid; grid-template-columns: repeat(6, minmax(190px, 1fr)); gap: 10px; padding: 8px 12px; }
+.col { background: var(--panel-2); border: 1px solid var(--line); min-height: 320px; }
+.col h4 { margin: 0; padding: 8px 10px; font-family: var(--f-display); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: .85rem; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
+.pcard { margin: 8px; background: var(--panel); border: 1px solid var(--line-strong); padding: 8px 10px; display: grid; gap: 5px; font-size: .8rem; cursor: pointer; }
+.pcard:hover { background: var(--hover); }
+.pcard .top { display: flex; gap: 8px; align-items: center; }
+.pcard .top b { font-size: .86rem; }
+.prio { font-family: var(--f-display); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; padding: 0 5px; border: 1px solid currentColor; }
+
+/* New project dialog */
+.overlay { position: relative; background: color-mix(in srgb, var(--bg) 70%, transparent); display: grid; place-items: start center; padding: 10px 0; }
+.dialog { width: min(1380px, 100%); background: var(--bg); border: 1px solid var(--amber); }
+.dialog-head { background: var(--panel); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+.dialog-head b { font-family: var(--f-display); font-size: 1.6rem; text-transform: uppercase; letter-spacing: .04em; }
+.dialog-body { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; padding: 14px; }
+.part-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 6px 16px; }
+.pbtn { background: var(--panel-2); border: 1px solid var(--line-strong); color: var(--text); padding: 8px 6px; font: inherit; font-size: .78rem; cursor: pointer; text-align: left; display: grid; gap: 2px; }
+.pbtn[aria-pressed="true"] { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
+.pbtn small { color: var(--muted); }
+.choices { display: grid; gap: 6px; padding: 6px 16px; }
+.choices.c3 { grid-template-columns: repeat(3, 1fr); }
+.choice { text-align: left; font: inherit; background: var(--panel-2); border: 1px solid var(--line-strong); color: var(--text); padding: 8px 10px; cursor: pointer; display: grid; gap: 2px; }
+.choice small { color: var(--muted); font-size: .76rem; }
+.choice[aria-pressed="true"] { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
+.seg { display: flex; gap: 4px; padding: 6px 16px; }
+.seg button { flex: 1; font: inherit; padding: 6px; background: var(--panel); border: 1px solid var(--line-strong); color: var(--text); cursor: pointer; }
+.seg button[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+.timeline { display: flex; height: 26px; margin: 6px 16px; border: 1px solid var(--line-strong); }
+.timeline span { display: grid; place-items: center; font-size: .7rem; color: var(--bg); font-weight: 600; overflow: hidden; white-space: nowrap; }
+.gainbar { position: relative; height: 22px; margin: 6px 16px 2px; background: var(--line); }
+.gainbar .range { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--lv4) 40%, transparent); }
+.gainbar .exp { position: absolute; top: -3px; bottom: -3px; width: 3px; background: var(--lv4); }
+.gainbar .zero { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--text); }
+.quote { margin: 8px 16px; padding: 8px 12px; background: var(--panel-2); border: 1px solid var(--line-strong); font-size: .85rem; }
+.quote small { display: block; color: var(--muted); font-size: .74rem; margin-bottom: 2px; }
+.warnbox { margin: 6px 16px; padding: 8px 12px; border: 1px solid color-mix(in srgb, var(--lv2) 55%, transparent); background: color-mix(in srgb, var(--lv2) 10%, transparent); font-size: .82rem; }
+.slider { margin: 8px 16px; position: relative; height: 34px; }
+.slider .track { position: absolute; top: 14px; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, var(--team) 0 40%, var(--blue) 40% 100%); }
+.slider .knob { position: absolute; top: 6px; left: calc(40% - 9px); width: 18px; height: 22px; background: var(--text); border: 2px solid var(--bg); }
+.big { font-family: var(--f-display); font-size: 2rem; font-weight: 700; line-height: 1; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); }
+.tiles > div { padding: 10px 16px; border-right: 1px solid var(--line); }
+.tiles > div:last-child { border-right: none; }
+.tiles small { display: block; font-family: var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-size: .72rem; }
+.tiles b { font-family: var(--f-display); font-size: 1.5rem; }
+.tiles span { display: block; font-size: .76rem; color: var(--muted); }
+</style><style>
+.lab-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+.variant { display: grid; grid-template-columns: 26px 1.4fr 1fr 1fr 1fr 110px; gap: 10px; align-items: center; padding: 7px 16px; border-bottom: 1px solid var(--line); }
+.variant.head { font-family: var(--f-display); letter-spacing: .06em; color: var(--muted); font-size: .8rem; background: var(--panel-2); }
+.variant.base { background: color-mix(in srgb, var(--blue) 8%, transparent); }
+.variant.pick { background: color-mix(in srgb, var(--amber) 10%, transparent); box-shadow: inset 3px 0 0 var(--amber); }
+.variant input { accent-color: var(--amber); }
+.eb { position: relative; height: 18px; background: var(--panel-2); border: 1px solid var(--line); }
+.eb .zero { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--muted); }
+.eb .rng { position: absolute; top: 4px; bottom: 4px; background: color-mix(in srgb, var(--lv4) 35%, transparent); }
+.eb .rng.neg { background: color-mix(in srgb, var(--lv1) 35%, transparent); }
+.eb .pt { position: absolute; top: 2px; bottom: 2px; width: 3px; background: var(--text); }
+.eb small { position: absolute; right: 4px; top: 0; font-size: .68rem; color: var(--muted); }
+.steps { display: flex; gap: 0; padding: 10px 16px; flex-wrap: wrap; }
+.step { flex: 1; min-width: 110px; padding: 8px 10px; border: 1px solid var(--line-strong); margin-right: -1px; font-size: .78rem; }
+.step b { display: block; font-family: var(--f-display); letter-spacing: .06em; text-transform: uppercase; font-size: .82rem; }
+.step.done { background: color-mix(in srgb, var(--lv4) 10%, transparent); }
+.step.now { background: color-mix(in srgb, var(--amber) 14%, transparent); border-color: var(--amber); }
+.idea { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; padding: 9px 16px; border-bottom: 1px solid var(--line); align-items: start; }
+.idea b { display: block; }
+.b2b { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.b2b > div { padding: 12px 16px; border-right: 1px solid var(--line); }
+.b2b big { font-family: var(--f-display); font-size: 1.8rem; font-weight: 700; display: block; }
+</style>
+<style>
+.pu { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pu-svg rect.comp { cursor:pointer; stroke: var(--bg); stroke-width: 2; }
+.pu-svg rect.comp.sel { stroke: var(--amber); stroke-width: 3; }
+.pu-svg text { font-family: var(--f-display); font-weight: 700; font-size: 13px; fill: var(--bg); letter-spacing: .04em; }
+.unit { display:grid; grid-template-columns: 70px 90px 1fr 110px 110px; gap: 10px; align-items:center; padding: 7px 16px; border-bottom: 1px solid var(--line); }
+.unit.head { font-family: var(--f-display); letter-spacing:.06em; color: var(--muted); font-size:.8rem; background: var(--panel-2); }
+.life { position:relative; height: 10px; background: var(--line); }
+.life i { position:absolute; inset: 0 auto 0 0; }
+.life .warn70 { position:absolute; top:-3px; bottom:-3px; width:1px; left:70%; background: var(--muted); }
+.mode { display:grid; grid-template-columns: repeat(4,1fr); gap:6px; padding: 6px 16px; }
+.mode button { font: inherit; text-align:left; padding: 8px 10px; background: var(--panel-2); border:1px solid var(--line-strong); color: var(--text); cursor:pointer; }
+.mode button small { display:block; color: var(--muted); font-size:.74rem; }
+.mode button[aria-pressed="true"] { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 10%, transparent); }
+.offer { display:grid; grid-template-columns: 1.4fr repeat(5, .7fr) .9fr .8fr 120px; gap: 8px; align-items:center; padding: 8px 16px; border-bottom: 1px solid var(--line); font-size:.85rem; }
+.offer.head { font-family: var(--f-display); letter-spacing:.06em; color: var(--muted); font-size:.78rem; background: var(--panel-2); }
+.offer.cur { background: color-mix(in srgb, var(--blue) 8%, transparent); box-shadow: inset 3px 0 0 var(--blue); }
+.endurance { display:flex; gap:3px; padding: 6px 16px; }
+.endurance span { flex:1; height: 16px; background: var(--line); position:relative; }
+.endurance span.ok { background: color-mix(in srgb, var(--lv4) 45%, transparent); }
+.endurance span.fail { background: color-mix(in srgb, var(--lv1) 60%, transparent); }
+.moment { border:1px solid var(--amber); background: color-mix(in srgb, var(--amber) 8%, var(--panel)); padding: 12px 16px; display:grid; gap:8px; }
+.moment b { font-family: var(--f-display); font-size: 1.2rem; letter-spacing:.04em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="lab">
+<div class="lab-head">
+<div>
+<h1>R5 mockup: the engine (power unit)</h1>
+<p>Manufacturer and contract, five components → five engine values, engine units with mileage, the engine lab (dyno and endurance runs), contracts, and the engine block at the race weekend. Game values 0–100; numbers are illustrative.</p>
+</div>
+<div class="controls" role="group" aria-label="Screen">
+<button data-s="overview" aria-pressed="true">1 · Overview</button>
+<button data-s="units" aria-pressed="false">2 · Units</button>
+<button data-s="lab" aria-pressed="false">3 · Engine lab</button>
+<button data-s="contracts" aria-pressed="false">4 · Contracts</button>
+<button data-s="weekend" aria-pressed="false">5 · Weekend</button>
+</div>
+</div>
+<p class="note" id="note"></p>
+<section class="stage" id="stage"></section>
+</div>
+<script>
+const card = (title, body, small = "") => `<div class="card"><h3>${title}${small ? `<small>${small}</small>` : ""}</h3>${body}</div>`;
+const fact = (k, v, cls = "") => `<div class="fact"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
+const tabs = (now) => `<div class="seg" style="padding:0">${["Overview","Units","Engine lab","Contracts"].map((t,i)=>`<button aria-pressed="${i===now}">${t}</button>`).join("")}</div>`;
+const VALUES = [["Power", 58, 6, 61], ["Efficiency", 71, 2, 52], ["Reliability", 74, 1, 55], ["Weight", 49, 7, 50], ["Drivability", 63, 3, 54]];
+const rank = r => r <= 3 ? "good" : r <= 5 ? "ok" : r <= 7 ? "warn" : "bad";
+const rating = ([n, v, r, avg]) => `<div class="rating-row"><span class="muted">${n}</span><div class="meter"><i style="width:${v}%;background:var(--${r<=3?"lv4":r<=5?"lv3":r<=7?"lv2":"lv1"})"></i><span class="tick" style="left:${avg}%"></span></div><b class="mono">${v}</b><b class="mono ${rank(r)}">P${r}</b><span class="mono muted">${v-avg>=0?"+":""}${v-avg}</span></div>`;
+const COMPS = [["ICE", "Combustion engine", "Spec 2", 60], ["TURBO", "Turbocharger", "Spec 1", 55], ["ERS", "Energy recovery", "Spec 2", 66], ["BATT", "Battery", "Spec 1", 48], ["CTRL", "Control electronics", "Spec 3", 70]];
+function puSvg() {
+  const pos = [[30, 60, 200, 120], [250, 40, 110, 70], [250, 130, 110, 70], [380, 60, 120, 70], [380, 150, 120, 50]];
+  const col = v => v >= 65 ? "var(--lv4)" : v >= 55 ? "var(--lv3)" : v >= 48 ? "var(--lv2)" : "var(--lv1)";
+  return `<svg class="pu-svg" viewBox="0 0 520 230" width="100%">${COMPS.map((c, i) => `<rect class="comp ${i===0?"sel":""}" x="${pos[i][0]}" y="${pos[i][1]}" width="${pos[i][2]}" height="${pos[i][3]}" rx="3" fill="${col(c[3])}"/><text x="${pos[i][0]+10}" y="${pos[i][1]+22}">${c[0]}</text><text x="${pos[i][0]+10}" y="${pos[i][1]+40}" style="font-size:11px;font-family:var(--f-mono)">${c[2]} · ${c[3]}</text>`).join("")}
+  <path d="M230 120 L250 75 M230 120 L250 165 M360 95 L380 95 M360 165 L380 175" stroke="var(--line-strong)" stroke-width="3" fill="none"/></svg>`;
+}
+function overview() {
+  return `${tabs(0)}<div class="row" style="grid-template-columns:1.2fr 1fr">
+  ${card("Power unit · Meridian M26 (customer)", `<div class="pad">${puSvg()}</div>
+    <div class="sub">Combustion engine · Spec 2</div>
+    ${fact("Power · Efficiency · Reliability", "64 · 73 · 76")}${fact("Mass", "151.2 kg")}${fact("Rank among the manufacturers (ICE)", "P2 of 4", "good")}
+    <div class="pad muted">Customer engine: new specs come from Meridian. Works team Meridian gets Spec 3 at R9 – customers from R11.</div>`, "click a component")}
+  <div style="display:grid;gap:14px">
+  ${card("Engine values", VALUES.map(rating).join("") + `<div class="pad muted">line = field average · P = rank of 11 cars</div>`)}
+  ${card("Contract", fact("Manufacturer", "Meridian High Performance") + fact("Type", "Customer engine") + fact("Price", "$18.0M per year") + fact("Runs until", "end of 2027") + fact("Relationship with Meridian", "68 · good", "good") + fact("Units this season", "8 (4 per car) · 3 used"))}
+  </div></div>`;
+}
+function unitRow(d, n, spec, km, life, state) {
+  const p = Math.min(100, km / life * 100);
+  const c = p > 90 ? "var(--lv1)" : p > 70 ? "var(--lv2)" : "var(--lv4)";
+  return `<div class="unit"><span class="mono">${d} #${n}</span><span class="mono">${spec}</span><div class="life"><i style="width:${p}%;background:${c}"></i><span class="warn70"></span></div><span class="mono">${km} / ${life} km</span><span class="${state[1]}">${state[0]}</span></div>`;
+}
+function units() {
+  return `${tabs(1)}<div class="row" style="grid-template-columns:1.6fr 1fr">
+  ${card("Engine units", `<div class="unit head"><span>Unit</span><span>Spec</span><span>Mileage (lifetime by reliability)</span><span>km</span><span>State</span></div>
+    ${unitRow("Hale", 1, "Spec 1", 2480, 2900, ["Friday engine", "muted"])}
+    ${unitRow("Hale", 2, "Spec 2", 1310, 2900, ["Fitted", "good"])}
+    ${unitRow("Hale", 3, "–", 0, 2900, ["In stock (Spec 2)", "muted"])}
+    ${unitRow("Brandt", 1, "Spec 1", 2950, 2900, ["Worn out", "bad"])}
+    ${unitRow("Brandt", 2, "Spec 2", 900, 2900, ["Fitted · damaged 30 %", "warn"])}
+    ${unitRow("Brandt", 3, "–", 0, 2900, ["In stock (Spec 2)", "muted"])}
+    <div class="pad muted">From 70 % of the lifetime the unit loses power (up to −2) and the failure risk rises. A new spec only comes with a new unit.</div>`, "4 per car and season · extra unit $1.5M · grid penalties come with R9")}
+  <div style="display:grid;gap:14px">
+  ${card("Plan", fact("Next race", "R14 Monteverde · long straights") + fact("Engine chief recommends", "new unit for Hale (Spec 2)", "amber") + fact("Season pool", "Hale 3/4 · Brandt 3/4 used") + fact("Races left", "10"))}
+  ${card("Manufacturer updates", fact("Spec 3 (ICE + turbo)", "Meridian R9 · customers R11", "amber") + fact("Expected", "+2.5 power, −1 reliability") + `<div class="pad muted">Better relationship with Meridian = earlier delivery.</div>`)}
+  </div></div>`;
+}
+function lab() {
+  const eb = (v, u) => { const x = val => 50 + val / 6 * 50; return `<div class="eb"><span class="zero"></span><span class="rng ${v<0?"neg":""}" style="left:${x(v-u)}%;width:${(2*u)/12*100}%"></span><span class="pt" style="left:calc(${x(v)}% - 1px)"></span><small>${v>=0?"+":""}${v.toFixed(1)} ±${u.toFixed(1)}</small></div>`; };
+  const end = (runs, fail) => `<div class="endurance">${Array.from({length: 6}, (_, i) => `<span class="${i < runs ? (i === fail ? "fail" : "ok") : ""}"></span>`).join("")}</div>`;
+  return `${tabs(2)}<div class="card"><h3>Turbocharger Spec 2 · new development<small>licence engine · baseline Spec 1</small></h3>
+  <div class="steps">${["Ideas","Single-cylinder rig","Performance run","Endurance run","Homologation","Production"].map((s,i)=>`<div class="step ${i<3?"done":i===3?"now":""}"><b>${i<3?"✓ ":""}${s}</b>${["engine design","rough ±","dyno, precise","race distances","spec frozen","units"][i]}</div>`).join("")}</div></div>
+  <div class="lab-grid">
+  ${card("Variants on the dyno", `<div class="variant head"><span></span><span>Variant</span><span>Power</span><span>Efficiency</span><span>Reliability</span><span>Endurance</span></div>
+    <div class="variant"><input type="radio" name="v"><span><b>A</b> · Bigger compressor stage</span>${eb(2.4,0.4)}${eb(-0.8,0.3)}${eb(-1.5,2.5)}<span class="mono warn">3 of 6 · fail at 1 400 km</span></div>
+    <div class="variant pick"><input type="radio" name="v" checked><span><b>B</b> · New bearing</span>${eb(0.6,0.3)}${eb(0.2,0.2)}${eb(1.8,0.6)}<span class="mono good">6 of 6 · no failures</span></div>
+    <div class="variant"><input type="radio" name="v"><span><b>A+B</b> · combined</span>${eb(2.9,0.5)}${eb(-0.5,0.3)}${eb(0.4,1.8)}<span class="mono muted">1 of 6</span></div>
+    <div class="pad">${end(3,2)}<span class="muted">Variant A on the endurance dyno: bearing failed in the third race distance.</span></div>
+    <div class="actions"><button class="btn">Defuse (−power, +reliability)</button><button class="btn">More endurance runs (3 · 9 days · $0.9M)</button><button class="btn">Let the engine chief decide</button><button class="btn primary">Homologate B ▷</button></div>`, "power is easy to measure – durability takes kilometres")}
+  ${card("Engine department", fact("Engine engineers", "48 · room for 60") + fact("Dyno capacity (engine works Lv 2)", "×1.00") + fact("Endurance accuracy", "±0.6 after 6 runs") + fact("Specs this season (turbo)", "1 of 3") + fact("Cost so far", "$3.4M") + `<div class="pad muted">Engine works level 1: licence · level 3: own works engine and customers.</div>`)}
+  </div>`;
+}
+function contracts() {
+  const offer = (n, t, v, price, slot, btn, cur) => `<div class="offer ${cur?"cur":""}"><span><b>${n}</b><br><span class="muted">${t}</span></span>${v.map(x=>`<span class="mono">${x}</span>`).join("")}<span class="mono">${price}</span><span class="${slot[1]}">${slot[0]}</span><span>${btn}</span></div>`;
+  return `${tabs(3)}${card("Engine supply for 2028", `<div class="offer head"><span>Manufacturer</span><span>Power</span><span>Effic.</span><span>Reliab.</span><span>Weight</span><span>Driv.</span><span>Price/year</span><span>Places</span><span></span></div>
+    ${offer("Meridian High Performance", "current · works team Meridian", [64,73,76,49,63], "$18.0M", ["4 of 4 – you are in", "good"], `<button class="btn small">Extend</button>`, true)}
+    ${offer("Corsa Alta Motori", "works team Scuderia Corsa Alta", [72,55,58,52,57], "$22.0M", ["3 of 4", "ok"], `<button class="btn small">Ask</button>`)}
+    ${offer("Aurum Powertrains", "works team Aurum", [69,64,66,55,60], "$21.0M", ["2 of 4", "ok"], `<button class="btn small">Ask</button>`)}
+    ${offer("Valkyr Power Systems", "independent", [59,62,63,58,68], "$14.0M", ["3 of 4", "ok"], `<button class="btn small">Ask</button>`)}
+    ${offer("Licence: Meridian M26", "develop it yourself · engine works ≥ 1", [64,73,76,49,63], "$32.4M", ["engine works Lv 2 ✓", "good"], `<button class="btn small">Ask</button>`)}
+    ${offer("Own power unit programme", "~2 seasons · ≈ $150M · engine works ≥ 3", ["–","–","–","–","–"], "–", ["engine works Lv 2 ✗", "bad"], `<button class="btn small" disabled>Locked</button>`)}
+    <div class="pad muted">Negotiation window: 1 July to the end of the season. Manufacturers decide by places, your reputation and championship position. Switching costs 1 season of adaptation (−3 cooling, +3 kg).</div>`, "contract ends after 2027")}`;
+}
+function weekend() {
+  const modes = (sel) => `<div class="mode">${[["Qualifying","+3 power · wear ×4 · quali only"],["Push","+1.5 · wear ×1.6 · heat +4"],["Normal","baseline"],["Save","−1.5 · wear ×0.7 · fuel −4 %"]].map((m,i)=>`<button aria-pressed="${i===sel}">${m[0]}<small>${m[1]}</small></button>`).join("")}</div>`;
+  return `<div class="row" style="grid-template-columns:1fr 1fr">
+  ${card("Planning · Engine", fact("Hale", "Unit #2 · Spec 2 · 1 310 km (45 %)") + fact("Brandt", "Unit #2 · Spec 2 · damaged 30 %", "warn") + `<div class="pad"><label><input type="checkbox" checked> Fit a new unit for Brandt (3/4 used)</label></div>` + `<div class="pad quote"><small>Engine chief</small>“Brandt's unit took a hit in Duinen. I'd put in a fresh one – Monteverde is hard on engines.”</div>`, "R14 Monteverde")}
+  ${card("Strategy · Engine mode", `<div class="sub">Hale</div>${modes(2)}<div class="sub">Brandt</div>${modes(1)}<div class="pad muted">Race engineer recommends Normal for Hale (unit at 45 %), Push for Brandt (fresh unit).</div>`)}
+  </div>
+  <div class="moment"><span class="muted">Key moment · lap 38 of 58</span><b>Engine temperature rising – Hale</b><span>Water temperature 4 °C over the limit in Hale's slipstream. Keep pushing for the overtake on Okafor (gap 0.6 s) or turn the engine down?</span>
+  <div class="actions" style="justify-content:flex-start;padding:0"><button class="btn">Turn down to Save (−0.2 s/lap, risk normal)</button><button class="btn primary">Keep pushing (failure risk ×3 for 5 laps)</button></div></div>`;
+}
+const SCREENS = { overview, units, lab, contracts, weekend };
+const NOTES = {
+  overview: "<b>Overview</b>: the power unit with 5 clickable components, the 5 engine values vs the field and the contract.",
+  units: "<b>Units</b>: every engine unit with spec and mileage; when to fit a fresh one is a decision. Penalties only with R9.",
+  lab: "<b>Engine lab</b> (licence or works engine): single-cylinder rig → performance run → endurance runs that reveal durability → homologate.",
+  contracts: "<b>Contracts</b>: compare manufacturers, places and prices; licence and own programme as long-term goals.",
+  weekend: "<b>Weekend</b>: engine block in planning, engine modes in the strategy, and a new key moment.",
+};
+const stage = document.getElementById("stage"), note = document.getElementById("note");
+function show(s) { stage.innerHTML = SCREENS[s](); note.innerHTML = NOTES[s];
+  document.querySelectorAll(".controls button").forEach(b => b.setAttribute("aria-pressed", b.dataset.s === s)); }
+document.querySelectorAll(".controls button").forEach(b => b.addEventListener("click", () => show(b.dataset.s)));
+show(SCREENS[location.hash.slice(1)] ? location.hash.slice(1) : "overview");
+</script>
+</body>
+</html>

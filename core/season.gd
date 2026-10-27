@@ -66,6 +66,8 @@ func _daily_world_update() -> void:
 	TeamMood.daily_update()
 	CarDevelopment.daily_update(_rng)
 	Facilities.daily_update(_rng)
+	Engines.daily_update()
+	EngineLab.daily_update(_rng)
 	if Calendar.date_of().day == 1:
 		_pay_salaries()
 		_refresh_market()
@@ -251,6 +253,7 @@ func _pay_salaries() -> void:
 		var payroll := ContractLogic.payroll_per_month(team.id)
 		var upkeep := Facilities.upkeep_per_month(team)
 		team.budget -= payroll + upkeep
+		var engine_fee := Engines.pay_month(team)
 		if team.id == GameState.player_team_id:
 			var msg := InboxMessage.new()
 			msg.sender = "Finance department"
@@ -260,6 +263,8 @@ func _pay_salaries() -> void:
 			msg.add_paragraph("Monthly salaries for drivers and staff have been paid. Budget now: %s.",
 				[UIStyle.money(team.budget)])
 			msg.add_paragraph("HQ upkeep: %s.", [UIStyle.money(upkeep)])
+			if engine_fee > 0:
+				msg.add_paragraph("Engine supply: %s.", [UIStyle.money(engine_fee)])
 			GameState.add_message(msg)
 
 
@@ -551,6 +556,10 @@ func _season_review(s: SeriesData, team_table: Array, prize: Dictionary) -> Dict
 		"hq_spent": GameState.hq_spending.get(team_id, 0),
 		"hq_completed": GameState.hq_completed.get(team_id, 0),
 		"campus_rank": Facilities.campus_rank(GameState.teams[team_id]),
+		"engine_name": Engines.manufacturer_of(GameState.teams[team_id]).name if Engines.manufacturer_of(GameState.teams[team_id]) else "",
+		"engine_power_rank": Engines.rank(GameState.teams[team_id], &"power"),
+		"engine_units": GameState.teams[team_id].engine_units.size(),
+		"engine_spent": GameState.engine_spending.get(team_id, 0),
 		"year": Calendar.year,
 		"team_position": position,
 		"team_points": GameState.team_points.get(team_id, 0),
@@ -637,10 +646,12 @@ func _start_new_season(year: int) -> void:
 	GameState.car_spending.clear()
 	GameState.hq_spending.clear()
 	GameState.hq_completed.clear()
+	GameState.engine_spending.clear()
 	# Development projects of the old car end with the season (R3d: next year's car).
 	GameState.car_projects.clear()
 	GameState.resolved_rounds = 0
 	weekend = null
+	Engines.new_season(year)
 
 	var gone := []
 	for c in GameState.contracts.duplicate():

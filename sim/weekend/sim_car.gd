@@ -24,6 +24,9 @@ var rain_setup: RainSetup = RainSetup.COMPROMISE
 var cooling_opening: int = 0
 ## Heat the car could not get rid of this lap (> 0 = overheating).
 var heat_deficit: float = 0.0
+## Engine mode in the race (PowerUnit.Mode) and the km run on the unit.
+var engine_mode: PowerUnit.Mode = PowerUnit.Mode.NORMAL
+var engine_km: float = 0.0
 ## 0..1: how much tyre data the team collected in practice (long runs).
 var tyre_data: float = 0.4
 var briefing: Briefing = Briefing.NORMAL

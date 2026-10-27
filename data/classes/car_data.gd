@@ -30,8 +30,20 @@ extends Resource
 @export var traction: int = -1
 @export var cooling: int = -1
 @export var mass_kg: float = 0.0
-## Engine power without the exhaust (fixed team value until R5).
+## Engine power without the exhaust (from the power unit, R5).
 @export var engine_base: int = -1
+
+@export_group("Power unit (R5)")
+## Engine values besides power (reliability is the field above).
+@export var engine_efficiency: float = 50.0
+@export var engine_drivability: float = 50.0
+@export var pu_mass_kg: float = PowerUnit.MASS_AT_50
+## Integration with the chassis: works team +2 cooling / −2 kg; first season
+## after a switch −3 / +3 kg (docs/engine_model.md 1).
+@export var engine_cooling_fit: int = 0
+@export var engine_mass_fit: float = 0.0
+## Failure risk from the fitted unit's wear (×1 = fresh).
+@export var engine_wear_risk: float = 1.0
 ## Part ID -> fitted PartVersion.
 @export var parts: Dictionary = {}
 ## Part ID -> every version of the season, oldest first.

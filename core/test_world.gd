@@ -116,12 +116,14 @@ static func build() -> void:
 	_make_player_team_details()
 	for t in TEAMS:
 		_make_team_staff(r, GameState.teams[t[0]], t[4])
+	Engines.setup_world(r)
 	_make_market(r)
 	_make_knowledge(r)
 	Calendar.day = FIRST_RACE_DAY + (ROUNDS_COMPLETED - 1) * DAYS_BETWEEN_RACES + 3
 	for round_index in ROUNDS_COMPLETED:
 		QuickRace.resolve_round(f1, round_index)
 	GameState.resolved_rounds = ROUNDS_COMPLETED
+	Engines.setup_units(r)
 	_make_welcome_messages()
 
 

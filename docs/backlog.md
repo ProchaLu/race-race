@@ -6,7 +6,17 @@ Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt u
 **R3 komplett (Auto & Entwicklung):** 13 Teile mit Versionen, Masse, Zuverlässigkeit; Autowerte daraus, Gewicht, Kühlung (Renningenieur wählt Öffnungen), Bremsleistung, Traktion, Defekte pro Teil. Entwicklung mit 5 Abteilungen (Design, CFD, Windkanal, Prüfstände, Fabrik; Personalstärke aus dem Budget, Schlüsselpersonen, Gebäudestufen), parallele Projekte, Kosten, Prognose vs. Realität. Teile pro Auto, Stückzahlen und Ersatzteile, Unfälle zerstören Teile, Bremsen als Verbrauchsteil, Notfertigung, Wochenend-Block „Teile“, Training „Neue Teile testen“. Nächstjahresauto, Saisonwechsel mit Nächstjahres-Entwicklung. KI entwickelt nach denselben Regeln.
 **Entwicklungslabor umgesetzt:** alte Version als Basis → Ideen → CFD (grob, mit ±) → Windkanal/Prüfstand (Kombinieren, Verfeinern) → Freigeben/Verwerfen → Detailkonstruktion → Werkzeuge → Fertigung → Qualität → Direktvergleich auf der Strecke, „Zurück zur alten Version“. Entscheidungen an Meilensteinen (Inbox + Werkstatt-Spalte „Deine Entscheidung“), „Aero-/Chassis-Chef entscheiden lassen“; delegiert/KI automatisch. Details: `docs/car_model.md` 3a.
 **R4 komplett (HQ):** 15 Gebäude mit 5 Stufen auf festem Gelände, Bau mit Kosten/Bauzeit/Unterhalt, bis zu zwei Bautrupps, Wirkung auf Entwicklung, Wochenende und Stimmung (Stufe 1 gegen 5 deutlich), KI baut, Saisonbilanz. Details: `docs/hq_screen_design.md`, `docs/r4_review.md`.
-**Nächster Schritt:** R5 (Motor). Offen für später: Playtest und Feinabstimmung von R3/R4, Styling, R3e (`docs/car_model.md` 17).
+**R5 komplett (Motor):** 4 erfundene Hersteller, Power Unit mit 5 Komponenten → 5 Motorwerte in der Simulation (Leistung, Sprit, Defekte, Gewicht, Traktion/Reifen/Regen), Kunden-/Lizenz-/Werksmotor, Specs mit Verzögerung für Kunden, Motoreinheiten mit Laufleistung (4 pro Fahrer, weitere kosten), Motormodi, 4 neue Entscheidungen (Motortemperatur, ERS-Fehler, Sprit knapp, „Motor klingt nicht gut“), Verträge und Angebote, Motoren-Labor mit Dauerlauf, Power-Unit-Programm, Kunden beliefern. Details: `docs/engine_model.md`.
+**Nächster Schritt:** R6 (Geld & Macht). Offen für später: Playtest und Feinabstimmung R3–R5, Styling, R3e (`docs/car_model.md` 17).
+
+## R5 — Motor ✅ abgeschlossen (31.10.2026)
+- [x] Hersteller, Komponenten, Specs, Verträge; Motorwerte in der Simulation (R5a)
+- [x] Einheiten & Laufleistung, Wochenend-Block „Motor“, Motor-Modi, Schlüsselmomente (R5b)
+- [x] Hersteller-Entwicklung (KI), Angebote & Verträge, Saisonwechsel (R5c)
+- [x] Motoren-Labor, Motorenwerk frei, Power-Unit-Programm, Kunden beliefern, Saisonbilanz (R5d)
+- [ ] Später R9: Startplatzstrafen für zusätzliche Einheiten, Entwicklungseinfrierung/Token
+- [ ] Playtest: Lebensdauer, Preise, Spec-Größe, Ausfallraten feinstimmen
+- [ ] Motorgrafik (PU-Diagramm ist ein Platzhalter aus Blöcken)
 
 ## R4 — HQ ✅ abgeschlossen (30.10.2026)
 **Review 30.10.2026:** Stand, Sofort-Punkte, Styling, fehlende Systeme und Aufräumen in `docs/r4_review.md` (Checkliste, Reihenfolge am Ende).

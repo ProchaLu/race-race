@@ -219,7 +219,7 @@ func _as_stops(laps: Array, seq: Array) -> Array:
 ## Fuel for the start: full distance plus a margin; a brave strategist
 ## underfuels a little and relies on lift and coast later.
 func start_fuel(car: SimCar) -> float:
-	var need := PaceModel.fuel_per_lap(model) * conditions.laps
+	var need := PaceModel.car_fuel_per_lap(car, model) * conditions.laps
 	# Only worth it with a driver who saves fuel cheaply.
 	var underfuel := (car.ops.race_reading - 40) / 60.0 * (car.driver.fuel_management - 40) / 60.0 * 3.0
 	return need * 1.01 - clampf(underfuel, 0.0, 2.5)
