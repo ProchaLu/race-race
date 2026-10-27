@@ -24,6 +24,7 @@ const NAV_ITEMS := [
 
 ## Screens that exist so far; every other section shows a placeholder.
 const SCREENS := {
+	&"hq": preload("res://ui/screens/hq_screen.gd"),
 	&"home": preload("res://ui/screens/home_screen.gd"),
 	&"inbox": preload("res://ui/screens/inbox_screen.gd"),
 	&"drivers": preload("res://ui/screens/driver_list_screen.gd"),

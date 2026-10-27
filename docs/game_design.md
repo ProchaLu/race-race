@@ -371,7 +371,7 @@ Ein **übersichtlicher Gesamtwert** für die Stimmung im ganzen Team (z. B. 0–
 ---
 
 ## 7. Gelände / HQ ✅
-Ein Standort mit einem **ausbaubaren Gelände**. Gebäude haben Stufen; jede Stufe kostet Geld **und** Bauzeit, verursacht Unterhaltskosten und braucht zum Teil Personal. Später kann zusätzlicher Platz (Grundstück) gekauft werden.
+Ein Standort mit einem **ausbaubaren Gelände**. Gebäude haben Stufen; jede Stufe kostet Geld **und** Bauzeit, verursacht Unterhaltskosten und braucht zum Teil Personal. Das Gelände ist für alle Teams gleich groß und hat für jedes der 15 Gebäude einen festen Platz – kein Grundstückskauf (Entscheidung 30.10.2026).
 
 | Gebäude | Wirkung |
 |---|---|
@@ -676,7 +676,7 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 | **R1 – Menschen** | Fahrer-Detailmodell, Personal, Verträge, Transfermarkt |
 | **R2 – Saison** | Kalender, Rennwochenende (Quali + Rennen), WM-Tabellen, Preisgeld, Saisonwechsel |
 | **R3 – Auto** | Teile, Entwicklungsprojekte, Produktion, Korrelation |
-| **R4 – HQ** | Gelände, Gebäude, Bau, Effekte |
+| **R4 – HQ** ✅ | Gelände, Gebäude, Bau, Effekte |
 | **R5 – Motor** | Kunde / Lizenz / Werk |
 | **R6 – Geld & Macht** | Finanzen komplett, Sponsoren, Besitzer, Investoren, Ruf |
 | **R7 – Nachwuchs** | F2/F3-Simulation, Akademie, Scouting mit Wissensmodell, Newgens |

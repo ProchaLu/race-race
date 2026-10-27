@@ -65,7 +65,27 @@ static func from_team(id: StringName) -> TeamOps:
 		for v in reliability:
 			total += v
 		ops.reliability_staff = total / reliability.size()
+	if GameState.teams.has(id):
+		_add_facilities(ops, GameState.teams[id])
 	return ops
+
+
+## HQ buildings add to the staff values (docs/r4_review.md).
+static func _add_facilities(ops: TeamOps, team: TeamData) -> void:
+	var pit := Facilities.ops_bonus(team, &"pit")
+	ops.stop_speed = mini(ops.stop_speed + pit, 100)
+	ops.precision = mini(ops.precision + pit, 100)
+	var mission := Facilities.ops_bonus(team, &"mission")
+	ops.race_reading = mini(ops.race_reading + mission, 100)
+	ops.weather_reading = mini(ops.weather_reading + mission, 100)
+	ops.tyre_model = mini(ops.tyre_model + mission, 100)
+	var care := Facilities.ops_bonus(team, &"performance")
+	ops.physical_training = mini(ops.physical_training + care, 100)
+	ops.pressure_training = mini(ops.pressure_training + care, 100)
+	ops.reliability_staff = mini(ops.reliability_staff + Facilities.ops_bonus(team, &"lab"), 100)
+	var sim := Facilities.ops_bonus(team, &"simulator")
+	for driver_id in ops.engineers:
+		ops.engineers[driver_id]["setup_work"] = mini(ops.engineers[driver_id]["setup_work"] + sim, 100)
 
 
 ## Every value set to the same level (sim lab).

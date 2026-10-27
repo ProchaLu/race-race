@@ -266,6 +266,10 @@ func _team_card() -> UICard:
 	card.add_row(FactRow.new("Key moments decided", str(t.get("moments", 0)), "", true))
 	card.add_row(FactRow.new("New parts this season", str(_review.get("new_parts", 0)), "", true))
 	card.add_row(FactRow.new("Spent on the car", UIStyle.money(_review.get("car_spent", 0)), "", true))
+	if _review.has("hq_spent"):
+		card.add_row(FactRow.new("HQ: building levels completed", str(_review.hq_completed), "", true))
+		card.add_row(FactRow.new("HQ: invested", UIStyle.money(_review.hq_spent), "", true))
+		card.add_row(FactRow.new("Campus rank", "P%d" % _review.campus_rank, "", true))
 	return card
 
 

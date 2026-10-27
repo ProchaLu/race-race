@@ -1,6 +1,83 @@
-# R4 — HQ screen design proposal
+# R4 — HQ screen design
 
-Status: visual and interaction proposal, pending review. No gameplay implementation yet.
+## Current state (30.10.2026) – this section is authoritative
+
+**Art style (decision):** illustrated tycoon style, not pixel art. Detailed building illustrations seen from a slight 3/4 angle on a top-down campus with roads, smoothly scaled (linear filtering, Lanczos downsampling). Future art – cars, people, animations, new buildings – follows this style: matte, readable silhouettes, team colour on garage doors, transporters and flags. The pixel-art notes in the history below are superseded.
+
+**Code**
+- `core/facilities.gd` (`Facilities`, static): the single source for all 15 buildings – name, purpose, base price and build time, upkeep, the round whose system a building feeds (locked until then), levels per team (`TeamData.facilities`, StringName IDs), construction (`facility_projects`, one at a time), daily progress (called from `Season._daily_world_update`), monthly upkeep (with the salaries), AI building, starting campus per team (`seed_for_tier`) and all effects. Replaces `FacilityManager` and the old level fields on TeamData.
+- `ui/components/hq_campus.gd` (`HqCampus`): ground layer (own TextureRect behind the buildings, slightly desaturated by a shader) + building layer, re-rendered only when levels or construction stages change; scaled sprites are cached. Hover tag with name and level; building sites show name and price (or "comes with R5"); optional "Show names".
+- `ui/screens/hq_screen.gd`: status strip (in operation, construction, upkeep, campus rank), campus card, inspector with the tabs "Building" and "All buildings", and an action bar that is always visible; construction is confirmed inline.
+- Checks: `godot --headless --path . res://tools/hq_construction_check.tscn` and `res://tools/hq_visual_check.tscn`.
+
+**Prices (calibrated 30.10.2026):** base price × [1.0, 1.5, 2.3, 3.4, 5.0] for levels 1–5 (largest upgrade: wind tunnel level 5 = $60M). Build time base × (1 + 0.35 × (level − 1)) – wind tunnel level 5 takes 144 days. Upkeep per month = base × 0.6 % × level^1.3 (all buildings at level 5 ≈ $3.1M per month). A second construction crew from 45 campus levels in total.
+
+**Effects** – level 1 → 5 roughly doubles a department (see `Facilities.effect_lines`):
+
+| Building | Effect |
+|---|---|
+| Design office | design capacity ×(0.6 + 0.2·L), parallel projects 1 + L, room for designers |
+| Wind tunnel | wind tunnel capacity ×(0.45 + 0.2·L), aero forecast error ×(1.5 − 0.2·L) |
+| CFD centre | CFD capacity ×(0.6 + 0.2·L), room for aerodynamicists |
+| Factory | production ×(0.6 + 0.2·L), cost per part ×(1.15 − 0.07·L), room for factory staff |
+| Composites | weight saved by new parts ×(0.7 + 0.15·L) |
+| Test laboratory | rig capacity ×(0.6 + 0.2·L), mechanical forecast error ×(1.4 − 0.15·L), reliability +3·L, room for rig engineers |
+| Simulator | race engineers' setup work +4·L |
+| Driver performance centre | physical and mental training +5·L |
+| Pit-crew training | pit stop speed and precision +5·L |
+| Mission control | race, weather and tyre reading +4·L |
+| Staff facilities | team mood 2·L − 4 |
+| Engine works / Marketing & hospitality / Academy, Scouting | locked until R5 / R6 / R7 |
+
+**Calibration run** (same team and staff, one full season, every building at level 1 vs level 5): new parts 9 vs 26, lap time gained −0.10 s vs −0.24 s, car vs field P7 vs P4, wind tunnel forecast error 23 % vs 8 %, parallel projects 2 vs 6, pit stop 2.66 s vs 2.24 s, team mood 52 vs 62, upkeep $0.4M vs $3.1M per month.
+
+**Campus life:** unused plots show a storage yard, overflow parking or a garden (cleared when construction starts). With "Animation" on: pit-crew drill at the pit apron, people walking, a transporter on the middle road (switch off for a still image).
+
+Room for staff: the R3 department headcount (from the budget) is capped by the building that houses the department (design office, CFD centre, test laboratory, factory). Without the building (level 0) the department squeezes into other buildings at 45 % of an average team's room – it never drops to zero.
+
+---
+
+## History (superseded proposals and earlier implementation notes)
+
+### Interaction implementation (before the R4 review)
+
+Latest road correction supersedes the v2 runtime access-path approach below: all circulation now uses a single authored asphalt/curb material in `campus_ground_v3.png`. Removed the code-drawn access network, entrance strokes, parking surfaces, road markings and crossing patches. The ground layer is calibrated to world-coordinate road bands with continuous texture resampling; it is not combined with a second road style. Parked cars and transporters were aligned to the painted parking/loading areas.
+
+Each facility family uses a shared source scale capped by the maximum architectural variant's visible footprint. Smaller variants retain their relative size and all levels align to the same entrance baseline. Scouting, mission control, garage and staff reserved bounds were adjusted for traffic clearance. Automated visual checks now test visible sprite alpha against public lanes and parking, not just arbitrary sprite bounding boxes. Current in-game capture: [unified roads](ui_mockups/r4_hq_unified_roads.png). Asset prompts: `assets/hq/UNIFIED_ROADS.md`.
+
+Visual refinement: the runtime uses `campus_ground_v2.png`, which removes baked entrance stubs. Explicit access routes now connect facility entrances to the main footpaths, the bottom facilities to the gate walkway, and the entrance parking/loading area to the service road. No campus or building anchors moved.
+
+Construction is rendered as an actual site: fenced boundary, hazard panels, material stacks, cabin and crane. New facilities show foundations, then structural framing as progress increases. Upgrades retain the operating building under scaffolding and translucent safety netting. A large local status banner and percentage bar replace the old tiny plus/progress marker. The whole fenced area selects the project, including transparent parts of an upgraded building. Completion removes the overlay. Calendar-driven screen refreshes are coalesced so Continue does not rebuild the campus once per skipped day.
+
+Captures: [new building worksite](ui_mockups/r4_hq_construction_refined.png), [upgrade scaffolding](ui_mockups/r4_hq_upgrade_refined.png). Verification now also checks worksite selection, intermediate construction artwork, removal on completion and retention of the operating sprite during an upgrade. Terrain cleanup prompt: `assets/hq/TERRAIN_PATH_CLEANUP.md`.
+
+In-game captures: [facility selection and build proposal](ui_mockups/r4_hq_interactive.png), [construction in progress](ui_mockups/r4_hq_construction.png).
+
+HQ now supports alpha-aware selection of existing buildings, reserved-site selection for missing facilities and keyboard-accessible facility buttons. Picking and overlays follow the same aspect-fit/letterbox transform as the campus image. The side inspector shows purpose, level, current/next art, effects, costs, duration and completion date. Empty plots have compact build markers; active work has an amber outline and progress indicator.
+
+`FacilityManager` owns initialization, validation, spending and calendar-day progress. TeamData holds authoritative levels for all 15 buildings and active construction orders. Existing visual defaults are migrated once, so new buildings are not subsequently reseeded from the design level. One construction project per team; maximum level 5; existing levels remain active during upgrades; payment is taken once on confirmation. Completion synchronizes the five legacy level fields, updates campus art and posts an inbox link to the facility. Remaining days survive the 364-day season rollover.
+
+Design, wind tunnel and factory already influence R3 through the existing formulas. The other facilities can be built/upgraded, but their specialist simulation effects remain planned and are labelled accordingly before purchase. Costs/durations are initial tuning values; upkeep and autonomous AI building are not yet implemented.
+
+Verification: `tools/hq_construction_check.gd` covers spending and duplicate/concurrent rejection, stale quotes, insufficient funds, max level, rollover, completion inbox, legacy R3 sync, letterboxed map picking and selected-facility navigation. `tools/hq_visual_check.gd` continues to cover the 75 architectural sprites.
+
+## Current implementation — detailed campus and architectural levels
+
+The visual-only renderer now composites at 1600×1000. It uses a dedicated terrain layer and 75 independent architectural sprites: five levels for each of the 15 facility families. These replace the previous tiny 640×400 intermediary, same-building scaling and generic annexes. Source rows have measured boundaries, disconnected atlas fringe is isolated, and sprites share a common baseline/source scale. Rendering uses high-quality downsampling to retain refined pixel illustration at the actual viewport size rather than magnifying coarse blocks.
+
+Runtime assets: `assets/hq/campus_ground.png`, `engineering_levels.png`, `development_levels.png`, `operations_levels.png`. Prompts/provenance: `assets/hq/LEVEL_ART_NOTES.md` and `TERRAIN_ART_NOTES.md`. The older `facilities.png` sheet is retained as history and is no longer loaded by the renderer.
+
+Same land and anchors across teams; missing buildings leave grounds visible. Existing TeamData levels are read for five facilities; the remaining availability/levels still use the documented visual-only policy derived from design level. No upgrades, clicks or financial/simulation effects are implemented. Crew, race cars and transporters remain static decoration. Final visual approval and a real facility-state model remain open.
+
+Verification: `tools/hq_visual_check.gd` checks 75 nonempty/distinct adjacent-level sprites, exports five full-campus renders and opens HQ through AppShell. Running with a real rendering driver also captures the actual game screen. Technical checks do not constitute approval of art quality.
+
+## R4a implementation started
+
+Visual revision after v1 feedback: replace generic rectangle buildings with individually identifiable facility sprites from `assets/hq/facilities.png`. Generated transparent atlas, 5 columns × 3 rows; native scene still 640×400 with nearest-neighbour scaling. Added roof shapes, glazing, manufacturing details, landscaped edges, parking, curbs, entry treatment and a framed screen presentation. Empty sites receive natural planting. Runtime sprites preserve aspect ratio; atlas slicing is cached. The five full authored level variants per facility remain future art work: current levels vary sprite footprint and add engineering wings at levels 3/5. This is not a claim that final five-level architecture is complete. Art generation prompt/provenance: `assets/hq/ART_NOTES.md`.
+
+The HQ sidebar now opens `ui/screens/hq_screen.gd`. Its read-only `ui/components/hq_campus.gd` draws a native 640×400 pixel campus with nearest-neighbour sampling. Grounds and 15 anchors stay fixed; numbered buildings correspond to a noninteractive facility legend. Team colour appears on walls, cars, transporters and flags. Levels add physical extensions, glazing, equipment and footprint changes inside reserved bounds. People and vehicles are currently static pixel decorations.
+
+The five existing TeamData facility levels are read directly. Other facility occupancy and levels are visual placeholders derived from the design-office level, without modifying TeamData or giving simulation benefits. A real facility model will replace that policy. No clicks, inspector, upgrades, construction, spending or animation are implemented in this visual-first task. The generated concept screenshots are references; the screen uses code-drawn pixel art rather than embedding a generated screenshot and its UI.
 
 Current review: multiple style alternatives using the attached v5 campus as reference. See [HQ style options](hq_style_options.md) and the [comparison page](ui_mockups/r4_hq_style_options.html). No final style selected. Heritage, modern and retro options retain shared campus and building-level requirements.
 
@@ -106,7 +183,7 @@ Building labels use a short name and “Lv 2”, with a text/icon status indicat
 
 Each facility has five authored appearances, one per level. A level is a different building design, not a recolour, scaled sprite or changed badge. Keep the building's defining silhouette, entrance orientation and architectural family consistent so the player recognises it after an upgrade.
 
-Each campus parcel reserves enough room for its facility at level 5. Lower levels use less of that parcel, leaving service yards or landscaping. Later levels add halls, annexes, floors and equipment within the reservation. This avoids rebuilding the whole campus layout whenever one building levels up. Additional land unlocks new parcels; free placement and relocation are deferred from the first version.
+Each campus parcel reserves enough room for its facility at level 5. Lower levels use less of that parcel, leaving service yards or landscaping. Later levels add halls, annexes, floors and equipment within the reservation. This avoids rebuilding the whole campus layout whenever one building levels up. Every team has the same campus with one fixed plot per building; there is no land purchase, free placement or relocation (decision 30.10.2026).
 
 | Level | Architectural reading |
 |---|---|

@@ -339,7 +339,10 @@ func _variant_row(v: Dictionary, tickable: bool) -> HBoxContainer:
 		var check := CheckBox.new()
 		var key: String = v.key
 		if not _ticked.has(key):
-			_ticked[key] = _p.variants.filter(func(x): return not x.cfd.is_empty()).find(v) < 2
+			# Pre-tick the two best CFD results.
+			var measured := _p.variants.filter(func(x): return not x.cfd.is_empty())
+			measured.sort_custom(func(a, b): return CarDevelopment.variant_score(_p, a, "cfd") > CarDevelopment.variant_score(_p, b, "cfd"))
+			_ticked[key] = measured.find(v) < 2
 		check.button_pressed = _ticked[key]
 		check.toggled.connect(func(on):
 			_ticked[key] = on

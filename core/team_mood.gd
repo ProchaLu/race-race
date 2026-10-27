@@ -53,6 +53,9 @@ static func factors(team_id: StringName) -> Array:
 	var results := _results_factor(team_id, drivers)
 	if not results.is_empty():
 		out.append(results)
+	var facilities := Facilities.mood_bonus(GameState.teams[team_id])
+	if facilities != 0:
+		out.append([Loc.t("Staff facilities"), facilities])
 	var relationship := _relationship_factor(team_id, drivers, staff)
 	if relationship != 0:
 		out.append([Loc.t("Relationship with you"), relationship])

@@ -65,6 +65,7 @@ func _daily_world_update() -> void:
 	_check_shortlist()
 	TeamMood.daily_update()
 	CarDevelopment.daily_update(_rng)
+	Facilities.daily_update(_rng)
 	if Calendar.date_of().day == 1:
 		_pay_salaries()
 		_refresh_market()
@@ -248,7 +249,8 @@ func _rival_team() -> TeamData:
 func _pay_salaries() -> void:
 	for team in GameState.teams.values():
 		var payroll := ContractLogic.payroll_per_month(team.id)
-		team.budget -= payroll
+		var upkeep := Facilities.upkeep_per_month(team)
+		team.budget -= payroll + upkeep
 		if team.id == GameState.player_team_id:
 			var msg := InboxMessage.new()
 			msg.sender = "Finance department"
@@ -257,6 +259,7 @@ func _pay_salaries() -> void:
 			msg.icon = "wallet"
 			msg.add_paragraph("Monthly salaries for drivers and staff have been paid. Budget now: %s.",
 				[UIStyle.money(team.budget)])
+			msg.add_paragraph("HQ upkeep: %s.", [UIStyle.money(upkeep)])
 			GameState.add_message(msg)
 
 
@@ -545,6 +548,9 @@ func _season_review(s: SeriesData, team_table: Array, prize: Dictionary) -> Dict
 		"team_stats": _team_stats(team_id),
 		"car_spent": GameState.car_spending.get(team_id, 0),
 		"new_parts": _new_parts(team_id),
+		"hq_spent": GameState.hq_spending.get(team_id, 0),
+		"hq_completed": GameState.hq_completed.get(team_id, 0),
+		"campus_rank": Facilities.campus_rank(GameState.teams[team_id]),
 		"year": Calendar.year,
 		"team_position": position,
 		"team_points": GameState.team_points.get(team_id, 0),
@@ -629,6 +635,8 @@ func _start_new_season(year: int) -> void:
 	GameState.team_points.clear()
 	GameState.race_results.clear()
 	GameState.car_spending.clear()
+	GameState.hq_spending.clear()
+	GameState.hq_completed.clear()
 	# Development projects of the old car end with the season (R3d: next year's car).
 	GameState.car_projects.clear()
 	GameState.resolved_rounds = 0

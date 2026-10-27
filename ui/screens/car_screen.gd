@@ -365,7 +365,7 @@ func _build_workshop() -> void:
 	var cap := UICard.new("Capacity", "more projects than capacity = each runs slower")
 	cap.add_padded(_capacity_rows(), 6, 4)
 	cap.add_padded(_small(tr("%d of %d parallel projects (design office level %d). Each project runs at most at its normal pace; priority decides who gets more when a department is full.")
-		% [CarDevelopment.design_projects(_team.id).size(), CarDevelopment.max_projects(_team), _team.design_center_level]), 4, 4)
+		% [CarDevelopment.design_projects(_team.id).size(), CarDevelopment.max_projects(_team), Facilities.level(_team, &"design")]), 4, 4)
 	var bar := HBoxContainer.new()
 	bar.alignment = BoxContainer.ALIGNMENT_END
 	bar.add_child(_new_button(_part))

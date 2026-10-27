@@ -5,7 +5,29 @@ Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt u
 ## 📍 Stand (30.10.2026)
 **R3 komplett (Auto & Entwicklung):** 13 Teile mit Versionen, Masse, Zuverlässigkeit; Autowerte daraus, Gewicht, Kühlung (Renningenieur wählt Öffnungen), Bremsleistung, Traktion, Defekte pro Teil. Entwicklung mit 5 Abteilungen (Design, CFD, Windkanal, Prüfstände, Fabrik; Personalstärke aus dem Budget, Schlüsselpersonen, Gebäudestufen), parallele Projekte, Kosten, Prognose vs. Realität. Teile pro Auto, Stückzahlen und Ersatzteile, Unfälle zerstören Teile, Bremsen als Verbrauchsteil, Notfertigung, Wochenend-Block „Teile“, Training „Neue Teile testen“. Nächstjahresauto, Saisonwechsel mit Nächstjahres-Entwicklung. KI entwickelt nach denselben Regeln.
 **Entwicklungslabor umgesetzt:** alte Version als Basis → Ideen → CFD (grob, mit ±) → Windkanal/Prüfstand (Kombinieren, Verfeinern) → Freigeben/Verwerfen → Detailkonstruktion → Werkzeuge → Fertigung → Qualität → Direktvergleich auf der Strecke, „Zurück zur alten Version“. Entscheidungen an Meilensteinen (Inbox + Werkstatt-Spalte „Deine Entscheidung“), „Aero-/Chassis-Chef entscheiden lassen“; delegiert/KI automatisch. Details: `docs/car_model.md` 3a.
-**Nächster Schritt:** Playtest R3 (inkl. Labor), dann Styling/UI-Feinschliff, dann R3e (Ausbau der Entwicklung 17.1–17.3), dann R4 (HQ). Alle weiteren Ideen zur Entwicklung: `docs/car_model.md` 17.
+**R4 komplett (HQ):** 15 Gebäude mit 5 Stufen auf festem Gelände, Bau mit Kosten/Bauzeit/Unterhalt, bis zu zwei Bautrupps, Wirkung auf Entwicklung, Wochenende und Stimmung (Stufe 1 gegen 5 deutlich), KI baut, Saisonbilanz. Details: `docs/hq_screen_design.md`, `docs/r4_review.md`.
+**Nächster Schritt:** R5 (Motor). Offen für später: Playtest und Feinabstimmung von R3/R4, Styling, R3e (`docs/car_model.md` 17).
+
+## R4 — HQ ✅ abgeschlossen (30.10.2026)
+**Review 30.10.2026:** Stand, Sofort-Punkte, Styling, fehlende Systeme und Aufräumen in `docs/r4_review.md` (Checkliste, Reihenfolge am Ende).
+- [x] Straßenstil vereinheitlicht: ein zusammenhängender Asphalt-/Bordstein-Layer, keine zur Laufzeit darüber gemalten Wege, Straßenstücke oder Zebrastreifen. Gebäudemaßstab pro Familie begrenzt; alle 75 Varianten auf Grundstücks- und Straßenfreiraum geprüft. Aktueller Layer: `campus_ground_v3.png`.
+- [x] Campus-Verbindungen bereinigt: eingebrannte Sackgassen/Stummel aus dem Gelände entfernt, Gebäudeeingänge an tatsächlichen Ankern angeschlossen, unterer Gehweg zum Tor und befahrbare Park-/Lieferzufahrt ergänzt.
+- [x] Baustellen deutlich sichtbar: umzäunte Flächen mit Fundament/Baufortschritt für Neubauten, Gerüst/transparentes Schutznetz bei Ausbauten, Kran, Material und Baustellenhütte; Statusbanner mit Prozentanzeige. Gesamte Baustelle anklickbar, Entfernung bei Fertigstellung geprüft.
+- [x] **R4b – Auswahl & Bau:** Gebäude und freie Standorte anklickbar, Tastatur-Auswahl über Gebäudeliste, Informationspanel mit Zweck/Stufe/Bildern/Effekten/Kosten/Bauzeit, bestätigte Bau- und Ausbauaufträge, ein laufendes Bauprojekt pro Team.
+- [x] Eigenständiger FacilityManager und gespeicherter Zustand in TeamData: einmalig übernommene Startgebäude, Zahlung bei Baubeginn, täglicher Fortschritt auch über den Saisonwechsel, Inbox bei Abschluss und neue Gebäudegrafik. Bestehende Design-/Windkanal-/Fabrikstufen bleiben mit R3 synchron.
+- [x] Wirkung für 11 Gebäude (R3-Kapazitäten, Wochenende über TeamOps, Teamstimmung), 4 bis R5/R6/R7 gesperrt; Unterhalt; KI baut; Startgelände pro Team; Platz für Personal; Bildschirm im gemeinsamen Stil (Review `docs/r4_review.md`, umgesetzt 30.10.2026)
+- [x] Baupreise, Bauzeiten, Unterhalt und Wirkungen kalibriert – Stufe 1 gegen 5 deutlich (Testlauf in `docs/hq_screen_design.md`); Feinschliff im Playtest
+- [x] Leben auf leeren Bauplätzen (Lager, Parkplatz, Garten) und Animationen (Boxencrew, Fußgänger, Transporter), abschaltbar. Später: echte Grafiken im Tycoon-Stil statt gezeichneter Platzhalter
+- [x] Zweiter Bautrupp ab 45 Gebäudestufen
+- [x] Saisonbilanz mit HQ (fertige Stufen, investiert, Rang des Geländes). Kein Grundstückskauf – jedes Gebäude hat seinen festen Platz (Entscheidung 30.10.2026)
+- [x] **R4a – visuelle Grundlage:** HQ-Platzhalter durch nicht interaktive Campus-Ansicht ersetzt; native 640×400-Pixelgrafik, feste Grundstücksgröße und 15 Gebäudeanker, Teamfarben, Rennbetrieb mit Autos/Personal/Transportern, nummerierte Gebäudeliste.
+- [x] Bestehende fünf Gebäudestufen werden gelesen; Stufen verändern Größe, Anbauten und Ausstattung innerhalb reservierter Flächen.
+- [x] V1-Grafik überarbeitet: eigene Sprites für alle 15 Einrichtungen statt generischer Rechtecke; Gelände mit Bepflanzung, Zufahrt, Parkplätzen, Randsteinen und Teamdetails. Quelle/Prompt: `assets/hq/ART_NOTES.md`.
+- [x] V3: 75 eigenständige Gebäudegrafiken (15 Einrichtungen × 5 Stufen) integriert; generische Anbauten und Skalierung als Stufenersatz entfernt. Detaillierter Gelände-Layer und 1600×1000-Komposition erhalten die Grafikdetails.
+- [x] In Godot geprüft: alle 75 Sprites, fünf Campus-Stufen und HQ-Navigation; echte Bildschirmaufnahme mit Metal-Renderer erstellt. Prüfbefehl: `godot --headless --path . --script res://tools/hq_visual_check.gd`.
+- [x] Stil festgelegt: illustrierter Tycoon-Stil (`docs/hq_screen_design.md` oben). Offen: Art-Pass mit dem Spieler abstimmen: Gelände/Gebäude-Maßstab, Stufenidentität, Perspektive und kleine Rennbetriebs-Sprites. Grafikqualität ist nicht durch technische Tests abgenommen.
+- [x] R4-Datenmodell für alle 15 Gebäude: Verfügbarkeit, Stufen und Bauprojekte. Frühere visuelle Standardwerte werden einmalig übernommen.
+- [x] Gebäudeauswahl, Details, Upgrade-Vorschau und Bau (R4b). Weitere Simulationseffekte bleiben offen.
 
 ## 🐞 Bugs
 - [ ] *(noch keine offenen)*
@@ -23,7 +45,7 @@ Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt u
 - [ ] **KI-Teams werben eigenes Personal ab** (Interesse anderer → Angebote, Inbox-Meldung)
 
 ## 📌 Offen aus dem Entwicklungslabor
-- [ ] Vorauswahl der Häkchen nach CFD-Ergebnis (bisher: die ersten zwei)
+- [x] Vorauswahl der Häkchen nach CFD-Ergebnis
 - [ ] Kosten und Gewinne der Schritte im Playtest kalibrieren (Freigabe ist der größte Kostenblock)
 
 ## 📌 Ausbau der Entwicklung (Details: `docs/car_model.md` 17)

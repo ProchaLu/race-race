@@ -28,6 +28,10 @@ var next_project_id: int = 1
 var delegate_car_development: bool = true
 ## Money spent on car development this season per team.
 var car_spending: Dictionary = {}
+## Money spent on HQ construction this season per team.
+var hq_spending: Dictionary = {}
+## Building levels completed this season per team.
+var hq_completed: Dictionary = {}
 ## Correlated parts per "team|aero" / "team|rig" – the team learns its tools.
 var correlation_experience: Dictionary = {}
 ## Year whose end-of-season overlay is still to be shown (-1 = none).
@@ -80,6 +84,8 @@ func clear() -> void:
 	next_project_id = 1
 	delegate_car_development = true
 	car_spending.clear()
+	hq_spending.clear()
+	hq_completed.clear()
 	correlation_experience.clear()
 	team_points.clear()
 	race_results.clear()

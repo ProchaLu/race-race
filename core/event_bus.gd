@@ -26,6 +26,8 @@ signal inbox_changed()
 
 # Management
 signal budget_changed(team_id: StringName, new_budget: int)
+## A team started, advanced or finished construction at its HQ.
+signal facilities_changed(team_id: StringName)
 signal contract_expiring(contract: ContractData)
 signal contract_signed(person_id: StringName, team_id: StringName)
 signal contract_released(person_id: StringName)

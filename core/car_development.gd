@@ -51,10 +51,11 @@ const DEPARTMENT_NAMES := {&"design": "Design", &"aero": "CFD / simulation", &"t
 
 ## Headcount from the budget (until hiring comes with R4/R6): a team with
 ## twice the money has about 1.7× the people.
+## Capped by the room the HQ buildings offer (Facilities.room_for).
 static func set_departments(team: TeamData) -> void:
 	var money := clampf(team.budget / 200_000_000.0, 0.5, 1.8)
 	for d in REFERENCE_HEADCOUNT:
-		team.departments[d] = roundi(REFERENCE_HEADCOUNT[d] * pow(money, 0.8))
+		team.departments[d] = mini(roundi(REFERENCE_HEADCOUNT[d] * pow(money, 0.8)), Facilities.room_for(team, d))
 
 
 static func headcount(team: TeamData, d: StringName) -> int:
@@ -76,11 +77,11 @@ static func capacities(team: TeamData) -> Dictionary:
 	var factory := _attr(team, StaffData.Role.FACTORY_MANAGER, &"production_speed")
 	var mood := 1.0 + (TeamMood.value(team.id) - 50) / 50.0 * 0.05
 	var staff := {
-		&"design": (0.6 * speed + 0.4 * td) / 65.0 * (0.8 + 0.1 * team.design_center_level),
-		&"aero": aero / 65.0 * (0.8 + 0.05 * team.design_center_level + 0.05 * team.wind_tunnel_level),
-		&"tunnel": aero / 65.0 * (0.6 + 0.12 * team.wind_tunnel_level),
-		&"rig": mech / 65.0 * (0.8 + 0.1 * team.factory_level),
-		&"factory": factory / 65.0 * (0.8 + 0.1 * team.factory_level),
+		&"design": (0.6 * speed + 0.4 * td) / 65.0 * Facilities.capacity_factor(team, &"design"),
+		&"aero": aero / 65.0 * Facilities.capacity_factor(team, &"aero"),
+		&"tunnel": aero / 65.0 * Facilities.capacity_factor(team, &"tunnel"),
+		&"rig": mech / 65.0 * Facilities.capacity_factor(team, &"rig"),
+		&"factory": factory / 65.0 * Facilities.capacity_factor(team, &"factory"),
 	}
 	var people_of := {&"design": &"design", &"aero": &"aero", &"tunnel": &"aero", &"rig": &"rig", &"factory": &"factory"}
 	var out := {}
@@ -93,7 +94,7 @@ static func capacities(team: TeamData) -> Dictionary:
 
 
 static func max_projects(team: TeamData) -> int:
-	return 2 + team.design_center_level
+	return Facilities.max_projects(team)
 
 
 static func _attr(team: TeamData, role: StaffData.Role, property: StringName) -> int:
@@ -215,9 +216,9 @@ static func correlation_error(team: TeamData, part_id: StringName) -> float:
 	var aero := CarParts.test_kind(part_id) == "aero"
 	var base: float
 	if aero:
-		base = 0.45 * (1.0 - _attr(team, StaffData.Role.HEAD_OF_AERO, &"correlation") / 100.0) * (1.3 - 0.1 * team.wind_tunnel_level)
+		base = 0.45 * (1.0 - _attr(team, StaffData.Role.HEAD_OF_AERO, &"correlation") / 100.0) * Facilities.correlation_factor(team, true)
 	else:
-		base = 0.30 * (1.0 - _attr(team, StaffData.Role.HEAD_OF_CHASSIS, &"mechanical_knowledge") / 100.0) * (1.2 - 0.05 * team.factory_level)
+		base = 0.30 * (1.0 - _attr(team, StaffData.Role.HEAD_OF_CHASSIS, &"mechanical_knowledge") / 100.0) * Facilities.correlation_factor(team, false)
 	var learned: int = GameState.correlation_experience.get("%s|%s" % [team.id, "aero" if aero else "rig"], 0)
 	return base * maxf(0.6, 1.0 - 0.04 * learned)
 
@@ -256,7 +257,7 @@ static func design_cost(team: TeamData, part_id: StringName, ambition: int, over
 
 static func unit_cost(team: TeamData, part_id: StringName) -> int:
 	var control := _attr(team, StaffData.Role.FACTORY_MANAGER, &"cost_control")
-	return int(CarParts.PARTS[part_id][5][1] * (1.0 - control / 100.0 * 0.15))
+	return int(CarParts.PARTS[part_id][5][1] * (1.0 - control / 100.0 * 0.15) * Facilities.unit_cost_factor(team))
 
 
 static func _aero(part_id: StringName) -> int:
@@ -264,13 +265,16 @@ static func _aero(part_id: StringName) -> int:
 
 
 ## Value changes of a part for a gain in points in a direction.
-static func _effects(part_id: StringName, goal: String, gain: float) -> Dictionary:
+## With a team, the composites department scales the weight saved.
+static func _effects(part_id: StringName, goal: String, gain: float, team: TeamData = null) -> Dictionary:
 	var out := {}
 	var values := CarParts.values_of(part_id)
 	var effects: Dictionary = CarParts.GOALS[goal][2]
 	for key in effects:
 		if key == &"mass" or values.has(key):
 			out[key] = gain * effects[key]
+	if team and out.get(&"mass", 0.0) < 0.0:
+		out[&"mass"] *= Facilities.weight_saving(team)
 	return out
 
 
@@ -321,7 +325,7 @@ static func _make_ideas(team: TeamData, p: DevProject, r: RandomNumberGenerator)
 		if r.randf() < dead_end_chance(team, p.ambition):
 			gain = -r.randf_range(0.1, 0.6) * base
 		p.ideas.append({"key": keys[i], "name": entry[0], "goal": entry[1], "complexity": r.randi_range(1, 3),
-			"real": _effects(p.part_id, entry[1], gain)})
+			"real": _effects(p.part_id, entry[1], gain, team)})
 
 
 static func _set_work(p: DevProject, days: float) -> void:
@@ -916,7 +920,7 @@ static func ready_label(days: float) -> String:
 static func preview(team: TeamData, part_id: StringName, goal: String, ambition: int, priority: int,
 		units: int, overtime: bool, next_year: bool) -> Dictionary:
 	var base := expected_gain(team, part_id, goal, ambition) * TARGET_SHARE
-	var fx := _effects(part_id, goal, base)
+	var fx := _effects(part_id, goal, base, team)
 	var expected := CarBuild.lap_effect(part_id, fx, team.car.mass_kg)
 	var probe := DevProject.new()
 	probe.part_id = part_id
@@ -1024,7 +1028,7 @@ static func best_option(team: TeamData, next_year: bool = false) -> Array:
 ## What a goal is worth to this team (seconds, plus weight for reliability and cooling needs).
 static func _goal_value(team: TeamData, part_id: StringName, goal: String) -> float:
 	var gain := expected_gain(team, part_id, goal, DevProject.Ambition.NORMAL)
-	var fx := _effects(part_id, goal, gain)
+	var fx := _effects(part_id, goal, gain, team)
 	var car := team.car
 	# Weight already being saved by running projects does not count twice.
 	var mass := car.mass_kg

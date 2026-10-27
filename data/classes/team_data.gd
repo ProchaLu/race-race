@@ -15,12 +15,12 @@ extends Resource
 @export_range(0, 100) var reputation: int = 50
 
 @export_group("Headquarters")
-## Facility levels (1..5). Each one boosts a different area.
-@export_range(1, 5) var design_center_level: int = 1
-@export_range(1, 5) var wind_tunnel_level: int = 1
-@export_range(1, 5) var factory_level: int = 1
-@export_range(1, 5) var youth_academy_level: int = 1
-@export_range(1, 5) var scouting_level: int = 1
+## Facility ID (Facilities.CATALOG) -> level 0..5 (0 = undeveloped site).
+## The only source of facility levels; read through Facilities.level().
+@export var facilities: Dictionary = {}
+## Facility ID -> {target, remaining, duration, cost}. The current level
+## keeps working during construction.
+@export var facility_projects: Dictionary = {}
 
 @export_group("Car development (R3)")
 ## Headcount per department: design, aero, rig, factory (docs/car_model.md 4).
