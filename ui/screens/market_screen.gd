@@ -171,7 +171,8 @@ func _matches(p: PersonData) -> bool:
 func _people() -> Array[PersonData]:
 	var list: Array[PersonData] = []
 	for d in GameState.drivers.values():
-		if _matches(d):
+		# Juniors are on the scouting and academy screens, not here (R7).
+		if not Youth.is_youth(d) and _matches(d):
 			list.append(d)
 	for s in GameState.staff.values():
 		if _matches(s):
@@ -379,7 +380,7 @@ func _knowledge_row(p: PersonData) -> FactRow:
 	var row := FactRow.new("Known", "%d %%" % k, sub, true, UIStyle.meter_color(k))
 	var scout := Knowledge.chief_scout()
 	var b := Breakdown.new(tr("Known: %d %%") % k,
-		"Scouting assignments arrive in a later round. The estimate already uses your chief scout.")
+		"The scouting screen sends the chief scout after people. The estimate already uses your chief scout.")
 	if scout:
 		b.add("Chief scout", scout.full_name())
 		b.add("Judging ability", str(DriverAttributes.to_display(scout.attribute(&"judging_ability"))))

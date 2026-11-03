@@ -379,7 +379,7 @@ static func cancel(p: DevProject) -> void:
 
 
 static func _pay(team: TeamData, amount: int) -> void:
-	team.budget -= amount
+	Finance.pay(team, &"car", amount)
 	GameState.car_spending[team.id] = GameState.car_spending.get(team.id, 0) + amount
 	EventBus.budget_changed.emit(team.id, team.budget)
 

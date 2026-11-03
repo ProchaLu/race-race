@@ -42,6 +42,14 @@ var engine_offers: Array = []
 var engine_spending: Dictionary = {}
 ## Money spent on HQ construction this season per team.
 var hq_spending: Dictionary = {}
+## Sponsor offers: SponsorDeal with expires_key; signed offers become sponsor_deals.
+var sponsor_offers: Array[SponsorDeal] = []
+## Sponsor contracts of all teams (SponsorDeal, see Sponsors).
+var sponsor_deals: Array[SponsorDeal] = []
+## Income (positive) and costs (negative) per team and category this season (Finance).
+var cash_book: Dictionary = {}
+## Budget per team: [[year, day, budget], ...] after every change that matters (Finance.snapshot).
+var budget_history: Dictionary = {}
 ## Building levels completed this season per team.
 var hq_completed: Dictionary = {}
 ## Correlated parts per "team|aero" / "team|rig" – the team learns its tools.
@@ -71,6 +79,18 @@ var mood_events: Array = []
 var mood_history: Dictionary = {}
 ## 1-on-1 talks per driver: {"known": {tone: true}, "last_tone", "history", "last_request"}
 var talk_memory: Dictionary = {}
+
+## Junior teams of F3 and F2 (R7, docs/youth_model.md). Not in teams: they have
+## no staff, budget or car of their own.
+var youth_teams: Dictionary[StringName, YouthTeam] = {}
+## This season's junior results per series: {"drivers": {id: points},
+## "teams": {id: points}, "wins": {id: wins}, "rounds": int}.
+var youth_standings: Dictionary = {}
+## Scouting assignments running, see Scouting.start().
+var scout_assignments: Array[Dictionary] = []
+var next_scout_id: int = 1
+## Misjudgement of a scout, in display points: {person_id: {"ability": int, "potential": int}}.
+var scout_bias: Dictionary = {}
 ## Shortlist notices already sent: "person_id:kind" -> true
 var shortlist_notes: Dictionary = {}
 ## Number of rounds of the player's series already raced this season.
@@ -97,6 +117,11 @@ func clear() -> void:
 	delegate_car_development = true
 	car_spending.clear()
 	hq_spending.clear()
+	cash_book.clear()
+	budget_history.clear()
+	sponsor_offers.clear()
+	sponsor_deals.clear()
+	sponsors.clear()
 	manufacturers.clear()
 	engine_projects.clear()
 	next_engine_project_id = 1
@@ -120,6 +145,11 @@ func clear() -> void:
 	mood_history.clear()
 	shortlist_notes.clear()
 	talk_memory.clear()
+	youth_teams.clear()
+	youth_standings.clear()
+	scout_assignments.clear()
+	next_scout_id = 1
+	scout_bias.clear()
 	resolved_rounds = 0
 	player_team_id = &""
 
@@ -169,10 +199,12 @@ func staff_of_team(team_id: StringName) -> Array[StaffData]:
 	return result
 
 
+## Free drivers for the F1 market: no team, not retired, not a junior, and
+## allowed in F1 (super licence).
 func free_drivers() -> Array[DriverData]:
 	var result: Array[DriverData] = []
 	for d in drivers.values():
-		if d.team_id == &"" and not d.retired:
+		if d.team_id == &"" and not d.retired and not Youth.is_youth(d) and d.has_superlicence:
 			result.append(d)
 	return result
 

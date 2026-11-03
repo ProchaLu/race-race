@@ -119,10 +119,15 @@ static func build() -> void:
 	Engines.setup_world(r)
 	_make_market(r)
 	_make_knowledge(r)
+	Youth.setup_world(r)
 	Calendar.day = FIRST_RACE_DAY + (ROUNDS_COMPLETED - 1) * DAYS_BETWEEN_RACES + 3
 	for round_index in ROUNDS_COMPLETED:
 		QuickRace.resolve_round(f1, round_index)
+		Youth.resolve_round()
 	GameState.resolved_rounds = ROUNDS_COMPLETED
+	# After the calendar is set: offers and owner goals count from today.
+	Sponsors.setup_world(r)
+	Owners.setup_world()
 	Engines.setup_units(r)
 	_make_welcome_messages()
 
@@ -192,6 +197,8 @@ static func _make_team(id: StringName, team_name: String, short: String, color: 
 	team.series_id = series.id
 	team.primary_color = color
 	team.budget = budget
+	team.reputation = car_level
+	team.fans = car_level
 
 	var car := CarData.new()
 	car.team_id = id
@@ -415,8 +422,8 @@ static func _make_staff_contract(s: StaffData) -> void:
 
 ## Free agents: ex-F1 drivers, F2 and F3 talents, and staff for every role.
 static func _make_market(r: RandomNumberGenerator) -> void:
-	for spec in [[PersonGenerator.DriverTier.EX_F1, 8], [PersonGenerator.DriverTier.F2, 12],
-			[PersonGenerator.DriverTier.F3, 12]]:
+	# Juniors (F2, F3, newgens) are made by Youth.setup_world.
+	for spec in [[PersonGenerator.DriverTier.EX_F1, 8]]:
 		for i in spec[1]:
 			GameState.add_driver(PersonGenerator.driver(r, spec[0]))
 	for i in 70:

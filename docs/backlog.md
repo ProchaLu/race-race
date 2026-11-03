@@ -7,7 +7,38 @@ Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt u
 **Entwicklungslabor umgesetzt:** alte Version als Basis → Ideen → CFD (grob, mit ±) → Windkanal/Prüfstand (Kombinieren, Verfeinern) → Freigeben/Verwerfen → Detailkonstruktion → Werkzeuge → Fertigung → Qualität → Direktvergleich auf der Strecke, „Zurück zur alten Version“. Entscheidungen an Meilensteinen (Inbox + Werkstatt-Spalte „Deine Entscheidung“), „Aero-/Chassis-Chef entscheiden lassen“; delegiert/KI automatisch. Details: `docs/car_model.md` 3a.
 **R4 komplett (HQ):** 15 Gebäude mit 5 Stufen auf festem Gelände, Bau mit Kosten/Bauzeit/Unterhalt, bis zu zwei Bautrupps, Wirkung auf Entwicklung, Wochenende und Stimmung (Stufe 1 gegen 5 deutlich), KI baut, Saisonbilanz. Details: `docs/hq_screen_design.md`, `docs/r4_review.md`.
 **R5 komplett (Motor):** 4 erfundene Hersteller, Power Unit mit 5 Komponenten → 5 Motorwerte in der Simulation (Leistung, Sprit, Defekte, Gewicht, Traktion/Reifen/Regen), Kunden-/Lizenz-/Werksmotor, Specs mit Verzögerung für Kunden, Motoreinheiten mit Laufleistung (4 pro Fahrer, weitere kosten), Motormodi, 4 neue Entscheidungen (Motortemperatur, ERS-Fehler, Sprit knapp, „Motor klingt nicht gut“), Verträge und Angebote, Motoren-Labor mit Dauerlauf, Power-Unit-Programm, Kunden beliefern. Details: `docs/engine_model.md`.
-**Nächster Schritt:** R6 (Geld & Macht). Offen für später: Playtest und Feinabstimmung R3–R5, Styling, R3e (`docs/car_model.md` 17).
+**R6 Geld & Macht komplett (Stand 28.10.2026):** Kontobuch mit allen Geldbewegungen, Einnahmen pro Rennen (TV, Sponsoren, Merchandising), Abteilungspersonal und Logistik als Kosten, Finanzen-Bildschirm mit Verlauf und Prognose. 15 Sponsoren mit Werbeflächen, Angeboten, Bonus und Zufriedenheit; Gastronomie/Marketing entsperrt. Besitzer mit Persönlichkeit, Saisonziel, langfristigem Titelziel, Vertrauen, Geld-Bitten und Investoren; Teamruf, Fans und Ruf des Teamchefs. Details: `docs/finance_model.md`.
+**R7 Nachwuchs komplett (29.10.2026):** Apex F3 und F2 mit je zehn Teams und zwei Plätzen, 24 Newgens pro Jahr, Juniorenrennen im Hintergrund, Superlizenz aus den Juniorenergebnissen. Akademie mit Plätzen nach Gebäudestufe, Aufnahme, Platzierung in Juniorensitzen, Gebühren und Winterentwicklung. Scouting mit Aufträgen (Serie, Region, Einzelner), Wissen je Woche, Fehlgriffen schwacher Scouts und Empfehlungen; Akademie- und Scouting-Bildschirm. Details: `docs/youth_model.md`.
+**Nächster Schritt:** R8 laut Roadmap „Eigenes Team“. Die Entlassung und Jobangebote stehen in dieser Liste ebenfalls bei R8 – Reihenfolge mit dem Nutzer klären. Offen für später: Playtest und Feinabstimmung R3–R7 (Geldwerte: `docs/finance_model.md` 1, Nachwuchs: `docs/youth_model.md` 6), Styling, R3e (`docs/car_model.md` 17).
+
+## R7 — Nachwuchs ✅ abgeschlossen (29.10.2026)
+Modell und Startwerte: `docs/youth_model.md`.
+- [x] R7a Nachwuchspyramide: 10 F3- und 10 F2-Teams mit je zwei Plätzen, Newgens-Jahrgang, Saisonwechsel mit Altersabgang und Neubesetzung, Juniorenrennen nach jeder F1-Runde, Saisonmeldung
+- [x] R7b Superlizenz: Punkte aus F2 (40/30/20/10/5) und F3 (5/3/1), 40 Punkte in drei Saisons, F1-Markt nur mit Lizenz
+- [x] R7c Akademie: Plätze nach Gebäudestufe, Aufnahme (250 000 $ und 40 000 $ im Monat), Platzierung mit Saisongebühr, Zurückholen, Freigeben, Winterentwicklung über Akademieleiter, Akademie-Bildschirm mit Top-5-Tabellen
+- [x] R7d Scouting: Büro mit Stufe als Auftragsplätze, Aufträge für Serie, Region und Einzelnen, Wissen je Woche, Fehlgriffe (verschobener Bereich), Berichte mit Empfehlung, Scouting-Bildschirm
+- [x] Prüfung: `tools/youth_check.tscn` (Teams, Saisonwechsel, Akademie, Scouting, Lizenz, eine ganze Saison über den echten Saisonwechsel, deutsche Texte); bestehende Prüfungen finance/owner/sponsor/hq grün
+- [ ] Personal scouten (Design 4.3)
+- [ ] Reserve- und Testfahrer aus der Akademie mit festem Platz (Design 4.2); bisher nur FP1
+- [ ] Platzierung über Kontakte ohne Gebühr (Netzwerk, Design 4.3)
+- [ ] KI-Akademien und KI-Scouting (Gebäude sind für die KI noch nicht gewichtet)
+- [ ] Lizenzverfall nach drei Jahren (jetzt einmal erreicht, bleibt sie)
+- [ ] Juniorenzustand beim Speichern erfassen (zusammen mit Speichern/Laden)
+- [ ] Playtest: Stärke der Newgens, Lernrate, Akademiekosten, Ausfallrate der Juniorenrennen
+- [ ] Juniorentabellen auch im Tabellen-Bildschirm
+
+## R6 — Geld & Macht ✅ abgeschlossen (28.10.2026)
+Modell und Startwerte: `docs/finance_model.md`.
+- [x] R6a Finanzen: Kontobuch (`Finance.pay/receive`), Einnahmen und Kosten pro Rennen, Abteilungspersonal monatlich, Verlauf, Prognose, Finanzen-Bildschirm
+- [x] R6b Sponsoren: 15 erfundene Firmen, Werbeflächen je Stufe, monatliche Angebote (Gastronomie und kommerzieller Leiter wirken), Handgeld, Zahlung pro Rennen, Bonus am Saisonende, Zufriedenheit, Verlängerung, Kündigung; Gastronomie/Marketing entsperrt
+- [x] R6c Besitzer & Investoren: Persönlichkeit, Saisonziel, langfristiges Titelziel (5 Jahre), Vertrauen, Geld bitten (einmal pro Saison), Investor mit Anteil am Preisgeld, Besitzer-Ziel im Saisonrückblick
+- [x] R6d Ruf & Fans: Teamruf und Fans nach Platzierung, Merchandising pro Rennen, Ruf des Teamchefs (für R8)
+- [ ] Entlassung durch den Besitzer und Jobangebote – R8 (heute nur Warnungen: Vertrauen ≤ 25 und ≤ 10)
+- [ ] Kalibrierung der Geldwerte im Playtest: AI-Teams wachsen über eine Saison noch (Spitze etwa +100 M, Schluss etwa +30 M), vor allem weil KI-Teams wenig in die Entwicklung investieren
+- [ ] Abteilungspersonal einstellen und entlassen (heute aus dem Budget abgeleitet, monatlich bezahlt)
+- [ ] Medien und Interviews (Design 13) – eigene Runde
+- [ ] Sponsorwünsche (z. B. Fahrer aus einem Land)
+- [ ] Sektornamen der Sponsoren übersetzen
 
 ## R5 — Motor ✅ abgeschlossen (31.10.2026)
 - [x] Hersteller, Komponenten, Specs, Verträge; Motorwerte in der Simulation (R5a)
@@ -83,17 +114,17 @@ Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt u
 - [ ] Versprechen aus Gesprächen („Gleichbehandlung“, „bald Vertragsgespräche“) haben noch keine Frist und werden nicht geprüft
 - [ ] Schlüsselmoment „Reparatur“ (Design-Dok. 11.3) fehlt noch
 - [ ] Entwicklung auch während der Saison (Training, Leistung, Selbstvertrauen – Sim-Dok. 13); bisher nur einmal im Winter
-- [ ] **Budget wächst ohne Grenze** (Preisgeld ≫ Gehälter, sonst keine Kosten) – Finanzen kommen mit R6
+- [ ] **Budget wächst ohne Grenze** (Preisgeld ≫ Gehälter, sonst keine Kosten) – R6a: Einnahmen und Kosten sind gekoppelt; Restwachstum bei KI-Teams offen, siehe R6 oben
 - [ ] Autos ändern sich im Winter nur per Platzhalter-Regel (Technik-Personal, etwas Budget, Zufall) – echte Entwicklung mit R3
 - [ ] Sportdirektor besetzt am Renntag leere Cockpits und Stellen automatisch (für Playtests) – später als Delegieren-Option einstellbar
 - [ ] Ersatzfahrer bei Verletzung/Krankheit einsetzen; Flügelstufe als Entscheidung
-- [ ] Besitzer-Ziel im Saisonrückblick (kommt mit R6 Besitzer)
+- [x] Besitzer-Ziel im Saisonrückblick (R6c)
 - [ ] Saisonrückblick: „Große Momente“ nur aus Ergebnissen (Siege, Podien, Poles) – später auch Strategie-Treffer, Boxenstopp-Pannen, Gespräche
 
 ## 📌 Offen aus R3
 - [ ] Kalibrieren im Sim-Labor: Entwicklungstempo über eine volle Saison (Ziel +0,6–1,0 s), Abstand reich/arm, Ausfallquote (Tests: 5–7 %, Ziel ~5 %)
 - [ ] Getriebe-Laufleistung (6 Rennen, danach höheres Risiko) – kommt mit R9 (Kontingente, Strafen)
-- [ ] Personal der Abteilungen selbst einstellen/entlassen und bezahlen – R4 (HQ) / R6 (Finanzen); bis dahin Kopfzahl aus dem Budget
+- [ ] Personal der Abteilungen selbst einstellen/entlassen – bezahlt seit R6a (monatlich), Einstellen offen; bis dahin Kopfzahl aus dem Budget
 - [ ] Platzhalter-Grafiken (`assets/car/car_top.svg`, `assets/parts/*.svg`) durch echte Grafiken ersetzen – Dateinamen und Zonen (`ui/car_layout.gd`) beibehalten
 - [ ] Strecken-Specs (Low-/High-Downforce-Teile) – nach R3
 - [ ] Teil-Historie als eigene Ansicht (alle Versionen mit Prognose/Realität) – im Teil-Panel bisher die letzten 4

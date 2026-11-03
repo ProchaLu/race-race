@@ -41,6 +41,11 @@ const SCREENS := {
 	&"driver_talk": preload("res://ui/screens/driver_talk_screen.gd"),
 	&"car": preload("res://ui/screens/car_screen.gd"),
 	&"engine": preload("res://ui/screens/engine_screen.gd"),
+	&"finances": preload("res://ui/screens/finance_screen.gd"),
+	&"sponsors": preload("res://ui/screens/sponsor_screen.gd"),
+	&"owner": preload("res://ui/screens/owner_screen.gd"),
+	&"scouting": preload("res://ui/screens/scouting_screen.gd"),
+	&"academy": preload("res://ui/screens/academy_screen.gd"),
 }
 const PlaceholderScreen := preload("res://ui/screens/placeholder_screen.gd")
 const LANGUAGES := [["en", "English"], ["de", "Deutsch"]]

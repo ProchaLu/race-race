@@ -266,6 +266,15 @@ func _team_card() -> UICard:
 	card.add_row(FactRow.new("Key moments decided", str(t.get("moments", 0)), "", true))
 	card.add_row(FactRow.new("New parts this season", str(_review.get("new_parts", 0)), "", true))
 	card.add_row(FactRow.new("Spent on the car", UIStyle.money(_review.get("car_spent", 0)), "", true))
+	if _review.get("owner", {}).has("goal"):
+		var o: Dictionary = _review.owner
+		card.add_row(FactRow.new("Owner's goal: P%d" % o.goal, "P%d" % o.position, "trust %d → %d" % [o.trust_before, o.trust],
+			true, UIStyle.GOOD if o.met else UIStyle.BAD))
+	if _review.has("cash"):
+		var net := 0
+		for amount in _review.cash.values():
+			net += amount
+		card.add_row(FactRow.new("Money: net this season", UIStyle.money(net), "", true, UIStyle.money_color(net)))
 	if _review.has("hq_spent"):
 		card.add_row(FactRow.new("HQ: building levels completed", str(_review.hq_completed), "", true))
 		card.add_row(FactRow.new("HQ: invested", UIStyle.money(_review.hq_spent), "", true))

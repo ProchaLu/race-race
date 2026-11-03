@@ -3,7 +3,8 @@
 class_name PersonGenerator
 extends RefCounted
 
-enum DriverTier { EX_F1, F2, F3 }
+## NEWGEN: a new junior from the yearly cohort (docs/youth_model.md).
+enum DriverTier { EX_F1, F2, F3, NEWGEN }
 
 static var _next_id := 0
 
@@ -35,10 +36,14 @@ static func driver(r: RandomNumberGenerator, tier: DriverTier) -> DriverData:
 			age = r.randi_range(19, 24)
 			skill = r.randi_range(54, 68)
 			d.series_id = &"f2"
-		_:
+		DriverTier.F3:
 			age = r.randi_range(16, 19)
 			skill = r.randi_range(44, 58)
 			d.series_id = &"f3"
+		_:
+			age = r.randi_range(15, 17)
+			skill = r.randi_range(38, 50)
+			d.series_id = Youth.POOL
 	d.birth_year = Calendar.year - age
 
 	for attr in DriverAttributes.DRIVING:
@@ -66,7 +71,8 @@ static func driver(r: RandomNumberGenerator, tier: DriverTier) -> DriverData:
 			d.traits.append(t)
 
 	# Young drivers usually still need super licence points (design doc 3.9).
-	d.has_superlicence = tier == DriverTier.EX_F1 or (tier == DriverTier.F2 and r.randf() < 0.5)
+	# Juniors earn their licence through results (Youth.season_end).
+	d.has_superlicence = tier == DriverTier.EX_F1
 	d.seasons = maxi(0, age - 22) if tier == DriverTier.EX_F1 else 0
 	d.races = d.seasons * 22
 	d.form = r.randi_range(35, 75)

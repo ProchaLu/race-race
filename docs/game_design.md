@@ -680,8 +680,8 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 | **R3 – Auto** | Teile, Entwicklungsprojekte, Produktion, Korrelation |
 | **R4 – HQ** ✅ | Gelände, Gebäude, Bau, Effekte |
 | **R5 – Motor** ✅ | Kunde / Lizenz / Werk |
-| **R6 – Geld & Macht** | Finanzen komplett, Sponsoren, Besitzer, Investoren, Ruf |
-| **R7 – Nachwuchs** | F2/F3-Simulation, Akademie, Scouting mit Wissensmodell, Newgens |
+| **R6 – Geld & Macht** ✅ | Finanzen komplett, Sponsoren, Besitzer, Investoren, Ruf (`docs/finance_model.md`) |
+| **R7 – Nachwuchs** ✅ | F2/F3-Simulation, Akademie, Scouting mit Wissensmodell, Newgens, Superlizenz (`docs/youth_model.md`) |
 | **R8 – Eigenes Team** | Team gründen, Feld auf 24 Autos |
 | **R9 – Regulierung** | Regeländerungen, Budget Cap, Aero-Testlimit, Motorkontingente |
 | **Nach R0** | Strecken-Editor und die ersten 4–6 fiktiven Strecken |

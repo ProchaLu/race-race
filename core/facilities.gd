@@ -18,11 +18,11 @@ const CATALOG := {
 	&"lab": ["Test laboratory", "Dedicated test cells for mechanical systems and component validation.", 6_000_000, 35, ""],
 	&"simulator": ["Simulator", "A dedicated environment for driver preparation and virtual testing.", 5_000_000, 30, ""],
 	&"performance": ["Driver performance centre", "Fitness, recovery and mental preparation for the drivers.", 3_000_000, 25, ""],
-	&"academy": ["Academy", "Teaching and training facilities for young drivers.", 4_000_000, 35, "R7"],
-	&"scouting": ["Scouting office", "A base for talent analysis and recruitment.", 2_000_000, 20, "R7"],
+	&"academy": ["Academy", "Teaching and training facilities for young drivers.", 4_000_000, 35, ""],
+	&"scouting": ["Scouting office", "A base for talent analysis and recruitment.", 2_000_000, 20, ""],
 	&"pit": ["Pit-crew training", "Garage and practice space for race preparation and pit-stop drills.", 3_000_000, 25, ""],
 	&"mission": ["Mission control", "Race support, communications and strategy analysis.", 4_000_000, 30, ""],
-	&"hospitality": ["Marketing & hospitality", "Welcomes partners and guests and supports commercial activity.", 3_000_000, 25, "R6"],
+	&"hospitality": ["Marketing & hospitality", "Welcomes partners and guests and supports commercial activity.", 3_000_000, 25, ""],
 	&"staff": ["Staff facilities", "Dining, social and wellbeing spaces for the team.", 2_000_000, 20, ""],
 }
 ## Buildings every team has (never level 0).
@@ -182,6 +182,14 @@ static func effect_lines(team: TeamData, id: StringName, at_level: int) -> Array
 			return [["Strategy: race, weather and tyre reading", ops_bonus(probe, &"mission"), "+%d"]]
 		&"staff":
 			return [["Team mood", mood_bonus(probe), "%+d"]]
+		&"hospitality":
+			return [["Sponsor offers open at once", Sponsors.offers_wanted(probe), "%d"],
+				["Reputation gain per season", TeamReputation.brand_bonus(probe), "+%d"]]
+		&"academy":
+			return [["Academy places", at_level, "%d"],
+				["Growth of academy drivers each winter", Academy.GROWTH * (1.0 + 0.1 * at_level) * 100, "+%d %%"]]
+		&"scouting":
+			return [["Scouting assignments at the same time", at_level, "%d"]]
 		&"engine":
 			return [["Dyno capacity", 0.6 + 0.2 * at_level, "×%.2f"],
 				["Room for engine engineers", room_for(probe, &"engine"), "%d"],
@@ -236,7 +244,7 @@ static func start(team: TeamData, id: StringName, expected_target: int = -1) -> 
 	var offer := quote(team, id)
 	if expected_target >= 0 and expected_target != offer.target:
 		return "The facility changed. Review the new construction proposal."
-	team.budget -= int(offer.cost)
+	Finance.pay(team, &"hq", int(offer.cost))
 	GameState.hq_spending[team.id] = GameState.hq_spending.get(team.id, 0) + int(offer.cost)
 	team.facility_projects[id] = {"target": offer.target, "remaining": offer.duration,
 		"duration": offer.duration, "cost": offer.cost}

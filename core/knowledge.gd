@@ -1,7 +1,7 @@
 ## What the player's team knows about a person (design doc 4.3).
 ## Knowledge 0..100 per person: 100 = exact values, lower = wider ranges.
-## Ranges always contain the true value for now; scouts in R7 can narrow
-## them (or get them wrong).
+## Scouting (R7, core/scouting.gd) narrows the ranges; a weak scout can shift
+## them so they miss the true value (GameState.scout_bias).
 class_name Knowledge
 extends RefCounted
 
@@ -10,8 +10,12 @@ const MAX_WIDTH := 8
 const EXACT_FROM := 90
 
 
+## Own people (team, academy) are known exactly; everybody else by the
+## knowledge stored in GameState.knowledge (scouting raises it, R7).
 static func level(person: PersonData) -> int:
 	if person.team_id == GameState.player_team_id and person.team_id != &"":
+		return 100
+	if person is DriverData and person.academy_team_id != &"" and person.academy_team_id == GameState.player_team_id:
 		return 100
 	return GameState.knowledge.get(person.id, 20)
 
@@ -23,8 +27,12 @@ static func is_exact(person: PersonData) -> bool:
 ## Known range on the 1-20 display scale for an internal 0..100 value.
 ## The offset is fixed per person and attribute, so ranges do not jump.
 static func display_range(person: PersonData, property: StringName, internal: int) -> Vector2i:
-	var value := DriverAttributes.to_display(internal)
 	var k := level(person)
+	var value := DriverAttributes.to_display(internal)
+	# A scout who got the person wrong shifts the whole range (R7).
+	if k < 100 and GameState.scout_bias.has(person.id):
+		var bias: Dictionary = GameState.scout_bias[person.id]
+		value = clampi(value + bias.get("potential" if property == &"potential" else "ability", 0), 1, 20)
 	if k >= EXACT_FROM:
 		return Vector2i(value, value)
 	var width := roundi((EXACT_FROM - k) / float(EXACT_FROM) * MAX_WIDTH)
@@ -48,8 +56,8 @@ static func star_range(person: PersonData, property: StringName, internal: int) 
 	return Vector2(lo, hi)
 
 
-## Weeks a scouting assignment needs until values are exact (scouting
-## assignments arrive in R7; the estimate already uses your chief scout).
+## Weeks until values are exact (90 %) by scouting alone, as the market shows
+## it; the chief scout's skill sets the speed (docs/youth_model.md 5).
 static func weeks_to_scout(person: PersonData) -> int:
 	var k := level(person)
 	if k >= EXACT_FROM:

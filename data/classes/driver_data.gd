@@ -63,6 +63,9 @@ extends PersonData
 ## Change of each attribute since the start of the season: {&"cornering": 1}
 @export var attribute_changes: Dictionary = {}
 @export var has_superlicence: bool = true
+## Super licence points won in the junior series, one entry per season
+## (oldest first, last three kept). 40 points in those seasons give the licence.
+@export var superlicence_points: Array[int] = []
 
 @export_group("Career")
 @export var races: int = 0

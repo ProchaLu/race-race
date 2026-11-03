@@ -275,7 +275,7 @@ static func new_unit(team: TeamData, driver_id: StringName, pay: bool = true) ->
 		u.spec_versions[c] = spec.version
 	u.values = PowerUnit.compute(comps)
 	if pay and u.number > PowerUnit.UNITS_PER_SEASON:
-		team.budget -= PowerUnit.EXTRA_UNIT_COST
+		Finance.pay(team, &"engine_units", PowerUnit.EXTRA_UNIT_COST)
 		GameState.engine_spending[team.id] = GameState.engine_spending.get(team.id, 0) + PowerUnit.EXTRA_UNIT_COST
 		EventBus.budget_changed.emit(team.id, team.budget)
 	for other: EngineUnit in team.engine_units:
@@ -387,7 +387,7 @@ static func pay_month(team: TeamData) -> int:
 	if price <= 0:
 		return 0
 	var fee := price / 12
-	team.budget -= fee
+	Finance.pay(team, &"engine_supply", fee)
 	var m := manufacturer_of(team)
 	var receiver_id: StringName = m.works_team_id if m else &""
 	if m and m.licensed_from != &"":
@@ -395,7 +395,7 @@ static func pay_month(team: TeamData) -> int:
 		receiver_id = origin.works_team_id if origin else &""
 	if receiver_id != &"" and receiver_id != team.id and GameState.teams.has(receiver_id):
 		var receiver: TeamData = GameState.teams[receiver_id]
-		receiver.budget += fee - CUSTOMER_SUPPORT / 12
+		Finance.receive(receiver, &"engine_sales", fee - CUSTOMER_SUPPORT / 12)
 	return fee
 
 

@@ -211,7 +211,7 @@ static func _pay(p: EngineProject, amount: int) -> bool:
 		return true
 	if team.budget < amount:
 		return false
-	team.budget -= amount
+	Finance.pay(team, &"engine_dev", amount)
 	GameState.engine_spending[team.id] = GameState.engine_spending.get(team.id, 0) + amount
 	EventBus.budget_changed.emit(team.id, team.budget)
 	return true

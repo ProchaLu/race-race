@@ -170,14 +170,14 @@ static func sign(person: PersonData, team: TeamData, terms: Dictionary) -> Dicti
 	c.release_clause = int(terms.salary * 3) if terms.get("release_clause", false) else 0
 	if person is DriverData:
 		c.role = terms.get("role", ContractData.DriverRole.EQUAL)
-	team.budget -= terms.get("signing_fee", 0)
+	Finance.pay(team, &"signing", terms.get("signing_fee", 0))
 	# Release clause paid to the old team.
 	var transfer_fee: int = terms.get("transfer_fee", 0)
 	if transfer_fee > 0:
-		team.budget -= transfer_fee
+		Finance.pay(team, &"transfer_out", transfer_fee)
 		var old_team: TeamData = GameState.teams.get(person.team_id)
 		if old_team and old_team != team:
-			old_team.budget += transfer_fee
+			Finance.receive(old_team, &"transfer_in", transfer_fee)
 
 	var role: int = c.role if person is DriverData else -1
 	var moves_position := old_team_id != team.id
@@ -208,7 +208,7 @@ static func release(person: PersonData) -> int:
 	var team: TeamData = GameState.teams.get(person.team_id)
 	var cost := severance(person)
 	if team:
-		team.budget -= cost
+		Finance.pay(team, &"signing", cost)
 		TeamMood.add_event(team.id, "%s released", [person.full_name()], -4)
 	var c := GameState.contract_of(person.id)
 	if c:

@@ -6,6 +6,8 @@ enum Tier { TITLE, MAJOR, MINOR }
 
 @export var id: StringName
 @export var name: String
+## Field the company works in, e.g. "Banking".
+@export var sector: String = ""
 @export var tier: Tier = Tier.MINOR
 
 ## Paid once per race weekend.

@@ -73,8 +73,8 @@ func _rebuild() -> void:
 	var root := _tree.create_item()
 	var list: Array[DriverData] = []
 	for driver in GameState.drivers.values():
-		# Free agents live on the transfer market.
-		if driver.team_id == &"":
+		# Free agents live on the transfer market; juniors have their own screens (R7).
+		if driver.team_id == &"" or Youth.is_youth(driver):
 			continue
 		if _filter.selected == 1 and driver.team_id != GameState.player_team_id:
 			continue

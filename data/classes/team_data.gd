@@ -13,6 +13,17 @@ extends Resource
 @export_group("Economy")
 @export var budget: int = 0
 @export_range(0, 100) var reputation: int = 50
+## Fans (0..100): merchandise income per race (TeamReputation, R6d).
+@export_range(0, 100) var fans: int = 50
+
+@export_group("Owner and investors (R6c)")
+## Owner of the team (Owners): name, personality, trust, goal, long-term goal, titles, boss reputation.
+## Empty for teams without an owner (AI teams).
+@export var owner: Dictionary = {}
+## Investor who takes a share of the prize money; empty = none.
+@export var investor: Dictionary = {}
+## Investor offer waiting for an answer; empty = none.
+@export var investor_offer: Dictionary = {}
 
 @export_group("Headquarters")
 ## Facility ID (Facilities.CATALOG) -> level 0..5 (0 = undeveloped site).

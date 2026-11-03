@@ -71,8 +71,12 @@ func _daily_world_update() -> void:
 	if Calendar.date_of().day == 1:
 		_pay_salaries()
 		_refresh_market()
+		Sponsors.monthly_update(_rng)
+		Owners.monthly_update(_rng)
+		Academy.monthly_fees(GameState.player_team())
 	if Calendar.day % 7 == 0:
 		_ai_fill_vacancies()
+		Scouting.weekly_update(_rng)
 	if Calendar.date_of().month == 9 and Calendar.date_of().day == 1:
 		_own_contract_reminder()
 
@@ -252,7 +256,10 @@ func _pay_salaries() -> void:
 	for team in GameState.teams.values():
 		var payroll := ContractLogic.payroll_per_month(team.id)
 		var upkeep := Facilities.upkeep_per_month(team)
-		team.budget -= payroll + upkeep
+		Finance.pay(team, &"salaries", payroll)
+		Finance.pay(team, &"departments", Finance.departments_per_month(team))
+		Finance.pay(team, &"upkeep", upkeep)
+		Finance.snapshot(team)
 		var engine_fee := Engines.pay_month(team)
 		if team.id == GameState.player_team_id:
 			var msg := InboxMessage.new()
@@ -272,11 +279,7 @@ func _pay_salaries() -> void:
 func _refresh_market() -> void:
 	var r := RandomNumberGenerator.new()
 	r.randomize()
-	for i in NEW_MARKET_DRIVERS_PER_MONTH:
-		var tier := PersonGenerator.DriverTier.F3 if r.randf() < 0.6 else PersonGenerator.DriverTier.F2
-		var d := PersonGenerator.driver(r, tier)
-		GameState.add_driver(d)
-		GameState.knowledge[d.id] = r.randi_range(10, 30) if tier == PersonGenerator.DriverTier.F3 else r.randi_range(30, 60)
+	# Juniors come once a year with the newgen cohort (Youth.new_season).
 	for i in NEW_MARKET_STAFF_PER_MONTH:
 		var role: StaffData.Role = StaffRoles.TEAM_POSITIONS[r.randi() % StaffRoles.TEAM_POSITIONS.size()]
 		var s := PersonGenerator.staff(r, role, r.randi_range(40, 80))
@@ -433,6 +436,8 @@ func race_weekend() -> Dictionary:
 func _after_race(round_index: int, summary: Dictionary) -> void:
 	var s := _player_series()
 	GameState.resolved_rounds += 1
+	Finance.race_settlement(s)
+	Youth.resolve_round()
 	EventBus.round_completed.emit(round_index)
 	_check_promises()
 
@@ -480,9 +485,14 @@ func _season_finale() -> void:
 	for i in team_table.size():
 		var team: TeamData = GameState.teams[team_table[i][0]]
 		var amount: int = PRIZE_MONEY_M[mini(i, PRIZE_MONEY_M.size() - 1)] * 1_000_000
-		team.budget += amount
+		Finance.receive(team, &"prize", amount)
 		prize[team.id] = amount
+	Sponsors.season_end(s, team_table)
+	TeamReputation.season_end(s, team_table)
+	Youth.season_end()
+	var verdict := Owners.season_end(GameState.player_team(), team_table, prize.get(GameState.player_team_id, 0))
 	var review := _season_review(s, team_table, prize)
+	review["owner"] = verdict
 	GameState.season_history.append(review)
 	EventBus.budget_changed.emit(GameState.player_team_id, GameState.player_team().budget)
 
@@ -560,6 +570,7 @@ func _season_review(s: SeriesData, team_table: Array, prize: Dictionary) -> Dict
 		"engine_power_rank": Engines.rank(GameState.teams[team_id], &"power"),
 		"engine_units": GameState.teams[team_id].engine_units.size(),
 		"engine_spent": GameState.engine_spending.get(team_id, 0),
+		"cash": GameState.cash_book.get(team_id, {}).duplicate(),
 		"year": Calendar.year,
 		"team_position": position,
 		"team_points": GameState.team_points.get(team_id, 0),
@@ -647,11 +658,13 @@ func _start_new_season(year: int) -> void:
 	GameState.hq_spending.clear()
 	GameState.hq_completed.clear()
 	GameState.engine_spending.clear()
+	GameState.cash_book.clear()
 	# Development projects of the old car end with the season (R3d: next year's car).
 	GameState.car_projects.clear()
 	GameState.resolved_rounds = 0
 	weekend = null
 	Engines.new_season(year)
+	Owners.new_season(year)
 
 	var gone := []
 	for c in GameState.contracts.duplicate():
@@ -668,6 +681,7 @@ func _start_new_season(year: int) -> void:
 	var retired := Development.retirements(year, r)
 	var promoted := _promote_reserves()
 	_ai_fill_vacancies()
+	var juniors := Youth.new_season(year, r)
 	for team in GameState.teams.values():
 		for driver in GameState.drivers_of_team(team.id):
 			SeasonRecords.stats_of(driver.id)
@@ -699,6 +713,13 @@ func _start_new_season(year: int) -> void:
 		msg.add_paragraph("Our new car: average rating %d → %d.", [roundi(car[0]), roundi(car[1])])
 	if not retired.is_empty():
 		msg.add_paragraph("Retired: %s.", [", ".join(retired)])
+	msg.add_paragraph("Junior series: %d newgens joined the pool. Juniors who were too old left the system: %d.",
+		[juniors.cohort, juniors.left.size()])
+	if not juniors.academy.is_empty():
+		var growth := []
+		for entry in juniors.academy:
+			growth.append("%s +%d" % [entry[0], entry[1]])
+		msg.add_paragraph("Academy growth over the winter (ability points): %s.", [", ".join(growth)])
 	msg.link_screen = &"calendar"
 	msg.link_args = {}
 	msg.link_label = "Open calendar"
