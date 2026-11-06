@@ -87,7 +87,7 @@ func _build_overview() -> void:
 	pu.size_flags_stretch_ratio = 1.2
 	var diagram := PuDiagram.new(info)
 	diagram.selected = _component
-	diagram.custom_minimum_size.y = 240
+	diagram.custom_minimum_size.y = 300
 	diagram.component_selected.connect(func(c):
 		shell.update_args({"component": c})
 		shell.refresh_current())

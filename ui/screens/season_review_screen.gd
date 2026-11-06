@@ -164,7 +164,7 @@ func _table_card() -> UICard:
 			continue
 		var prize: int = Season.PRIZE_MONEY_M[mini(i, Season.PRIZE_MONEY_M.size() - 1)]
 		var row := InfoRow.new("%d.  %s" % [i + 1, team.name], tr("%d pts") % table[i][1], "$%dM" % prize,
-			UIStyle.ACCENT if team.id == GameState.player_team_id else UIStyle.TEXT, true)
+			UIStyle.ACCENT if team.id == _review.get("team_id", GameState.player_team_id) else UIStyle.TEXT, true)
 		card.add_row(row)
 	return card
 

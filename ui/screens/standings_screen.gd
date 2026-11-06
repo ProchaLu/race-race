@@ -3,7 +3,10 @@
 ## results grid per round. Cards below show what is at stake.
 extends UIScreen
 
-enum Tab { DRIVERS, TEAMS }
+enum Tab { DRIVERS, TEAMS, JUNIORS }
+
+## Junior championship shown in the junior tab (Youth.all_series index).
+static var _junior := 0
 
 var _tab: Tab = Tab.TEAMS
 var _series: SeriesData
@@ -24,8 +27,8 @@ func setup(args: Dictionary) -> void:
 
 	var toolbar := HBoxContainer.new()
 	toolbar.add_theme_constant_override("separation", 12)
-	var tabs := Segmented.new([tr("Drivers"), tr("Teams")], _tab)
-	tabs.custom_minimum_size.x = 260
+	var tabs := Segmented.new([tr("Drivers"), tr("Teams"), tr("Juniors")], _tab)
+	tabs.custom_minimum_size.x = 390
 	tabs.changed.connect(func(i):
 		shell.update_args({"tab": i})
 		shell.refresh_current())
@@ -37,6 +40,9 @@ func setup(args: Dictionary) -> void:
 	toolbar.add_child(info)
 	_page.add_child(toolbar)
 
+	if _tab == Tab.JUNIORS:
+		_build_juniors()
+		return
 	if _tab == Tab.TEAMS:
 		_page.add_child(_teams_card())
 	else:
@@ -232,7 +238,9 @@ func _fight_card() -> UICard:
 			GameState.teams[table[i + 1][0]].name, true, UIStyle.GOOD))
 	var prize := Season.PRIZE_MONEY_M
 	if i > 0:
-		card.add_row(FactRow.new("One place higher is worth", "+$%dM" % (prize[i - 1] - prize[i]), "", true, UIStyle.GOOD))
+		var here: int = prize[mini(i, prize.size() - 1)]
+		var above: int = prize[mini(i - 1, prize.size() - 1)]
+		card.add_row(FactRow.new("One place higher is worth", "+$%dM" % (above - here), "", true, UIStyle.GOOD))
 	return card
 
 
@@ -274,3 +282,90 @@ func _note(text: String) -> Label:
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return l
+
+
+# --- Junior championships ------------------------------------------------------
+
+## F2, F3 and the karting regions: the full drivers' table, the teams' table
+## for F2/F3. Karting kids our scouts have not found are shown as unknown.
+func _build_juniors() -> void:
+	var keys := Youth.all_series()
+	var pick := Segmented.new(keys.map(func(k): return tr(Youth.series_name(k))), _junior)
+	pick.changed.connect(func(i):
+		_junior = i
+		shell.refresh_current())
+	_page.add_child(pick)
+	var key: StringName = keys[clampi(_junior, 0, keys.size() - 1)]
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", UIStyle.GAP)
+	var drivers := _junior_drivers_card(key)
+	drivers.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	drivers.size_flags_stretch_ratio = 1.6
+	row.add_child(drivers)
+	if Youth.SERIES.has(key):
+		var teams := _junior_teams_card(key)
+		teams.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(teams)
+	_page.add_child(row)
+
+
+func _junior_drivers_card(key: StringName) -> UICard:
+	var st := Youth.standings(key)
+	var card := UICard.new(tr("%s · drivers") % tr(Youth.series_name(key)), tr("after %d rounds") % st.rounds)
+	var rows := Youth.table(key)
+	if rows.is_empty():
+		card.add_padded(YouthUI.small(tr("The season has not started yet.")), 8, 8)
+		return card
+	var player := GameState.player_team()
+	var tree := _tree([["#", 56], [tr("Driver"), 220, true], [tr("Team"), 180], [tr("Age"), 50], [tr("Wins"), 60],
+		[tr("Races"), 60], [tr("Points"), 70]], rows.size())
+	var root := tree.create_item()
+	var ids := []
+	for i in rows.size():
+		var d: DriverData = GameState.drivers.get(rows[i][0])
+		if not d:
+			continue
+		var item := tree.create_item(root)
+		var visible := Youth.is_visible(d) or not Youth.is_karting(d)
+		var t := Youth.team_of(d)
+		item.set_text(0, "%d" % (i + 1))
+		item.set_text(1, d.full_name() if visible else tr("Unknown kid (%s)") % d.nationality)
+		item.set_text(2, t.name if t else (YouthUI.academy_name(d) if d.academy_team_id != &"" else "–"))
+		item.set_text(3, "%d" % d.age(Calendar.year))
+		item.set_text(4, "%d" % st.wins.get(d.id, 0))
+		item.set_text(5, "%d" % st.get("starts", {}).get(d.id, 0))
+		item.set_text(6, "%d" % rows[i][1])
+		var own := player and d.academy_team_id == player.id
+		var watched := GameState.shortlist.has(d.id)
+		if own or watched:
+			for c in 7:
+				item.set_custom_color(c, UIStyle.ACCENT if own else UIStyle.GOOD)
+		elif not visible:
+			for c in 7:
+				item.set_custom_color(c, UIStyle.MUTED)
+		ids.append(d.id if visible else &"")
+	tree.item_activated.connect(func():
+		var sel := tree.get_selected()
+		if sel:
+			var id: StringName = ids[sel.get_index()]
+			if id != &"":
+				shell.open_driver(id))
+	card.add_padded(tree, 4, 4)
+	card.add_padded(YouthUI.small(tr("Amber: our academy · green: watchlist · double-click a driver to open his profile.")), 4, 8)
+	return card
+
+
+func _junior_teams_card(series_id: StringName) -> UICard:
+	var card := UICard.new(tr("%s · teams") % Youth.SERIES_NAMES[series_id], tr("strength = machinery and staff"))
+	var rows := Youth.team_table(series_id)
+	var tree := _tree([["#", 56], [tr("Team"), 200, true], [tr("Strength"), 80], [tr("Points"), 70]], rows.size())
+	var root := tree.create_item()
+	for i in rows.size():
+		var t: YouthTeam = GameState.youth_teams[rows[i][0]]
+		var item := tree.create_item(root)
+		item.set_text(0, "%d" % (i + 1))
+		item.set_text(1, t.name)
+		item.set_text(2, "%d" % t.strength)
+		item.set_text(3, "%d" % rows[i][1])
+	card.add_padded(tree, 4, 8)
+	return card

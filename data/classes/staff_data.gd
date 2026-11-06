@@ -20,6 +20,8 @@ enum Role {
 	COMMERCIAL_MANAGER,
 	FITNESS_COACH,
 	MENTAL_COACH,
+	## Extra scouts of the scout network (not one of the 16 key positions).
+	SCOUT,
 }
 
 @export var role: Role = Role.RACE_ENGINEER

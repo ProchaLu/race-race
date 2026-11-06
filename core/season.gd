@@ -11,7 +11,7 @@ const NEW_MARKET_DRIVERS_PER_MONTH := 2
 const NEW_MARKET_STAFF_PER_MONTH := 4
 
 ## Constructors' prize money by final position, champion first (design doc 13).
-const PRIZE_MONEY_M := [140, 125, 112, 100, 90, 81, 73, 66, 60, 57, 55]
+const PRIZE_MONEY_M := [140, 125, 112, 100, 90, 81, 73, 66, 60, 57, 55, 53]
 
 var _important_posted := false
 var _rng := RandomNumberGenerator.new()
@@ -45,6 +45,9 @@ func continue_to_next_event() -> void:
 ## On race day time stops: the weekend waits for the team principal.
 func _step() -> bool:
 	_important_posted = false
+	# A dismissed principal must choose a new team first.
+	if Career.job_pending():
+		return true
 	var today := round_today()
 	if today >= 0:
 		weekend_of_today()
@@ -73,7 +76,7 @@ func _daily_world_update() -> void:
 		_refresh_market()
 		Sponsors.monthly_update(_rng)
 		Owners.monthly_update(_rng)
-		Academy.monthly_fees(GameState.player_team())
+		Academy.monthly(_rng)
 	if Calendar.day % 7 == 0:
 		_ai_fill_vacancies()
 		Scouting.weekly_update(_rng)
@@ -438,6 +441,7 @@ func _after_race(round_index: int, summary: Dictionary) -> void:
 	GameState.resolved_rounds += 1
 	Finance.race_settlement(s)
 	Youth.resolve_round()
+	Academy.round_report(GameState.player_team())
 	EventBus.round_completed.emit(round_index)
 	_check_promises()
 
@@ -490,9 +494,14 @@ func _season_finale() -> void:
 	Sponsors.season_end(s, team_table)
 	TeamReputation.season_end(s, team_table)
 	Youth.season_end()
+	Academy.young_driver_tests(GameState.player_team(), _rng)
 	var verdict := Owners.season_end(GameState.player_team(), team_table, prize.get(GameState.player_team_id, 0))
 	var review := _season_review(s, team_table, prize)
 	review["owner"] = verdict
+	review["team_id"] = GameState.player_team_id
+	review["boss_reputation"] = Career.reputation()
+	var job_offers := Career.season_end(team_table, verdict.get("dismissed", false), _rng)
+	review["job_offers"] = job_offers.size()
 	GameState.season_history.append(review)
 	EventBus.budget_changed.emit(GameState.player_team_id, GameState.player_team().budget)
 
@@ -664,7 +673,9 @@ func _start_new_season(year: int) -> void:
 	GameState.resolved_rounds = 0
 	weekend = null
 	Engines.new_season(year)
+	Career.new_season()
 	Owners.new_season(year)
+	Academy.return_loans(year)
 
 	var gone := []
 	for c in GameState.contracts.duplicate():

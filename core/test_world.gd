@@ -1,5 +1,6 @@
-## Builds a fictional development world: 11 teams, 22 drivers, a 24-race
-## calendar and a half-finished season. Texts stay English here; they are
+## Builds the fictional world: 11 teams, 22 drivers and a 24-race calendar –
+## either a half-finished season (development, build()) or a real start on
+## 1 January (new_game(), optionally with a 12th team founded by the player). Texts stay English here; they are
 ## translation keys (see i18n/strings.csv). Will be replaced by the real start
 ## database (design doc 1.2) later.
 class_name TestWorld
@@ -90,9 +91,23 @@ const DRIVERS := [
 
 
 
+## Development world: the season is half done and the player runs Vortex Racing
+## with hand-made details (used by the check tools and the screenshot tool).
 static func build() -> void:
+	_build({"mode": "existing", "team_id": &"vortex"}, true)
+
+
+## A real new game (start menu): 1 January, no race run yet.
+## options: {"mode": "existing", "team_id"} or {"mode": "found", "name", "short_name",
+## "color", "manufacturer"} – see TeamFounding.
+static func new_game(options: Dictionary) -> void:
+	_build(options, false)
+
+
+static func _build(options: Dictionary, mid_season: bool) -> void:
 	GameState.clear()
 	Calendar.reset()
+	var founded: bool = options.get("mode", "existing") == "found"
 
 	var f1 := SeriesData.new()
 	f1.id = &"f1"
@@ -111,25 +126,50 @@ static func build() -> void:
 		_make_team(t[0], t[1], t[2], t[3], t[4], t[5] * 1_000_000, f1)
 	for d in DRIVERS:
 		_make_driver(d)
-	GameState.player_team_id = &"vortex"
+	var new_team: TeamData = null
+	if founded:
+		new_team = TeamFounding.make_team(options, f1, r)
+		GameState.player_team_id = new_team.id
+	else:
+		GameState.player_team_id = options.get("team_id", &"vortex")
 
-	_make_player_team_details()
+	if mid_season:
+		_make_player_team_details()
 	for t in TEAMS:
 		_make_team_staff(r, GameState.teams[t[0]], t[4])
 	Engines.setup_world(r)
 	_make_market(r)
+	if founded:
+		TeamFounding.engine_deal(new_team, options.get("manufacturer", &""), r)
+		TeamFounding.sign_start_drivers(new_team)
+		_make_team_staff(r, new_team, TeamFounding.STAFF_LEVEL)
 	_make_knowledge(r)
 	Youth.setup_world(r)
-	Calendar.day = FIRST_RACE_DAY + (ROUNDS_COMPLETED - 1) * DAYS_BETWEEN_RACES + 3
-	for round_index in ROUNDS_COMPLETED:
-		QuickRace.resolve_round(f1, round_index)
-		Youth.resolve_round()
-	GameState.resolved_rounds = ROUNDS_COMPLETED
+	if mid_season:
+		Calendar.day = FIRST_RACE_DAY + (ROUNDS_COMPLETED - 1) * DAYS_BETWEEN_RACES + 3
+		for round_index in ROUNDS_COMPLETED:
+			QuickRace.resolve_round(f1, round_index)
+			Youth.resolve_round()
+		GameState.resolved_rounds = ROUNDS_COMPLETED
+	else:
+		for team in GameState.teams.values():
+			for driver in GameState.drivers_of_team(team.id):
+				SeasonRecords.stats_of(driver.id)
 	# After the calendar is set: offers and owner goals count from today.
 	Sponsors.setup_world(r)
-	Owners.setup_world()
+	if mid_season:
+		Owners.setup_world()
+	else:
+		if not founded:
+			# The team already had sponsors before the new principal arrived.
+			Sponsors.ai_fill(GameState.player_team())
+		Owners.setup_world(TeamFounding.owner_name(r), "patient" if founded else Owners.PERSONALITIES.keys()[r.randi() % Owners.PERSONALITIES.size()], founded)
+	Career.setup_world()
 	Engines.setup_units(r)
-	_make_welcome_messages()
+	if mid_season:
+		_make_welcome_messages()
+	else:
+		TeamFounding.welcome_messages(founded)
 
 
 static func _make_tyres() -> void:

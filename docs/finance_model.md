@@ -62,7 +62,7 @@
 - **Vertrauen am Saisonende:** Ziel erreicht +8; um 1–2 Plätze verfehlt −4; weiter weg −10. Verluste werden mit dem Faktor der Persönlichkeit multipliziert (ungeduldig 1,3, geduldig 0,7). Sparsame Besitzer ziehen −5 ab, wenn die Saison im Minus endet.
 - **Geld bitten:** einmal pro Saison, in drei Stufen (10 / 25 / 50 M $). Chance = Vertrauen × Faktor × (1 − Betrag / 100 M), begrenzt auf 5–90 %. Eine Ablehnung kostet 3 Vertrauen.
 - **Warnungen:** Vertrauen ≤ 25: „verliert die Geduld“. Vertrauen ≤ 10: „letzte Warnung“.
-- **Noch keine Entlassung.** Sie kommt mit R8 zusammen mit den Jobangeboten. Bis dahin wirkt das Vertrauen nur als Warnung und über die Geldbitten.
+- **Entlassung** (R8b): nach der letzten Warnung oder bei massivem Versagen, danach Jobangebote – siehe `docs/career_model.md`.
 
 ## 5. Investoren (R6c)
 
@@ -74,7 +74,7 @@
 
 - **Teamruf** (0–100): Saisonschritt = Mitte − Platz, auf ±4 begrenzt (Mitte = (Teams + 1) / 2). Dazu kommt ein Bonus: Gastronomie-/Marketinggebäude (Stufe / 3) und ein Netzwerk-Kommerzieller-Leiter mit Markenbildung ≥ 75 (+1).
 - **Fans** (0–100): gleicher Schritt; +1, wenn ein Fahrer des Teams die Eigenschaft „Medienliebling“ hat.
-- **Ruf des Teamchefs** (im Besitzer-Eintrag, Start 50): folgt dem Saisonschritt des Spielerteams. Er entscheidet später über Jobangebote (R8).
+- **Ruf des Teamchefs** (`GameState.career`, Start 50): folgt dem Saisonschritt des Spielerteams und entscheidet über Jobangebote (`docs/career_model.md`).
 - **Merchandising:** Fans × 15 000 $ pro Rennen.
 
 ---
@@ -97,7 +97,7 @@
 
 ## 9. Offen
 
-- **Entlassung und Jobangebote** (R8).
+- ~~Entlassung und Jobangebote~~ – umgesetzt in R8b (`docs/career_model.md`).
 - **Abteilungspersonal einstellen und entlassen:** heute ist die Kopfzahl aus dem Budget abgeleitet und wird monatlich bezahlt.
 - **Kalibrierung:** die Zahlen in Abschnitt 1 sind Startwerte. Im Playtest prüfen, ob Mittelfeld und Spitze etwa ausgeglichen sind.
 - **Medien und Interviews** (Design 13) – eigene Runde.

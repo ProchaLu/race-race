@@ -20,6 +20,7 @@ const NAV_ITEMS := [
 	[&"market", "Transfer market", "arrow-left-right"],
 	[&"standings", "Standings", "trophy"],
 	[&"owner", "Owner", "briefcase"],
+	[&"career", "Career", "award"],
 ]
 
 ## Screens that exist so far; every other section shows a placeholder.
@@ -44,8 +45,10 @@ const SCREENS := {
 	&"finances": preload("res://ui/screens/finance_screen.gd"),
 	&"sponsors": preload("res://ui/screens/sponsor_screen.gd"),
 	&"owner": preload("res://ui/screens/owner_screen.gd"),
+	&"career": preload("res://ui/screens/career_screen.gd"),
 	&"scouting": preload("res://ui/screens/scouting_screen.gd"),
 	&"academy": preload("res://ui/screens/academy_screen.gd"),
+	&"junior_profile": preload("res://ui/screens/junior_profile_screen.gd"),
 }
 const PlaceholderScreen := preload("res://ui/screens/placeholder_screen.gd")
 const LANGUAGES := [["en", "English"], ["de", "Deutsch"]]
@@ -162,7 +165,11 @@ func go_back() -> void:
 
 
 func open_driver(driver_id: StringName) -> void:
-	navigate(&"driver_profile", {"driver_id": driver_id})
+	var d: DriverData = GameState.drivers.get(driver_id)
+	if d and (Youth.is_youth(d) or d.loan_from != &""):
+		navigate(&"junior_profile", {"driver_id": driver_id})
+	else:
+		navigate(&"driver_profile", {"driver_id": driver_id})
 
 
 func open_staff(staff_id: StringName) -> void:
@@ -182,12 +189,18 @@ func refresh_current() -> void:
 # --- Time controls -----------------------------------------------------------
 
 func _on_next_day() -> void:
+	if Career.job_pending():
+		navigate(&"career")
+		return
 	if not Season.weekend_pending():
 		Season.advance_one_day()
 	_after_time_passed()
 
 
 func _on_continue() -> void:
+	if Career.job_pending():
+		navigate(&"career")
+		return
 	if not Season.weekend_pending():
 		Season.continue_to_next_event()
 	_after_time_passed()
@@ -200,6 +213,10 @@ func _after_time_passed() -> void:
 		var year := GameState.pending_summary
 		GameState.pending_summary = -1
 		show_season_summary(year)
+	# Dismissed: time waits until the principal has taken a new job.
+	if Career.job_pending():
+		navigate(&"career", {}, _current_entry.get("id") != &"career")
+		return
 	# Race day: time waits until the weekend has been raced.
 	if Season.weekend_pending():
 		navigate(&"weekend", {}, _current_entry.get("id") != &"weekend")
@@ -457,6 +474,10 @@ func _refresh_top_bar() -> void:
 	_continue_button.text = tr("Race weekend").to_upper() if race_day else tr("Continue").to_upper()
 	_continue_button.tooltip_text = "Open today's race weekend" if race_day else "Advance until the next important event"
 	_day_button.disabled = race_day
+	if Career.job_pending():
+		_continue_button.text = tr("Choose a job").to_upper()
+		_continue_button.tooltip_text = "You were dismissed: take one of the job offers first"
+		_day_button.disabled = true
 	var mood := TeamMood.value(GameState.player_team_id)
 	var mood_color := UIStyle.mood_color(mood)
 	_mood_label.text = "%s · %d" % [tr(TeamMood.level_name(mood)), mood]

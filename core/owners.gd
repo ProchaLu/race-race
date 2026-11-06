@@ -4,7 +4,8 @@
 ## falls with the results and with the money. Trust decides whether the owner
 ## grants money when asked. Investors offer money for a share of the prize
 ## money and a goal; they leave when the goal is missed.
-## v1 is lenient: the owner warns, but does not dismiss yet (job offers come with R8).
+## v1 is lenient (R8b, docs/career_model.md 2): the owner dismisses only after a
+## final warning or after a massive failure; job offers follow in Career.
 class_name Owners
 extends RefCounted
 
@@ -27,14 +28,27 @@ const INVESTOR_MIN_REPUTATION := 50
 const INVESTOR_OFFER_DAYS := 45
 const INVESTOR_NAMES := ["Halden Capital", "Orsini Holdings", "Blackfen Partners", "Ostrava Growth Fund"]
 const START_TRUST := 60
+## Dismissal: trust at or below this after a final warning the season before …
+const DISMISS_TRUST := 10
+## … or a goal missed by this many places while trust is below MASSIVE_TRUST.
+const MASSIVE_MISS := 6
+const MASSIVE_TRUST := 30
 
-## Owner of the player's team (the test world has one owner; AI teams have none).
-static func setup_world() -> void:
+## Owner of the player's team (AI teams have none). founder: the player founded
+## the team; the owner is the backer and cannot dismiss the co-founder.
+static func setup_world(owner_name: String = "Constance Aldridge", kind: String = "patient", founder: bool = false) -> void:
 	var team: TeamData = GameState.player_team()
-	team.owner = {"name": "Constance Aldridge", "personality": "patient", "trust": START_TRUST,
+	team.owner = new_owner(team, owner_name, kind)
+	team.owner.founder = founder
+
+
+## A fresh owner for the team the player runs (start of the game or a new job).
+static func new_owner(team: TeamData, owner_name: String, kind: String) -> Dictionary:
+	team.owner = {"name": owner_name, "personality": kind, "trust": START_TRUST,
 		"goal": 0, "long_goal": "title", "long_deadline": Calendar.year + LONG_GOAL_YEARS,
-		"titles_at_start": 0, "titles": 0, "last_request": 0, "boss_reputation": 50}
+		"titles_at_start": 0, "titles": 0, "last_request": 0, "final_warning": false}
 	team.owner.goal = season_goal(team)
+	return team.owner
 
 
 static func has_owner(team: TeamData) -> bool:
@@ -159,12 +173,22 @@ static func season_end(team: TeamData, table: Array, prize: int) -> Dictionary:
 		owner.long_deadline = Calendar.year + LONG_GOAL_YEARS
 		owner.titles_at_start = owner.titles
 	owner.trust = clampi(before + change, 0, 100)
+	var dismissed: bool = not owner.get("founder", false) and should_dismiss(owner.get("final_warning", false), owner.trust, missed)
+	owner.final_warning = owner.trust <= DISMISS_TRUST
 	var investor_left := false
 	if not team.investor.is_empty():
 		investor_left = _investor_season(team, position, prize)
-	_message_verdict(team, position, missed <= 0, before)
+	_message_verdict(team, position, missed <= 0, before, dismissed)
 	return {"goal": owner.goal, "position": position, "met": missed <= 0, "trust_before": before,
-		"trust": owner.trust, "long_met": long_met, "investor_left": investor_left}
+		"trust": owner.trust, "long_met": long_met, "investor_left": investor_left, "dismissed": dismissed}
+
+
+## v1 is lenient: a second bad season after the final warning, or a massive
+## failure (goal missed by MASSIVE_MISS places) when trust is already low.
+static func should_dismiss(warned_before: bool, trust: int, missed: int) -> bool:
+	if warned_before and trust <= DISMISS_TRUST and missed > 0:
+		return true
+	return missed >= MASSIVE_MISS and trust < MASSIVE_TRUST
 
 
 static func monthly_update(r: RandomNumberGenerator) -> void:
@@ -241,7 +265,7 @@ static func _investor_season(team: TeamData, position: int, prize: int) -> bool:
 	return left
 
 
-static func _message_verdict(team: TeamData, position: int, met: bool, before: int) -> void:
+static func _message_verdict(team: TeamData, position: int, met: bool, before: int, dismissed: bool) -> void:
 	var owner: Dictionary = team.owner
 	var msg := InboxMessage.new()
 	msg.sender = "Owner"
@@ -252,7 +276,10 @@ static func _message_verdict(team: TeamData, position: int, met: bool, before: i
 	msg.subject = "Owner's verdict: goal %s" % ("met" if met else "missed")
 	msg.add_paragraph("Season goal P%d, we finished P%d. Trust %d → %d (%s).",
 		[owner.goal, position, before, owner.trust, TranslationServer.translate(trust_level(owner.trust))])
-	if owner.trust <= 10:
+	if dismissed:
+		msg.priority = InboxMessage.Priority.IMPORTANT
+		msg.add_paragraph("The owner has lost all patience and dismisses you.")
+	elif owner.trust <= DISMISS_TRUST:
 		msg.priority = InboxMessage.Priority.IMPORTANT
 		msg.add_paragraph("This is a final warning. One more season like this and the owner may end your time as team principal.")
 	elif owner.trust <= 25:

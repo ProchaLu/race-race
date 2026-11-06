@@ -53,7 +53,7 @@ func _stats_row() -> HBoxContainer:
 	var stats := [
 		["%d" % owner.trust, tr(Owners.trust_level(owner.trust)), UIStyle.GOOD if owner.trust >= 50 else UIStyle.BAD],
 		["P%d" % owner.goal, tr("Season goal"), UIStyle.TEXT],
-		["%d" % owner.boss_reputation, tr("Team principal's reputation"), UIStyle.TEXT],
+		["%d" % Career.reputation(), tr("Team principal's reputation"), UIStyle.TEXT],
 		["%d" % _team.reputation, tr("Team reputation"), UIStyle.TEXT],
 	]
 	for stat in stats:
@@ -150,8 +150,8 @@ func _reputation_card() -> UICard:
 	var card := UICard.new(tr("Reputation and fans"), tr("moves with the season's position"))
 	card.add_row(FactRow.new(tr("Team reputation"), "%d" % _team.reputation, tr("needed for better sponsors"), true))
 	card.add_row(FactRow.new(tr("Fans"), "%d" % _team.fans, tr("%s merchandise per race") % UIStyle.money(TeamReputation.merch_per_race(_team)), true))
-	card.add_row(FactRow.new(tr("Team principal's reputation"), "%d" % _team.owner.boss_reputation,
-		tr("for the next job (later round)"), true))
+	card.add_row(FactRow.new(tr("Team principal's reputation"), "%d" % Career.reputation(),
+		tr("decides your job offers (Career)"), true))
 	return card
 
 

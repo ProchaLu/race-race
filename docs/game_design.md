@@ -540,7 +540,7 @@ Faustregel: Ein Topteam stemmt jedes Jahr **einen Star + ein großes Bauprojekt*
 - Der Spieler kann **um Geld bitten** (Budgeterhöhung, Freigabe für große Bauprojekte). Die Antwort hängt vom Vertrauen und der Persönlichkeit des Besitzers ab.
 - **Investoren** tauchen auf und bieten Geld an – mit Bedingungen (Ziele, Anteile, Mitspracherecht, z. B. einen bestimmten Fahrer einsetzen).
 - ✅ **Nach einer Entlassung geht die Karriere weiter**: Der Spieler bekommt Jobangebote von anderen Teams. Realistisch kommen sie von Teams, die selbst ihre Ziele verfehlt haben und einen neuen Teamchef suchen – nicht vom amtierenden Weltmeister. Der Ruf des Teamchefs bestimmt, wie gut die Angebote sind.
-- Auch ohne Entlassung können später Angebote anderer Teams kommen (Wechsel möglich).
+- ✅ Auch ohne Entlassung kommen bei hohem Ruf Angebote besserer Teams (Wechsel möglich). Regeln: `docs/career_model.md`.
 
 ---
 
@@ -682,7 +682,7 @@ Modern, clean, übersichtlich – der Spieler verbringt den größten Teil der Z
 | **R5 – Motor** ✅ | Kunde / Lizenz / Werk |
 | **R6 – Geld & Macht** ✅ | Finanzen komplett, Sponsoren, Besitzer, Investoren, Ruf (`docs/finance_model.md`) |
 | **R7 – Nachwuchs** ✅ | F2/F3-Simulation, Akademie, Scouting mit Wissensmodell, Newgens, Superlizenz (`docs/youth_model.md`) |
-| **R8 – Eigenes Team** | Team gründen, Feld auf 24 Autos |
+| **R8 – Eigenes Team** ✅ | Startmenü mit echtem Saisonstart, Team übernehmen oder gründen (12. Team, 24 Autos), Entlassung, Jobangebote, Teamwechsel (`docs/career_model.md`) |
 | **R9 – Regulierung** | Regeländerungen, Budget Cap, Aero-Testlimit, Motorkontingente |
 | **Nach R0** | Strecken-Editor und die ersten 4–6 fiktiven Strecken |
 | **Laufend** | Rennsimulation verbessern (Safety Car, Wetter, DRS, Boxengasse, Training) |

@@ -96,11 +96,26 @@ var shortlist_notes: Dictionary = {}
 ## Number of rounds of the player's series already raced this season.
 var resolved_rounds: int = 0
 
+## The team principal's career (Career): reputation, dismissal, job offers, history.
+var career: Dictionary = {}
+
 ## The team controlled by the player.
 var player_team_id: StringName
 
 
+## Juniors the player's scouts have found in karting: {driver_id: true} (R7b).
+var discovered: Dictionary = {}
+## Offers of other academies for the player's juniors:
+## [{"driver_id", "team_id", "fee", "until_day"}]
+var junior_offers: Array = []
+## Juniors the paddock already talks about: {driver_id: year}.
+var junior_hype: Dictionary = {}
+
+
 func clear() -> void:
+	discovered.clear()
+	junior_offers.clear()
+	junior_hype.clear()
 	series.clear()
 	teams.clear()
 	drivers.clear()
@@ -151,6 +166,7 @@ func clear() -> void:
 	next_scout_id = 1
 	scout_bias.clear()
 	resolved_rounds = 0
+	career = {}
 	player_team_id = &""
 
 

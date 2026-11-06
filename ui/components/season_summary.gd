@@ -86,7 +86,8 @@ func _title_bar() -> Control:
 	titles.add_theme_constant_override("separation", 0)
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var small := Label.new()
-	small.text = tr("End of season · %s") % GameState.player_team().name
+	var review_team: TeamData = GameState.teams.get(_review.get("team_id", GameState.player_team_id))
+	small.text = tr("End of season · %s") % review_team.name
 	small.uppercase = true
 	small.theme_type_variation = &"SectionLabel"
 	titles.add_child(small)
@@ -270,6 +271,10 @@ func _team_card() -> UICard:
 		var o: Dictionary = _review.owner
 		card.add_row(FactRow.new("Owner's goal: P%d" % o.goal, "P%d" % o.position, "trust %d → %d" % [o.trust_before, o.trust],
 			true, UIStyle.GOOD if o.met else UIStyle.BAD))
+		if o.get("dismissed", false):
+			card.add_row(FactRow.new("Owner's decision", "Dismissed", "", true, UIStyle.BAD))
+	if _review.get("job_offers", 0) > 0:
+		card.add_row(FactRow.new("Job offers from other teams", str(_review.job_offers), "", true))
 	if _review.has("cash"):
 		var net := 0
 		for amount in _review.cash.values():
@@ -500,7 +505,7 @@ func _table_card() -> UICard:
 		if not team:
 			continue
 		var row := InfoRow.new("%d.  %s" % [i + 1, team.name], "", tr("%d pts") % table[i][1],
-			UIStyle.ACCENT if team.id == GameState.player_team_id else UIStyle.TEXT, true)
+			UIStyle.ACCENT if team.id == _review.get("team_id", GameState.player_team_id) else UIStyle.TEXT, true)
 		card.add_row(row)
 	return card
 

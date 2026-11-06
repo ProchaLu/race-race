@@ -2,14 +2,46 @@
 
 Regel: **Kaputtes oder Störendes sofort beheben.** Feinschliff wird gesammelt und am Ende jeder Runde abgearbeitet. Erledigtes wird abgehakt und bleibt als Verlauf stehen.
 
-## 📍 Stand (30.10.2026)
+## 📍 Stand (03.11.2026)
 **R3 komplett (Auto & Entwicklung):** 13 Teile mit Versionen, Masse, Zuverlässigkeit; Autowerte daraus, Gewicht, Kühlung (Renningenieur wählt Öffnungen), Bremsleistung, Traktion, Defekte pro Teil. Entwicklung mit 5 Abteilungen (Design, CFD, Windkanal, Prüfstände, Fabrik; Personalstärke aus dem Budget, Schlüsselpersonen, Gebäudestufen), parallele Projekte, Kosten, Prognose vs. Realität. Teile pro Auto, Stückzahlen und Ersatzteile, Unfälle zerstören Teile, Bremsen als Verbrauchsteil, Notfertigung, Wochenend-Block „Teile“, Training „Neue Teile testen“. Nächstjahresauto, Saisonwechsel mit Nächstjahres-Entwicklung. KI entwickelt nach denselben Regeln.
 **Entwicklungslabor umgesetzt:** alte Version als Basis → Ideen → CFD (grob, mit ±) → Windkanal/Prüfstand (Kombinieren, Verfeinern) → Freigeben/Verwerfen → Detailkonstruktion → Werkzeuge → Fertigung → Qualität → Direktvergleich auf der Strecke, „Zurück zur alten Version“. Entscheidungen an Meilensteinen (Inbox + Werkstatt-Spalte „Deine Entscheidung“), „Aero-/Chassis-Chef entscheiden lassen“; delegiert/KI automatisch. Details: `docs/car_model.md` 3a.
 **R4 komplett (HQ):** 15 Gebäude mit 5 Stufen auf festem Gelände, Bau mit Kosten/Bauzeit/Unterhalt, bis zu zwei Bautrupps, Wirkung auf Entwicklung, Wochenende und Stimmung (Stufe 1 gegen 5 deutlich), KI baut, Saisonbilanz. Details: `docs/hq_screen_design.md`, `docs/r4_review.md`.
 **R5 komplett (Motor):** 4 erfundene Hersteller, Power Unit mit 5 Komponenten → 5 Motorwerte in der Simulation (Leistung, Sprit, Defekte, Gewicht, Traktion/Reifen/Regen), Kunden-/Lizenz-/Werksmotor, Specs mit Verzögerung für Kunden, Motoreinheiten mit Laufleistung (4 pro Fahrer, weitere kosten), Motormodi, 4 neue Entscheidungen (Motortemperatur, ERS-Fehler, Sprit knapp, „Motor klingt nicht gut“), Verträge und Angebote, Motoren-Labor mit Dauerlauf, Power-Unit-Programm, Kunden beliefern. Details: `docs/engine_model.md`.
 **R6 Geld & Macht komplett (Stand 28.10.2026):** Kontobuch mit allen Geldbewegungen, Einnahmen pro Rennen (TV, Sponsoren, Merchandising), Abteilungspersonal und Logistik als Kosten, Finanzen-Bildschirm mit Verlauf und Prognose. 15 Sponsoren mit Werbeflächen, Angeboten, Bonus und Zufriedenheit; Gastronomie/Marketing entsperrt. Besitzer mit Persönlichkeit, Saisonziel, langfristigem Titelziel, Vertrauen, Geld-Bitten und Investoren; Teamruf, Fans und Ruf des Teamchefs. Details: `docs/finance_model.md`.
 **R7 Nachwuchs komplett (29.10.2026):** Apex F3 und F2 mit je zehn Teams und zwei Plätzen, 24 Newgens pro Jahr, Juniorenrennen im Hintergrund, Superlizenz aus den Juniorenergebnissen. Akademie mit Plätzen nach Gebäudestufe, Aufnahme, Platzierung in Juniorensitzen, Gebühren und Winterentwicklung. Scouting mit Aufträgen (Serie, Region, Einzelner), Wissen je Woche, Fehlgriffen schwacher Scouts und Empfehlungen; Akademie- und Scouting-Bildschirm. Details: `docs/youth_model.md`.
-**Nächster Schritt:** R8 laut Roadmap „Eigenes Team“. Die Entlassung und Jobangebote stehen in dieser Liste ebenfalls bei R8 – Reihenfolge mit dem Nutzer klären. Offen für später: Playtest und Feinabstimmung R3–R7 (Geldwerte: `docs/finance_model.md` 1, Nachwuchs: `docs/youth_model.md` 6), Styling, R3e (`docs/car_model.md` 17).
+**R8b Karriere komplett (03.11.2026):** Ruf des Teamchefs gehört dem Spieler, Entlassung am Saisonende (nach letzter Warnung oder bei massivem Versagen), Jobangebote von Teams, die ihre Ziele verfehlt haben, Angebote besserer Teams bei hohem Ruf, Zeit wartet nach der Entlassung, Teamwechsel mit neuem Besitzer, Karriere-Bildschirm. Details: `docs/career_model.md`.
+**R8a Spielstart & eigenes Team komplett (03.11.2026):** Startmenü (Neues Spiel, Sprache), echter Start am 1. Januar ohne gefahrene Rennen, Team übernehmen (elf Teams mit Einordnung) oder eigenes Team gründen (Name, Kürzel, Farbe, Kundenmotor) als 12. Team mit 24 Autos, Gründer kann nicht entlassen werden. Details: `docs/career_model.md` 6–7.
+**Grafik Auto & Motor überarbeitet (06.11.2026):** Auto von oben als technische Illustration (weiche Formen, Reifen, Schatten, Cockpit mit Halo und Helm in Teamfarbe, Flügelklappen, Diffusor, Kühleröffnungen, Hover), Teile-Symbole daraus erzeugt (`tools/part_icons.tscn`); Power Unit als Zeichnung (V6 mit Zylinderbänken, Turbine/Verdichter, Motor-Generator, Batterie, Steuergerät, Leitungen und Kabel).
+**Nachwuchs überarbeitet (06.11.2026):** Sitz kaufen (auch während der Saison, ersetzt den schwächeren Nicht-Akademiefahrer), Rennpraxis in F3/F2 und Ergebnisse zählen für die Entwicklung, Junioren mit Sitz verpflichten, Rundenbericht der Akademie und Tabellenplatz/letztes Rennen im Akademie-Bildschirm, Juniorenliste mit Filter (frei/F3/F2), Scouten direkt aus der Liste, „Alle gescoutet“ statt „0 zu scouten“. Details: `docs/youth_model.md` 2a, 4.
+**Nachwuchs ausgebaut (06.11.2026):** Kart als verborgene Stufe mit drei Regionalserien, Wunderkinder und Spätzünder, Scout-Netzwerk (Scouts einstellen), Regionsreisen entdecken Kartkinder, Rennbesuche, ausführliche Berichte, Beobachtungsliste; KI-Akademien, Angebote mit Laufzeit/Versprechen/Handgeld und Interesse, rivalisierende Akademien, Ausstiegsklausel, Abwerben, Verkauf; Trainingsschwerpunkt, Mentor, Nachwuchstest, Stimmung; Juniorenprofil, Juniorentabellen, Nachrichten; Befördern, Verleihen. Akademieplätze 2–8, höchstens 2 F3 + 2 F2. Details: `docs/youth_model.md` 9–13.
+**Nächster Schritt:** R9 Regulierung laut Roadmap – vorher mit dem Nutzer abstimmen (Alternativen: Playtest/Feinabstimmung, Speichern/Laden für „Weiter“ im Startmenü). Offen für später: Playtest und Feinabstimmung R3–R7 (Geldwerte: `docs/finance_model.md` 1, Nachwuchs: `docs/youth_model.md` 6), Styling, R3e (`docs/car_model.md` 17).
+
+## Nachwuchs-Ausbau (Y1–Y5) ✅ (06.11.2026)
+- [x] Sitzlimit (2 F3 + 2 F2), Akademieplätze nach Stufe 2/3/4/6/8
+- [x] Y1 Kart-Ebene, Wunderkinder/Spätzünder, Scout-Netzwerk, Regionsreise mit Entdeckung, Rennbesuch, Berichte, Beobachtungsliste
+- [x] Y2 KI-Akademien, Angebote mit Interesse und Rivalen, Akademievertrag mit Ausstiegsklausel, Abwerben, Versprechen
+- [x] Y3 Trainingsschwerpunkt, Mentor, Nachwuchstest, Stimmung
+- [x] Y4 Juniorenprofil, Juniorentabellen im Tabellen-Bildschirm, Nachrichten (Fahrerlager-Gespräch, Rundenbericht)
+- [x] Y5 Befördern, Verleihen, Verkaufen
+- [ ] Playtest: Interesse-Schwelle (60), Häufigkeit der KI-Verpflichtungen und Abwerbeangebote, Marktwerte, Anzahl der Entdeckungen
+- [ ] KI baut Akademie und Scouting-Büro aus (`Facilities.AI_WEIGHT`)
+- [ ] Rückkaufoption beim Verkauf, Leihgebühr verhandeln
+- [ ] Mehrere Versprechen (z. B. Nachwuchstest), Gespräche mit Junioren
+- [ ] Juniorenzustand beim Speichern (discovered, junior_offers, junior_hype, neue Fahrerfelder)
+
+## R8 — Eigenes Team & Karriere ✅ abgeschlossen (03.11.2026)
+- [x] R8b Karriere: Entlassung, Jobangebote (nach Entlassung und bei hohem Ruf), Zeit wartet, Teamwechsel, Karriere-Bildschirm, Saisonrückblick merkt sich das Team; Prüfung `tools/career_check.tscn` (Regel, Angebote, Wechsel, eine echte Saison mit Entlassung und neuem Team); owner/finance/sponsor/youth grün
+- [x] R8a Startmenü mit echtem Saisonstart (1. Januar), Team übernehmen oder gründen (12. Team, 24 Autos), Gründer nicht entlassbar; Prüfung `tools/new_game_check.tscn`; Preisgeld Platz 12 ergänzt (Absturz im Tabellen-Bildschirm bei 12 Teams behoben)
+- [ ] Gründung: Fahrer selbst wählen, Startkapital/Geldgeber wählen, Name des Teamchefs, Standort
+- [ ] „Weiter“ im Startmenü (kommt mit Speichern/Laden); Zurück ins Hauptmenü aus dem Spiel
+- [ ] Startmenü-Styling (Hintergrundbild, Logo) – zusammen mit dem Styling-Durchgang
+- [ ] Playtest: Startwerte des gegründeten Teams (Budget 140 M, Auto 48) und Erwartung P12
+- [ ] Entlassung während der Saison, strengere Besitzer (Schwierigkeitsstufen)
+- [ ] Angebote während der Saison, Abwerbung durch Spitzenteams
+- [ ] Akademie und Scouting des alten Teams nach einem Wechsel (KI-Akademien fehlen)
+- [ ] Gehalt und Vertrag des Teamchefs
+- [ ] Karriereverlauf mit Erfolgen pro Team
+- [ ] Karrierezustand beim Speichern erfassen (zusammen mit Speichern/Laden)
 
 ## R7 — Nachwuchs ✅ abgeschlossen (29.10.2026)
 Modell und Startwerte: `docs/youth_model.md`.
@@ -33,7 +65,7 @@ Modell und Startwerte: `docs/finance_model.md`.
 - [x] R6b Sponsoren: 15 erfundene Firmen, Werbeflächen je Stufe, monatliche Angebote (Gastronomie und kommerzieller Leiter wirken), Handgeld, Zahlung pro Rennen, Bonus am Saisonende, Zufriedenheit, Verlängerung, Kündigung; Gastronomie/Marketing entsperrt
 - [x] R6c Besitzer & Investoren: Persönlichkeit, Saisonziel, langfristiges Titelziel (5 Jahre), Vertrauen, Geld bitten (einmal pro Saison), Investor mit Anteil am Preisgeld, Besitzer-Ziel im Saisonrückblick
 - [x] R6d Ruf & Fans: Teamruf und Fans nach Platzierung, Merchandising pro Rennen, Ruf des Teamchefs (für R8)
-- [ ] Entlassung durch den Besitzer und Jobangebote – R8 (heute nur Warnungen: Vertrauen ≤ 25 und ≤ 10)
+- [x] Entlassung durch den Besitzer und Jobangebote – in R8b umgesetzt
 - [ ] Kalibrierung der Geldwerte im Playtest: AI-Teams wachsen über eine Saison noch (Spitze etwa +100 M, Schluss etwa +30 M), vor allem weil KI-Teams wenig in die Entwicklung investieren
 - [ ] Abteilungspersonal einstellen und entlassen (heute aus dem Budget abgeleitet, monatlich bezahlt)
 - [ ] Medien und Interviews (Design 13) – eigene Runde

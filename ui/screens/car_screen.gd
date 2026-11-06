@@ -108,6 +108,7 @@ func _build_overview() -> void:
 	inner.add_theme_constant_override("separation", 16)
 	var diagram := CarDiagram.new(_zone_color, _zone_tooltip, 600.0)
 	diagram.selected = _part
+	diagram.helmet_color = GameState.player_team().primary_color
 	diagram.part_selected.connect(func(id):
 		shell.update_args({"part": id})
 		shell.refresh_current())

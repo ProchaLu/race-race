@@ -66,6 +66,10 @@ const ROLES := {
 		[&"judging_ability", "Judging ability", "Accuracy when rating current ability."],
 		[&"judging_potential", "Judging potential", "Accuracy when rating potential."],
 		[&"network", "Network", "Finds more talents in more countries."]]],
+	R.SCOUT: ["Scout", "Youth", 180_000, [
+		[&"judging_ability", "Judging ability", "Accuracy when rating current ability."],
+		[&"judging_potential", "Judging potential", "Accuracy when rating potential."],
+		[&"network", "Network", "Finds more talents in more countries."]]],
 	R.COMMERCIAL_MANAGER: ["Commercial manager", "Commercial", 1_200_000, [
 		[&"negotiation", "Negotiation", "Better sponsor deals."],
 		[&"networking", "Networking", "More sponsor offers."],

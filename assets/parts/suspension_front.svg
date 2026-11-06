@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Placeholder symbol: suspension_front. Replace with the final artwork (64x64). -->
+<!-- Symbol: suspension_front. Made by tools/part_icons.tscn from ui/car_layout.gd. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-<polygon points="6.0,28.8 24.3,25.3 24.3,38.7 6.0,36.6" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
-<polygon points="58.0,28.8 39.7,25.3 39.7,38.7 58.0,36.6" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="39.6,19.7 4.0,27.3 4.0,30.7 40.5,23.9" fill="#ffffff" stroke="#ffffff" stroke-width="0.8" stroke-linejoin="round"/>
+<polygon points="23.5,23.9 60.0,30.7 60.0,27.3 24.4,19.7" fill="#ffffff" stroke="#ffffff" stroke-width="0.8" stroke-linejoin="round"/>
+<polygon points="41.3,40.1 4.0,31.6 4.0,35.0 41.3,44.3" fill="#ffffff" stroke="#ffffff" stroke-width="0.8" stroke-linejoin="round"/>
+<polygon points="22.7,44.3 60.0,35.0 60.0,31.6 22.7,40.1" fill="#ffffff" stroke="#ffffff" stroke-width="0.8" stroke-linejoin="round"/>
 </svg>

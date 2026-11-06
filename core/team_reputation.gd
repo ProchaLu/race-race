@@ -3,7 +3,7 @@
 ## Fans bring merchandise money after every race. Both move with the season's
 ## position; the marketing building and a strong brand-building commercial
 ## manager add a little on top. The team principal's reputation (for the next
-## job, R8) moves with the position of the player's team.
+## job, Career) moves with the position of the player's team.
 class_name TeamReputation
 extends RefCounted
 
@@ -45,5 +45,5 @@ static func season_end(series: SeriesData, table: Array) -> void:
 			if driver.traits.has(&"media_darling"):
 				fame = 1
 		team.fans = clampi(team.fans + step + fame, 0, 100)
-		if Owners.has_owner(team):
-			team.owner.boss_reputation = clampi(team.owner.boss_reputation + step, 0, 100)
+		if id == GameState.player_team_id:
+			Career.change_reputation(step)

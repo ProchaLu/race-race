@@ -48,6 +48,28 @@ extends PersonData
 ## Team academy the driver belongs to (empty = none).
 @export var academy_team_id: StringName
 
+@export_group("Academy")
+## Academy contract runs until the end of this season (0 = none).
+@export var academy_until: int = 0
+## Paid to the academy team when another team takes the junior away.
+@export var academy_release_clause: int = 0
+## Promise made at signing: &"" | &"f3_seat" | &"f2_seat", due at the first
+## junior race of academy_promise_year (docs/youth_model.md 10).
+@export var academy_promise: StringName
+@export var academy_promise_year: int = 0
+## Training focus in the academy: a key of Academy.FOCUS (empty = balanced).
+@export var academy_focus: StringName
+## Own F1 driver who coaches this junior (empty = none).
+@export var mentor_id: StringName
+## Picked for the young driver test at the end of the season.
+@export var young_driver_test: bool = false
+## Academy team that lent the driver to an F1 team (empty = no loan).
+@export var loan_from: StringName
+## Hidden kind of talent: &"" | &"wonderkid" | &"late_bloomer" (scouts may hint at it).
+@export var talent: StringName
+## One entry per finished junior season: {year, series, team, points, position, wins, starts}.
+@export var junior_history: Array = []
+
 @export_group("Condition")
 ## Short-term form, 0..100 (50 = as expected).
 @export_range(0, 100) var form: int = 50

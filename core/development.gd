@@ -194,6 +194,9 @@ static func _develop_driver(d: DriverData, year: int, r: RandomNumberGenerator) 
 
 ## Race drivers learn most, reserve drivers some, free agents little.
 static func _practice(d: DriverData) -> float:
+	# Juniors: races in F3/F2 this season and their results (Youth.practice).
+	if Youth.is_youth(d):
+		return Youth.practice(d)
 	var team: TeamData = GameState.teams.get(d.team_id)
 	if team and team.driver_ids.has(d.id):
 		return 1.0
